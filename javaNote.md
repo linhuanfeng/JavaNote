@@ -143,6 +143,467 @@ cd devtools
 
 ## Spring
 
+### SpringBoot自动装配
+
+SpringBootApplication被由下面三个注解标注
+
+#### 1、@SpringBootConfiguration
+
+#### 2、@EnableAutoConfiguration
+
+使用@EnableAutoConfiguration开启自动装配，它又被@AutoConfigurationPackage和@Import(AutoConfigurationImportSelector.class)标注
+
+@AutoConfigurationPackage负责扫描
+
+@Import(AutoConfigurationImportSelector.class)导入了**AutoConfigurationImportSelector**这个类，由它扫描META-INFO下面的spring.factories里面的类，类似Java SPI机制。
+
+自动配置类本身也是条件加载，注入各种需要的类
+
+```java
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnClass(RedisOperations.class)
+@EnableConfigurationProperties(RedisProperties.class)
+@Import({ LettuceConnectionConfiguration.class, JedisConnectionConfiguration.class })
+public class RedisAutoConfiguration {
+
+	@Bean
+	@ConditionalOnMissingBean(name = "redisTemplate")
+	@ConditionalOnSingleCandidate(RedisConnectionFactory.class)
+	public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+		RedisTemplate<Object, Object> template = new RedisTemplate<>();
+		template.setConnectionFactory(redisConnectionFactory);
+		return template;
+	}
+```
+
+
+
+```java
+	/**
+	 * Return the {@link AutoConfigurationEntry} based on the {@link AnnotationMetadata}
+	 * of the importing {@link Configuration @Configuration} class.
+	 * @param annotationMetadata the annotation metadata of the configuration class
+	 * @return the auto-configurations that should be imported
+	 */
+	protected AutoConfigurationEntry getAutoConfigurationEntry(AnnotationMetadata annotationMetadata) {
+		if (!isEnabled(annotationMetadata)) {
+			return EMPTY_ENTRY;
+		}
+		AnnotationAttributes attributes = getAttributes(annotationMetadata);
+		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes); // 获取spring.factories中的全类名
+		configurations = removeDuplicates(configurations);
+		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+		checkExcludedClasses(configurations, exclusions);
+		configurations.removeAll(exclusions);
+		configurations = getConfigurationClassFilter().filter(configurations);
+		fireAutoConfigurationImportEvents(configurations, exclusions);
+		return new AutoConfigurationEntry(configurations, exclusions);
+	}
+```
+
+
+
+AutoConfigurationImportSelector中getCandidateConfigurations方法类似Java SPI负责扫描META-INF/spring.factories下的包
+
+```java
+	protected List<String> getCandidateConfigurations(AnnotationMetadata metadata, AnnotationAttributes attributes) {
+		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
+				getBeanClassLoader());
+		Assert.notEmpty(configurations, "No auto configuration classes found in META-INF/spring.factories. If you "
+				+ "are using a custom packaging, make sure that file is correct.");
+		return configurations;
+	}
+```
+
+#### 3、@ComponentScan
+
+### Spring事务传播行为
+
+事务传播行为是为了解决业务层方法之间互相调用的事务问题。
+
+当事务方法被另一个事务方法调用时，必须指定事务应该如何传播。例如：方法可能继续在现有事务中运行，也可能开启一个新事务，并在自己的事务中运行。
+
+正确的事务传播行为可能的值如下:TransactionDefinition.PROPAGATION_**
+
+#### 1.REQUIRED
+
+使用的最多的一个事务传播行为，我们平时经常使用的`@Transactional`注解**默认使用**就是这个事务传播行为。如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。
+
+#### 2.REQUIRES_NEW
+
+创建一个新的事务，如果当前存在事务，则把当前事务挂起。也就是说不管外部方法是否开启事务，`Propagation.REQUIRES_NEW`修饰的内部方法会**新开启自己的事务**，且开启的事务相互独立，互不干扰。
+
+#### 3.NESTED
+
+如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于`TransactionDefinition.PROPAGATION_REQUIRED`。
+
+#### 4.MANDATORY
+
+如果当前存在事务，则加入该事务；如果当前没有事务，则**抛出异常。（mandatory：强制性）**
+
+这个使用的很少。
+
+若是错误的配置以下 3 种事务传播行为，事务将不会发生回滚：
+
+- **SUPPORTS**: 如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。
+- **NOT_SUPPORTED**: 以非事务方式运行，如果当前存在事务，则把当前**事务挂起**。
+- **NEVER**: 以非事务方式运行，如果当前存在事务，则**抛出异常**
+
+### Spring设计模式
+
+#### 1、简单工厂
+
+spring中的BeanFactory就是简单工厂模式的体现，**传入id来获取bean对象**
+
+#### 2、工厂方法
+
+通常由应用程序直接使用new创建新的对象，为了将对象的创建和使用相分离，采用工厂模式，即应用程序将对象的创建及初始化职责交给工厂对象。
+
+实现了**FactoryBean**接口的bean是一类叫做factory的bean。其特点是，spring会在使用getBean()调 用获得该bean时，会自动调用该bean的getObject()方法，所以返回的不是factory这个bean，而是这个 bean.getOjbect()方法的返回值。
+
+#### 3、单例模式
+
+spring的bean模式都是单例的 **singleton**
+
+#### 4、代理模式
+
+切面在应用运行的时刻被织入。一般情况下，在织入切面时，**AOP**容器会为目标对象创建动态的创建一个代理 对象。SpringAOP就是以这种方式织入切面的。
+
+织入：把切面应用到目标对象并创建新的代理对象的过程。
+
+#### 5、模板方法
+
+各种**template**，但是 Spring 并没有使用这种方式，而是使用Callback 模式与模板方法模式配合，既达到了代码复用的效果，同时增加了灵活性。
+
+spring启动流程有个**onRefresh()**方法是空方法，留给子类来重写，在springboot中来内嵌tomcat。
+
+模板方法：**不改变算法的骨架**而重定义该算法的某些具体实现
+
+#### 6、适配器模式
+
+在**Spring MVC中的HandlerAdapter**
+
+当Spring容器启动后，会将所有定义好的适配器对象存放在一个List集合中，当一个请求来临时，DispatcherServlet会通过handler的类型找到对应适配器，并将该适配器对象返回给用户，然后就可以统一通过适配器的hanle()方法来调用Controller中的用于处理请求的方法。
+
+#### 7、装饰器模式
+
+**不改变原类的情况下动态功能增强**，通过组合的方式
+
+Spring中用到的包装器模式在类名上有两种表现：一种是类名中含有**Wrapper**，另一种是类名中含有 **Decorator**。
+
+#### 8、观察者模式
+
+spring的**事件驱动模型**使用的是观察者模式，**listener**的实现
+
+#### 9、策略模式
+
+在不同的场景下切换不同的算法，可以替代代码中大量的 if-else。
+
+### @lookup
+
+https://blog.csdn.net/Wisimer/article/details/110880047
+
+1、**单例bean**获取**原型bean**，为了每次**获取到最新的实例**，spring提供了方法级别的注入,实现了与spring代码的解耦
+2、原理是当调用这个方法的时候，spring使用**cglib动态代理**，调用代理方法**获取proto最新的对象**
+3、实现**解耦**：如果使用applicationContext获取到bean的话，就跟spring代码耦合了；@Autowire的话只能得到最初的bean
+
+应用场景：lookup-method 方 法的返回值对象即可实现动态的对象返回。 
+
+ 在工厂方法难以定制的时候使用。 也是模板的一种应用。是工厂方法的扩展。 如：工厂方法返回对象类型为接口类型。且不同版本应用返回的对象未必相同时使用。 可以避免多次开发工厂类。
+
+```java
+@RestController
+@RequestMapping("/lookup")
+public class LookUpTest {
+
+    @GetMapping("/proto")
+    public String toy(){
+        Toy toy = getToy();
+        return "利用ciglib自动获取最新的proto对象:"+toy;
+    }
+
+    @Lookup // 自动获取最新的proto对象
+    public Toy getToy(){
+        return null;
+    }
+}
+
+@Component
+@Scope(scopeName = ConfigurableBeanFactory.SCOPE_PROTOTYPE) // 原型bean
+public class Toy {
+    public Toy(){
+        System.out.println("create proto 对象");
+    }
+}
+
+```
+
+@replaced-method原理类似，动态替换掉 bean 中的一些方法
+
+### IOC
+
+有很多够钩子函数，主要分为BeanFactoryPostProcessor，BeanPostProcessor
+
+refresh方法
+
+```java
+@Override
+public void refresh() throws BeansException, IllegalStateException {
+   // 来个锁，不然 refresh() 还没结束，你又来个启动或销毁容器的操作，那不就乱套了嘛
+   synchronized (this.startupShutdownMonitor) {
+
+      // 准备工作，记录下容器的启动时间、标记“已启动”状态、处理配置文件中的占位符
+      prepareRefresh();
+	
+      // 创建新的容器。DefaultListableBeanFactory,有旧的容器进行关闭，
+      // 自定义beanFactory。(beanFactory.setAllowBeanDefinitionOverriding,setAllowCircularReferences)
+      // 加载beanDefinitions。将配置文件就会解析成一个个 BeanDefinition 定义，注册到BeanFactory的map中（beanName-> beanDefinition）
+      // 当然，这里说的 Bean 还没有初始化，只是配置信息都提取出来了，
+      ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory(); // 调用refreshBeanFactory
+
+      // 设置 BeanFactory 的类加载器，添加几个BeanPostProcessor（ApplicationContextAwareProcessor，ApplicationListenerDetector，LoadTimeWeaverAwareProcessor），手动注册几个特殊的 bean(environment,systemProperties)
+      prepareBeanFactory(beanFactory);
+
+      try {
+         // Bean 如果实现了BeanFactoryPostProcessor接口，那么在容器初始化以后，Spring 会负责调用里面的 postProcessBeanFactory 方法。
+
+         // 这里是提供给子类的扩展点，到这里的时候，所有的Bean都加载、注册完成了，但是都还没有初始化
+         // 子类可添加BeanFactoryPostProcessor的实现类修改beanDefinition
+         postProcessBeanFactory(beanFactory);
+         // 调用 BeanFactoryPostProcessor 各个实现类的 postProcessBeanFactory(factory) 方法，可修改beanDefinition
+         invokeBeanFactoryPostProcessors(beanFactory);
+
+         // 注册 BeanPostProcessor 的实现类，注意看和 BeanFactoryPostProcessor 的区别
+         // 此接口两个方法: postProcessBeforeInitialization 和 postProcessAfterInitialization
+         // 两个方法分别在 Bean 初始化之前和初始化之后得到执行。注意，到这里 Bean 还没初始化
+         registerBeanPostProcessors(beanFactory);
+
+         // 初始化当前 ApplicationContext 的 MessageSource，国际化这里就不展开说了，不然没完没了了
+         initMessageSource();
+
+         // 初始化当前 ApplicationContext 的事件广播器，这里也不展开了
+         initApplicationEventMulticaster();
+
+         // 从方法名就可以知道，典型的模板方法(钩子方法)，
+         // 具体的子类可以在这里初始化一些特殊的 Bean（在初始化 singleton beans 之前）
+         onRefresh();
+
+         // 注册事件监听器，监听器需要实现 ApplicationListener 接口。这也不是我们的重点，过
+         registerListeners();
+
+         // 重点，重点，重点
+         // 初始化所有的 singleton beans
+         //（lazy-init 的除外）
+         finishBeanFactoryInitialization(beanFactory);
+
+         // 最后，广播事件，ApplicationContext 初始化完成
+         finishRefresh();
+      }
+
+      catch (BeansException ex) {
+         if (logger.isWarnEnabled()) {
+            logger.warn("Exception encountered during context initialization - " +
+                  "cancelling refresh attempt: " + ex);
+         }
+
+         // Destroy already created singletons to avoid dangling resources.
+         // 销毁已经初始化的 singleton 的 Beans，以免有些 bean 会一直占用资源
+         destroyBeans();
+
+         // Reset 'active' flag.
+         cancelRefresh(ex);
+
+         // 把异常往外抛
+         throw ex;
+      }
+
+      finally {
+         // Reset common introspection caches in Spring's core, since we
+         // might not ever need metadata for singleton beans anymore...
+         resetCommonCaches();
+      }
+   }
+}
+```
+
+refreshBeanFactory
+
+```java
+@Override
+protected final void refreshBeanFactory() throws BeansException {
+   // 如果 ApplicationContext 中已经加载过 BeanFactory 了，销毁所有 Bean，关闭 BeanFactory
+   // 注意，应用中 BeanFactory 本来就是可以多个的，这里可不是说应用全局是否有 BeanFactory，而是当前
+   // ApplicationContext 是否有 BeanFactory
+   if (hasBeanFactory()) {
+      destroyBeans();
+      closeBeanFactory();
+   }
+   try {
+      // 初始化一个 DefaultListableBeanFactory，为什么用这个，我们马上说。
+      DefaultListableBeanFactory beanFactory = createBeanFactory();
+      // 用于 BeanFactory 的序列化，我想不部分人应该都用不到
+      beanFactory.setSerializationId(getId());
+
+      // 下面这两个方法很重要，别跟丢了，具体细节之后说
+      // 设置 BeanFactory 的两个配置属性：是否允许 Bean 覆盖、是否允许循环引用
+      customizeBeanFactory(beanFactory);
+
+      // 加载 Bean 到 BeanFactory 中
+      loadBeanDefinitions(beanFactory);
+      synchronized (this.beanFactoryMonitor) {
+         this.beanFactory = beanFactory;
+      }
+   }
+   catch (IOException ex) {
+      throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
+   }
+}
+```
+
+
+
+doCreateBean 真正创建bean和初始化，依赖注入，循环依赖
+
+```java
+protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
+			throws BeanCreationException {
+
+		// Instantiate the bean. 实例化bean
+		BeanWrapper instanceWrapper = null;
+		if (mbd.isSingleton()) {
+			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
+		}
+		if (instanceWrapper == null) {
+			instanceWrapper = createBeanInstance(beanName, mbd, args); // 构造器推断，反射创建bean实例
+		}
+		final Object bean = instanceWrapper.getWrappedInstance();
+		Class<?> beanType = instanceWrapper.getWrappedClass();
+		if (beanType != NullBean.class) {
+			mbd.resolvedTargetType = beanType;
+		}
+
+		// Allow post-processors to modify the merged bean definition.
+		synchronized (mbd.postProcessingLock) {
+			if (!mbd.postProcessed) {
+				try {
+					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
+				}
+				catch (Throwable ex) {
+					throw new BeanCreationException(mbd.getResourceDescription(), beanName,
+							"Post-processing of merged bean definition failed", ex);
+				}
+				mbd.postProcessed = true;
+			}
+		}
+
+		// Eagerly cache singletons to be able to resolve circular references
+		// even when triggered by lifecycle interfaces like BeanFactoryAware.
+		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
+				isSingletonCurrentlyInCreation(beanName));
+		if (earlySingletonExposure) {
+			if (logger.isTraceEnabled()) {
+				logger.trace("Eagerly caching bean '" + beanName +
+						"' to allow for resolving potential circular references");
+			}
+			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+		}
+
+		// Initialize the bean instance.
+		Object exposedObject = bean;
+		try {
+			populateBean(beanName, mbd, instanceWrapper); // 属性注入
+			exposedObject = initializeBean(beanName, exposedObject, mbd); // 处理各种回调 BP initializeBean
+		}
+		...
+
+		if (earlySingletonExposure) {
+			Object earlySingletonReference = getSingleton(beanName, false);
+			if (earlySingletonReference != null) {
+				if (exposedObject == bean) {
+					exposedObject = earlySingletonReference;
+				}
+				else if (!this.allowRawInjectionDespiteWrapping && hasDependentBean(beanName)) {
+					String[] dependentBeans = getDependentBeans(beanName);
+					Set<String> actualDependentBeans = new LinkedHashSet<>(dependentBeans.length);
+					for (String dependentBean : dependentBeans) {
+						if (!removeSingletonIfCreatedForTypeCheckOnly(dependentBean)) {
+							actualDependentBeans.add(dependentBean);
+						}
+					}
+					if (!actualDependentBeans.isEmpty()) {
+						throw new BeanCurrentlyInCreationException(beanName,
+								"Bean with name '" + beanName + "' has been injected into other beans [" +
+								StringUtils.collectionToCommaDelimitedString(actualDependentBeans) +
+								"] in its raw version as part of a circular reference, but has eventually been " +
+								"wrapped. This means that said other beans do not use the final version of the " +
+								"bean. This is often the result of over-eager type matching - consider using " +
+								"'getBeanNamesOfType' with the 'allowEagerInit' flag turned off, for example.");
+					}
+				}
+			}
+		}
+
+		// Register bean as disposable.
+		try {
+			registerDisposableBeanIfNecessary(beanName, bean, mbd);
+		}
+		catch (BeanDefinitionValidationException ex) {
+			throw new BeanCreationException(
+					mbd.getResourceDescription(), beanName, "Invalid destruction signature", ex);
+		}
+
+		return exposedObject;
+	}
+```
+
+initializeBean aware接口、 BeanPostProcessor的BeforeInitialization回调、 InitializingBean的afterPropertiesSet、BeanPostProcessor的AfterInitialization回调
+
+```java
+	protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd) {
+		if (System.getSecurityManager() != null) {
+			AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+				invokeAwareMethods(beanName, bean);
+				return null;
+			}, getAccessControlContext());
+		}
+		else {
+			invokeAwareMethods(beanName, bean); // 如果bean实现了BeanNameAware，BeanClassLoaderAware，BeanFactoryAware接口
+		}
+
+		Object wrappedBean = bean;
+		if (mbd == null || !mbd.isSynthetic()) { // BeanPostProcessor的BeforeInitialization回调
+			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+		}
+
+		try {
+            // InitializingBean的afterPropertiesSet
+            // init-method
+			invokeInitMethods(beanName, wrappedBean, mbd); 
+		}
+		catch (Throwable ex) {
+			throw new BeanCreationException(
+					(mbd != null ? mbd.getResourceDescription() : null),
+					beanName, "Invocation of init method failed", ex);
+		}
+		if (mbd == null || !mbd.isSynthetic()) { // BeanPostProcessor的AfterInitialization回调
+			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+		}
+
+		return wrappedBean;
+	}
+```
+
+
+
+```java
+	protected void invokeInitMethods(String beanName, final Object bean, @Nullable RootBeanDefinition mbd)
+			throws Throwable {
+			...
+				((InitializingBean) bean).afterPropertiesSet();
+			...
+		}
+```
+
 model和session
 
 ```
@@ -150,7 +611,127 @@ session数据保存在服务器，model数据放入视图中,存入request域中
 session可以在不同页面使用。model只能在Controller返回的页面使用
 ```
 
+#### Bean生命周期图
 
+https://www.cnblogs.com/zrtqsk/p/3735273.html
+
+```
+现在开始初始化容器
+
+这是BeanFactoryPostProcessor实现类构造器！！
+BeanFactoryPostProcessor调用postProcessBeanFactory方法
+
+这是BeanPostProcessor实现类构造器！！
+这是InstantiationAwareBeanPostProcessorAdapter实现类构造器！！
+
+InstantiationAwareBeanPostProcessor调用postProcessBeforeInstantiation方法
+【构造器】调用Person的构造器实例化
+InstantiationAwareBeanPostProcessor调用postProcessPropertyValues方法
+
+【注入属性】注入属性address
+【注入属性】注入属性name
+【注入属性】注入属性phone
+
+【BeanNameAware接口】调用BeanNameAware.setBeanName()
+【BeanFactoryAware接口】调用BeanFactoryAware.setBeanFactory()
+
+BeanPostProcessor接口方法postProcessBeforeInitialization对属性进行更改！
+【InitializingBean接口】调用InitializingBean.afterPropertiesSet()
+【init-method】调用<bean>的init-method属性指定的初始化方法
+BeanPostProcessor接口方法postProcessAfterInitialization对属性进行更改！
+
+InstantiationAwareBeanPostProcessor调用postProcessAfterInitialization方法
+
+容器初始化成功
+Person [address=广州, name=张三, phone=110]
+现在开始关闭容器！
+【DiposibleBean接口】调用DiposibleBean.destory()
+【destroy-method】调用<bean>的destroy-method属性指定的初始化方法
+```
+
+
+
+![img](javaNote.assets/181453414212066.png)
+
+![img](javaNote.assets/181454040628981.png)
+
+```java
+单例bean实例化后调用的方法
+// Callback interface triggered at the end of the singleton pre-instantiation phase
+// during {@link BeanFactory} bootstrap.
+public interface SmartInitializingSingleton {
+
+	void afterSingletonsInstantiated();
+
+}
+
+通过CommandLineRunner接口，可以实现在Spring Boot完全启动后执行一些代码逻辑
+```
+
+postProcessBeanDefinitionRegistry负责扫描注解变成beanDefinition对象，放入Map中
+
+![img](javaNote.assets/2020072612595369.png)
+
+### AOP
+
+ AOP（Aspect Orient Programming），作为面向对象编程的一种补充，应用于具有**横切性质的系统级服务**，如**事务**管理、**安全检查**、缓存、对象池管理等、**日志**。AOP 代理则可分为静态代理和动态代理两大类：
+
+#### 静态代理
+
+在编译阶段就可生成 AOP 代理类，因此也称为编译时增强，**ApectJ主要采用的是编译期织入**，在这个期间使用AspectJ的acj编译器(类似javac)把aspect类编译成class字节码后，在java目标类编译时织入，即先编译aspect类再编译目标类。
+
+#### 动态代理
+
+ Spring代理实际上是对**JDK代理**（基于接口）和**CGLIB代理（**基于子类）做了一层封装，而动态代理则在运行时借助于 JDK 动态代理、CGLIB 等在内存中“临时”生成 **AOP 动态代理类**，因此也被称为运行时增强。
+
+并且引入了AOP概念:Aspect、advice、joinpoint等等，同时引入了AspectJ中的一些注解@pointCut,@after,@before等等。
+
+
+
+![image-20210919132927505](javaNote.assets/image-20210919132927505.png)
+
+![image-20210919132248570](javaNote.assets/image-20210919132248570.png)
+
+![image-20210919094313571](javaNote.assets/image-20210919094313571.png)
+
+##### spring事务
+
+![image-20210922094148429](javaNote.assets/image-20210922094148429.png)
+
+![image-20210922094646547](javaNote.assets/image-20210922094646547.png)
+
+### 循环依赖
+
+```
+	/**
+	 * 一级缓存，缓存beanName对应经过了完整生命周期的bean
+	  */
+	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
+
+	/**
+	 * 三级缓存，缓存bean的对象工厂ObjectFactory，可通过ObjectFactory得到普通对象或AOP对象（如果bean被代理的话）
+	  */
+	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
+
+	/**
+	 * 二级缓存，缓存提前拿原始对象进行AOP之后的代理对象，原始对象还没有进行属性注入和后续BeanPostProcessor生命周期
+	  */
+	private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
+```
+
+![8f7488526360acb69f9ff188da38e185.png](javaNote.assets/8f7488526360acb69f9ff188da38e185.png)
+
+#### ObjectFactory
+
+将半成品对象提前暴露，本质是一个Lambda表达式`**() ->getEarlyBeanReference(beanName, mbd, bean)**`，被AbstractAutoProxy实现，即该类用来实现APO的。
+
+![在这里插入图片描述](javaNote.assets/7c0145c9941d407a98b5f9e994d903b6.png)
+
+#### 可以用两级缓存吗
+
+用一级缓存和三级缓存就可以解决循环依赖：将半成品对象提前暴露在ObjectFactory中
+
+但如果有aop的话，每次调用ObjectFactory都会产生一个代理对象，这就不能保证单例了，所以需要二级缓存来存代理对象
 
 ### 日志级别
 
@@ -158,19 +739,6 @@ session可以在不同页面使用。model只能在Controller返回的页面使�
 DEBUG>INFO
 ALL、TRACE、DEBUG 、INFO、WARN、ERROR 、FATAL 、OFF
 ```
-
-### 事务传播行为 
-
-​    不要事务：
-​        never（上层调用方法中有事务就抛异常）、
-​        not_supported（上层调用方法中有事务就将该事务挂起继续运行）
-​    事务可有可无：
-​        supports（有就用，没有就不用）
-​    必须要有事务：
-​        requires_new（有没有都新建）、
-​        nested（没有就新建，有就在当前事务中嵌套子事务，子事务不影响父事务（父捕获子方法的异常时），父事务影响子事务）、
-​        required（没有就新建，有就加入当前事务）、
-​        mandatory（有就用，没有就**抛异常**）
 
 ### MyBatis批量更新
 
@@ -180,7 +748,7 @@ foreach
 
 ### beanFactory&factoryBean
 
-factortbean:不需要遵循bean生命周期地创建对象
+factortbean:不需要遵循bean生命周期地创建对象，适合自定义创建一些复杂对象
 
 ![image-20220524164924582](javaNote.assets/image-20220524164924582.png)
 
@@ -190,7 +758,15 @@ factortbean:不需要遵循bean生命周期地创建对象
 
 ### SpringMVC
 
-![img](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NzE1MDIxNQ==,size_16,color_FFFFFF,t_70.png)
+1. 客户端（浏览器）发送请求， `DispatcherServlet`拦截请求。
+2. `DispatcherServlet` 根据请求信息调用 `HandlerMapping` 。`HandlerMapping` 根据 uri 去匹配查找能处理的 `Handler`（也就是我们平常说的 `Controller` 控制器） ，并会将请求涉及到的拦截器和 `Handler` 一起封装。
+3. `DispatcherServlet` 调用 `HandlerAdapter`适配执行 `Handler` 。
+4. `Handler` 完成对用户请求的处理后，会返回一个 `ModelAndView` 对象给`DispatcherServlet`，`ModelAndView` 顾名思义，包含了数据模型以及相应的视图的信息。`Model` 是返回的数据对象，`View` 是个逻辑上的 `View`。
+5. `ViewResolver` 会根据逻辑 `View` 查找实际的 `View`。
+6. `DispaterServlet` 把返回的 `Model` 传给 `View`（视图渲染）。
+7. 把 `View` 返回给请求者（浏览器）
+
+![img](javaNote.assets/de6d2b213f112297298f3e223bf08f28.png)
 
 ### 配置文件加载顺序 
 
@@ -245,96 +821,20 @@ spring:
     - StripPrefix=1
 ```
 
-
-
-### Spring AOP，Aspectj，cglib
-
-​    AOP（Aspect Orient Programming），作为面向对象编程的一种补充，广泛应用于处理一些具有横切性质的系统级服务，如事务管理、安全检查、缓存、对象池管理等。AOP 实现的关键就在于 AOP 框架自动创建的 AOP 代理，AOP 代理则可分为静态代理和动态代理两大类，**其中静态代理是指使用 AOP 框架提供的命令进行编译，从而在编译阶段就可生成 AOP 代理类，因此也称为编译时增强，ApectJ主要采用的是编译期织入，在这个期间使用AspectJ的acj编译器(类似javac)把aspect类编译成class字节码后，在java目标类编译时织入，即先编译aspect类再编译目标类。**；而动态代理则在运行时借助于 JDK 动态代理、CGLIB 等**在内存中“临时”生成 AOP 动态代理类，因此也被称为运行时增强**。
-
-   Spring代理实际上是对JDK代理（底层通过反射来实现）和CGLIB代理（底层通过继承来实现）做了一层封装，并且引入了AOP概念:Aspect、advice、joinpoint等等，同时引入了AspectJ中的一些注解@pointCut,@after,@before等等.Spring Aop严格的来说都是动态代理，所以实际上Spring代理和Aspectj的关系并不大.
-
-### Bean生命周期
-
-```java
-单例bean实例化后调用的方法
-// Callback interface triggered at the end of the singleton pre-instantiation phase
-// during {@link BeanFactory} bootstrap.
-public interface SmartInitializingSingleton {
-
-	void afterSingletonsInstantiated();
-
-}
-
-通过CommandLineRunner接口，可以实现在Spring Boot完全启动后执行一些代码逻辑
-```
-
-postProcessBeanDefinitionRegistry负责扫描注解变成beanDefinition对象，放入Map中
-
-![img](javaNote.assets/2020072612595369.png)
-
-### 循环依赖
-
-```
-	/**
-	 * 一级缓存，缓存beanName对应经过了完整生命周期的bean
-	  */
-	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
-
-	/**
-	 * 三级缓存，缓存bean的对象工厂ObjectFactory，可通过ObjectFactory得到普通对象或AOP对象（如果bean被代理的话）
-	  */
-	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
-
-	/**
-	 * 二级缓存，缓存提前拿原始对象进行AOP之后的代理对象，原始对象还没有进行属性注入和后续BeanPostProcessor生命周期
-	  */
-	private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
-```
-
-![8f7488526360acb69f9ff188da38e185.png](javaNote.assets/8f7488526360acb69f9ff188da38e185.png)
-
-#### ObjectFactory
-
-将半成品对象提前暴露，本质是一个Lambda表达式`**() ->getEarlyBeanReference(beanName, mbd, bean)**`，被AbstractAutoProxy实现，即该类用来实现APO的。
-
-![在这里插入图片描述](javaNote.assets/7c0145c9941d407a98b5f9e994d903b6.png)
-
-#### 可以用两级缓存吗
-
-用一级缓存和三级缓存就可以解决循环依赖：将半成品对象提前暴露在ObjectFactory中
-
-但如果有aop的话，每次调用ObjectFactory都会产生一个代理对象，这就不能保证单例了，所以需要二级缓存来存代理对象
-
 ### @RequestBody注解
 
 **加@RequestBody**
 
-Content-type只能处理application/json
+Content-type**只能处理application/json**
 
-```
 @RequestBody作用： 
-      1. 该注解用于读取Request请求的body部分数据，使用系统默认配置的HttpMessageConverter进行解析，然后把相应的数据绑定到要返回的对象上；
+      1. 该注解用于读取Request请求的**body**部分数据，使用系统默认配置的**HttpMessageConverter**进行解析，然后把相应的数据绑定到要返回的对象上；
 
-     2. 再把HttpMessageConverter返回的对象数据绑定到 controller中方法的参数上。
-```
+2. 再把HttpMessageConverter返回的对象数据绑定到 controller中方法的参数上。
 
 **不加@RequestBody**
 
 Content-type为x-www-form-urlencoded和form-data，不能处理json对象
-
-### AOP
-
-![image-20210919132927505](javaNote.assets/image-20210919132927505.png)
-
-![image-20210919132248570](javaNote.assets/image-20210919132248570.png)
-
-![image-20210919094313571](javaNote.assets/image-20210919094313571.png)
-
-spring事务
-
-![image-20210922094148429](javaNote.assets/image-20210922094148429.png)
-
-![image-20210922094646547](javaNote.assets/image-20210922094646547.png)
 
 ### 拦截器
 
@@ -405,6 +905,44 @@ int insert3(SysRolePo sysRolePo);
 注解动态sql <if test=''>不用加#去取
 
 ![image-20211229222748909](javaNote.assets/image-20211229222748909.png)
+
+### MyBatis TypeHandler
+
+MyBatis 中的 TypeHandler 类型处理器用于 JavaType 与 JdbcType 之间的转换，用于 PreparedStatement 设置参数值和从 ResultSet 或 CallableStatement 中取出一个值。
+
+自定义 TypeHandler
+
+```java
+@MappedTypes(value = { Enum1.class, Enum2.class})
+public class EnumTypeHandler extends BaseTypeHandler<BaseEnum> {}
+```
+
+自定义类型处理器是通过实现 org.apache.ibatis.type.TypeHandler 接口实现的。这个接口定义了类型处理器的基本功能，接口定义如下所示。
+
+![在这里插入图片描述](javaNote.assets/20190520184430201.png)
+
+其中 setParameter 方法用于把 java 对象设置到 PreparedStatement 的参数中，getResult 方法用于从 ResultSet（根据列名或者索引位置获取） 或 CallableStatement（根据存储过程获取） 中取出数据转换为 java 对象。
+
+### Executor执行器
+
+** `SimpleExecutor` ：**每执行一次 update 或 select，就开启一个 Statement 对象，用完立刻关闭 Statement 对象。
+
+** `ReuseExecutor` ：**执行 update 或 select，以 sql 作为 key 查找 Statement 对象，存在就使用，不存在就创建，用完后，不关闭 Statement 对象，而是放置于 Map<String, Statement>内，供下一次使用。简言之，就是重复使用 Statement 对象。
+
+** `BatchExecutor` ：**执行 update（没有 select，JDBC 批处理不支持 select），将所有 sql 都添加到批处理中（addBatch()），等待统一执行（executeBatch()），它缓存了多个 Statement 对象，每个 Statement 对象都是 addBatch()完毕后，等待逐一执行 executeBatch()批处理。与 JDBC 批处理相同。
+
+作用范围：Executor 的这些特点，都严格限制在 SqlSession 生命周期范围内。
+
+### 延迟加载
+
+https://blog.csdn.net/qq_41775769/article/details/120090159
+
+它的原理是，使⽤ CGLIB 或 Javassist( 默认 ) 创建⽬标对象的代理对象。当**调⽤代理对象的延迟加载属性的 getting ⽅法**时，进⼊**拦截器⽅法**。⽐如调⽤ a.getB().getName() ⽅法，进⼊拦截器的invoke(...) ⽅法，发现 a.getB() 需要延迟加载时，那么就会**单独发送事先保存好的查询关联 B对象的 SQL ，把 B 查询上来**，然后调⽤a.setB(b) ⽅法，于是 a 对象 b 属性就有值了，接着完
+成a.getB().getName() ⽅法的调⽤。
+
+总结：延迟加载主要是通过**动态代理**的形式实现，通过**代理拦截到指定⽅法**，**执⾏数据加载**。 
+
+有效减少 Java 程序与数据库交互次数，从而提升整个系统的运行效率，延迟加载**适用于多表关联查询的业务场景**，而单表查询本身只涉及到一张数据表的查询，所以也没有优化的余地了
 
 ## java基础
 
@@ -2098,7 +2636,11 @@ messageconverter
 
 ### 垃圾回收
 
-标记清除算法
+吞吐量：用户线程/（运行用户代码时间+运行垃圾收集时间）。
+
+
+
+标记清除算法（低延迟）
 
 - 从跟集合扫描，标记存活的对象。标记完毕后，再扫描整个空间未标记的对象进行回收。
 
@@ -2111,11 +2653,15 @@ messageconverter
 - 直接复制存活对象，因此适合新生代朝生夕死比较多的对象。但会浪费一半的空间。
 - Serial，ParNew，Parallel Scavenge（可控制的吞吐量）
 
-标记整理算法
+标记整理算法（吞吐量高，因为内存分配频率比垃圾回收高）
 
 - 采用和标记清除算法一样的方式标记存活对象，但在清除的时候不同，在回收不存活对象后，会将所有存活对象往左端移动，并更新对应的指针
 - 成本较高，但不会产生内存碎片问题
 - SerialOld，Parallel Old
+
+
+
+
 
 JVM系统线程：GC 编译 信号 中断任务调度 虚拟机线程（stop word 栈回收）
 
@@ -2180,6 +2726,8 @@ Cms:初始标记（stop），并发标记，重新标记（stop），并发清�
 #### 三、初始化initialize
 
 静态变量和静态代码块显示初始化，即执行 clinit() 方法
+
+![img](javaNote.assets/v2-6e4d33e76ec925985e5039faa431ec8b_720w.jpg)
 
 ### 触发类的加载
 
@@ -2701,9 +3249,9 @@ CPU调度的是线程，而不是作业
 
 - 顺序分配：顺序 分配方法要求每个文件在磁盘上占有一组连续的块。
 - 隐式链接分配： 每个文件对应一个磁盘块的链表；磁盘块分布在磁盘的任何地方，除最后一个盘块外，每一个盘块都有指向下一个盘块的指针，这些指针对用户是透明的。
-- 显式链接分配：是指把用于链接文件各物理块的指针，**显式地存放在内存的一张链接表**中。 该表在**整个磁盘仅设置一张**，**每个表项中存放链接指针，即下一个盘块号**。 在该表中，凡是 属于某一文件的第一个盘块号，或者说是每一条链的链首指针所对应的盘块号，均作为文件 地址被填入相应文件的FCB的“物理地址”字段中。由于查找记录的过程是在内存中进行 的，因而不仅显著地提高了检索速度，而且大大减少了访问磁盘的次数。由于分配给文件的 所有盘块号都放在该表中，故称该表为文件分配表（File Allocation Table, **FAT)。MS-DOS 采用的就是这种方式**。
+- 显式链接分配：是指把用于链接文件各物理块的指针，**显式地存放在内存的一张链接表**中。 该表在**整个磁盘仅设置一张**，**每个表项中存放链接指针，即下一个盘块号**。 在该表中，凡是 属于某一文件的第一个盘块号，或者说是每一条链的链首指针所对应的盘块号，均作为文件地址被填入相应文件的FCB的“物理地址”字段中。由于查找记录的过程是在内存中进行 的，因而不仅显著地提高了检索速度，而且大大减少了访问磁盘的次数。由于**分配给文件的所有盘块号都放在该表中**，故称该表为**文件分配表**（File Allocation Table, **FAT)。MS-DOS 采用的就是这种方式**。
 
-![image-20220724223549924](javaNote.assets/image-20220724223549924.png)
+![image-20220801141246385](javaNote.assets/image-20220801141246385.png)
 
 ### 磁盘调度
 
@@ -2716,18 +3264,20 @@ CPU调度的是线程，而不是作业
 1、先来先服务 FCFS
 根据进程请求的先后顺序进行调度。
 优点：**公平**、算法简单，每个进程的请求都可以得到满足，不会出现某进程的长期请求得不到处理的情况。
-缺点：没有对寻道算法进行优化，平均寻道时间可能比较长。
+缺点：没有对寻道算法进行优化，平**均寻道时间可能比较长**。
 2、最短寻道时间有限 SSTF
-选择要求访问的磁盘与当前磁头所在的磁道距离最近，这样每次的寻道时间最短，但不能保证平均寻道时间最短。
-3、扫描算法 SCAN 
-优先考虑磁头当前的移动方向，然后是访问的磁道和当前磁道的距离。又称为电梯调度算法。
+选择要求访问的磁盘与当前磁头所在的磁道距离最近，这样**每次的寻道时间最短**，但不能保证平均寻道时间最短。
+
+可以会来回循环
+3、扫描算法 SCAN 电梯算法
+优先考虑磁头当前的移动方向，然后是访问的磁道和当前磁道的距离。
 4、循环扫描算法 CSCAN
 
-算法 规定磁头只能做**单向移动**，返回时直接复位磁头
+算法 规定磁头只能做**单向移动**，返回时 I confirm that I will attend the online paper test
 
 5、LOOK与C-LOOK算法
 
-LOOK算法和C-LOOK算法分别是对扫描算法和循环扫描算法的优化，优化的思路就是：磁头在移动到最远的请求位置，然后立刻向反方向移动。
+LOOK算法和C-LOOK算法分别是对扫描算法和循环扫描算法的优化，优化的思路就是：**磁头在移动到最远的请求位置，然后立刻向反方向移动。**
 
 #### **先来先服务算法**
 
@@ -3637,26 +4187,6 @@ service network restart
 
 静态IP设置完毕
 
-### 查看文件目录
-
-`find / -name "mysql" print`
-
-### 拷贝目录
-
-```
-cp
--r 目录递归复制
--i 交互的形式，重写会提示
--l 硬链接
--s 符号链接
-
-如果dir2目录不存在，则可以直接使用
-cp -r dir1 dir2
-
-如果dir2目录已存在，则需要使用
-cp -r dir1/. dir2
-```
-
 ### 用户
 
 ```
@@ -3673,6 +4203,26 @@ sudo 采用管理员身份执行
 cat /etc/passwd
 cat /etc/group
 ```
+
+### 文件系统
+
+为一个文件分配inode节点和目录项
+
+#### 1、inode
+
+磁盘块号（指向数据块）、文件属性（大小，创建时间）
+
+**磁盘**
+
+#### 2、目录项
+
+文件名、目录级联关系
+
+索引节点唯一标识一个文件，所以是目录项和inode是多对一的关系，即多个文件名对于同一个inode文件，这就是硬链接，起到备份的作用
+
+目录也是文件，也是用索引节点唯一标识，和普通文件不同的是，普通文件在磁盘里面保存的是文件数据，而目录文件在磁盘里面保存子目录或文件。
+
+**缓存在内存**
 
 ### 文件权限
 
@@ -3814,7 +4364,7 @@ iptables	根据IP制定策略，也可以根据端口制定策略
 分钟(0-59) 小时(0-23) 月份第几天(1-31) 月份(1-12) 星期第几天(0-6)
 ```
 
-### 快速编辑
+### vim
 
 ```
 ctrl+a 光标移到最前面
@@ -3822,6 +4372,22 @@ ctrl_e 光标移到最后面
 
 ctrl+u 光标处快速往前删除
 ctrl+k 光标处快速往后删除
+```
+
+### CP
+
+```
+cp
+-r 目录递归复制
+-i 交互的形式，重写会提示
+-l 硬链接
+-s 符号链接
+
+如果dir2目录不存在，则可以直接使用
+cp -r dir1 dir2
+
+如果dir2目录已存在，则需要使用
+cp -r dir1/. dir2
 ```
 
 ### ps命令
@@ -3932,8 +4498,6 @@ whereis 只能用于程序名的搜索，而且只搜索二进制文件（参数
 删除10天前的日志文件
 find ./* -type f -mtime +10 -exec rm  {}  \;
 ```
-
-
 
 ### 软硬连接
 
@@ -5659,10 +6223,25 @@ BGP协议：边界网关协议，域间路由协议，互联网的规模很大�
 
 集线器：多个端口的集线器
 
+### DNS域名解析
+
+浏览器首先看一下自己的缓存里有没有，如果没有就向操作系统的缓存要，还没有就检查本机域名解析文件 `hosts`，如果还是没有，就会 DNS 服务器进行查询，查询的过程如下：
+
+1. 客户端首先会发出一个 DNS 请求，问 www.server.com 的 IP 是啥，并发给本地 DNS 服务器（也就是客户端的 TCP/IP 设置中填写的 DNS 服务器地址）。
+2. 本地域名服务器收到客户端的请求后，如果缓存里的表格能找到 www.server.com，则它直接返回 IP 地址。如果没有，本地 DNS 会去问它的根域名服务器：“老大， 能告诉我 www.server.com 的 IP 地址吗？” 根域名服务器是最高层次的，它不直接用于域名解析，但能指明一条道路。
+3. 根 DNS 收到来自本地 DNS 的请求后，发现后置是 .com，说：“www.server.com 这个域名归 .com 区域管理”，我给你 .com 顶级域名服务器地址给你，你去问问它吧。”
+4. 本地 DNS 收到顶级域名服务器的地址后，发起请求问“老二， 你能告诉我 www.server.com 的 IP 地址吗？”
+5. 顶级域名服务器说：“我给你负责 www.server.com 区域的权威 DNS 服务器的地址，你去问它应该能问到”。
+6. 本地 DNS 于是转向问权威 DNS 服务器：“老三，www.server.com对应的IP是啥呀？” server.com 的权威 DNS 服务器，它是域名解析结果的原出处。为啥叫权威呢？就是我的域名我做主。
+7. 权威 DNS 服务器查询后将对应的 IP 地址 X.X.X.X 告诉本地 DNS。
+8. 本地 DNS 再将 IP 地址返回客户端，客户端和目标建立连接。
+
+![域名解析的工作流程](javaNote.assets/33.jpg)
+
 ### Ping命令
 
 应用可能用到**DNS**，域名解析服务
-网络层到**ARP**地址解析协议和**ICMP**协议
+网络层**ICMP**协议和**ARP**地址解析协议
 
 ### NAT协议
 
@@ -5795,7 +6374,7 @@ poll：O(n) 遍历，无连接数限制，因为采用链表
 epoll：O(1) 事件IO
 ```
 
-**select**阻塞调用线程，知道一个或多个数据包准备就绪，然后系统调用（**recvfrom**）拷贝数据
+**select**阻塞调用线程，直到一个或多个数据包准备就绪，然后系统调用（**recvfrom**）拷贝数据
 
 ![在这里插入图片描述](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1MzYxMjQ0,size_16,color_FFFFFF,t_70#pic_center-16510403144768.png)
 
@@ -5810,6 +6389,19 @@ epoll：O(1) 事件IO
 不阻塞，并且所有任务都交给内核处理（数据准备和数据拷贝），全部准备好了再通知线程处理数据报，真正做到非阻塞。
 
 ![在这里插入图片描述](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1MzYxMjQ0,size_16,color_FFFFFF,t_70#pic_center-165104086875711.png)
+
+下面这张图，总结了以上几种 I/O 模型：
+
+![img](javaNote.assets/同步VS异步IO.png)
+
+在前面我们知道了，I/O 是分为两个过程的：
+
+1. 数据准备的过程
+2. 数据从内核空间拷贝到用户进程缓冲区的过程
+
+阻塞 I/O 会阻塞在「过程 1 」和「过程 2」，而非阻塞 I/O 和基于非阻塞 I/O 的多路复用只会阻塞在「过程 2」，所以这三个都可以认为是同步 I/O。
+
+异步 I/O 则不同，「过程 1 」和「过程 2 」都不会阻塞。
 
 ### STOMP协议
 
@@ -6109,35 +6701,53 @@ public class WebSocketStompConfig implements WebSocketMessageBrokerConfigurer {
 503 Server Unavailable：表示服务器暂时处于超负载或正在进行停机维护，无法处理请求；
 ```
 
-### HTTP2
-
-*1. 头部压缩*
-
-*2. 二进制格式*
-
-*3. 数据流*
-
-每个请求或响应的所有数据包，称为一个数据流（`Stream`），**不同 Stream 的帧是可以乱序发送的**，客户端还可以**指定数据流的优先级**
-
-*4. 多路复用*
-
-**一个连接中并发多个请求或回应，而不用按照顺序一一对应**，不会再出现「队头阻塞」问题
-
-*5. 服务器推送*
-
 ### Https
 
-客户端发送支持的密匙交换算法
+用非对称加密的方式协商对称密匙
 
-服务端发送**CA证书**（包含公匙和数字签名（CA私匙对公匙加密））
+#### 一、四次握手过程
 
-客户端通过**CA公匙验证签名并得到公匙**，使用**公钥对随机生成的密钥进行加密**，发给服务器
+1、客户端发送TLS版本，client随机数和支持的密码套件列表（密匙交换算法--签名算法--对称加密算法--摘要算法）
 
-服务器使用**私匙解密**得到客户端的密钥，用**客户端的密匙加密数据**
+2、服务端发送TLS版本，server随机数，选择的密码套件和数字证书
+
+3、验证证书的安全性并得到服务器RSA公匙，生称新的新的随机数（pre-master）并用RSA公匙加密发给服务端。服务收到后用RSA解密得到pre-master。
+
+至此双方都共享了三个随机数：客户端随机数，服务端随机数，pre-master，用于生成会话密匙，他就是对称密匙。
+
+然后客户端就把之前发送的所有数据做个摘要，使用会话密匙加密让服务器验证一下消息是否又被篡改。
+
+4、服务器也是同样的操作，双方都验证加密和解密没问题，握手正式完成
+
+
 
 TLS四次握手过程
 
 ![img](javaNote.assets/B7268EF66524898CEF0E068EA5F1BA26.gif)
+
+#### 二、数字证书签发和验证流程
+
+CA 签发证书的过程，如上图左边部分：
+
+- 首先 CA 会把持有者的公钥、用途、颁发者、有效时间等信息打成一个包，然后对这些信息进行 Hash 计算，得到一个 Hash 值；
+- 然后 CA 会使用自己的私钥将该 Hash 值加密，生成 Certificate Signature，也就是 CA 对证书做了签名；
+- 最后将 Certificate Signature 添加在文件证书上，形成数字证书；
+
+客户端校验服务端的数字证书的过程，如上图右边部分：
+
+- 首先客户端会使用同样的 Hash 算法获取该证书的 Hash 值 H1；
+- 通常浏览器和操作系统中集成了 CA 的公钥信息，浏览器收到证书后可以使用 CA 的公钥解密 Certificate Signature 内容，得到一个 Hash 值 H2 ；
+- 最后比较 H1 和 H2，如果值相同，则为可信赖的证书，否则则认为证书不可信。
+
+![img](javaNote.assets/证书的校验.png)
+
+#### 证书链
+
+证书信任链
+
+开始客户端只信任根证书 GlobalSign Root CA 证书的，然后 “GlobalSign Root CA” 证书信任 “GlobalSign Organization Validation CA - SHA256 - G2” 证书，而 “GlobalSign Organization Validation CA - SHA256 - G2” 证书又信任 baidu.com 证书，于是客户端也信任 baidu.com 证书。
+
+![img](javaNote.assets/用户信任.png)
 
 ### RSA的公钥、私钥
 
@@ -6355,6 +6965,28 @@ A:固定长度；
 B：分隔符
 D:添加长度信息。
 ```
+
+### IPv6
+
+128位、**取消了分片/重新组装相关字段**
+
+- IPv6 可自动配置，即使没有 DHCP 服务器也可以实现自动分配IP地址，真是**便捷到即插即用**啊。
+- IPv6 包头包首部长度采用固定的值 `40` 字节，去掉了包头校验和，简化了首部结构，减轻了路由器负荷，大大**提高了传输的性能**。
+- IPv6 有应对伪造 IP 地址的网络安全功能以及防止线路窃听的功能，大大**提升了安全性**。
+
+### 网卡
+
+网卡**属于OSI的物理层与链路层**，它工作在物理层和数据链路层的MAC子层。
+
+网卡，即网络接口控制器，又称网络接口控制器，网络适配器，网卡，或局域网接收器，是一块被设计用来允许**计算机在计算机网络上进行通讯的计算机硬件**；**计算机与外界局域网的连接是通过网卡进行的**。由于其拥有MAC地址，因此属于OSI模型的第1层（物理层）；它使得用户可以通过电缆或无线相互连接。
+
+**网卡主要功能：**
+
+1、实现与主机总线的通讯连接，解释并执行主机的控制命令。
+
+2、实现数据链路层的功能。
+
+3、实现物理层的功能 网卡简称网络接口卡 ，是计算机局域网中重要的连接设备之一，**计算机通过网卡接入网络**。
 
 ## 算法和数据结构
 
@@ -6828,21 +7460,293 @@ https://blog.csdn.net/daaikuaichuan/article/details/98627822
 
   **参考网络分区的情况**。
 
+## SringCloud
+
+### setinel
+
+Sentinel实现**限流、隔离、降级、熔断**等功能，本质要做的就是两件事情：
+
+- 统计数据：统计某个资源的访问数据（QPS、RT等信息）
+- 规则判断：判断限流规则、隔离规则、降级规则、熔断规则是否满足
+
+总体基于责任链模式，每个链路节点抽象成××slot，一些slot进行数据统计，一些进行规则判断等，然后基于各种限流算法实现对应的限流规则等。主要组件有ProcessorSLotChain处理器链，链路节点Node，资源Entry，上下文Context等
+
+![image-20220728225713168](javaNote.assets/image-20220728225713168.png)
+
+#### 一、限流算法
+
+1、滑动时间窗口计数器算法
+
+限流中的快速失败、warm up、QPS计数
+
+![image-20220728224618315](javaNote.assets/image-20220728224618315.png)
+
+2、令牌桶算法
+
+参数限流
+
+![image-20220728224633144](javaNote.assets/image-20220728224633144.png)
+
+3、漏桶算法
+
+排队等待效
+
+![image-20220728224642849](javaNote.assets/image-20220728224642849.png)
+
+![image-20220728224901130](javaNote.assets/image-20220728224901130.png)
+
+#### 二、概念组件
+
+#### ProcessorSlotChain
+
+setinel的核心骨架是`ProcessorSlotChain`**处理器槽链**，基于**责任链模式**，将不同的功能（限流、降级、系统保护）封装为一个个的Slot，请求进入后逐个执行即可
+
+![image-20220728220641635](javaNote.assets/image-20220728220641635.png)
+
+责任链中的Slot也分为两大类：
+
+- 统计数据构建部分（statistic）
+  - NodeSelectorSlot：负责构建簇点链路中的节点（DefaultNode），将这些节点形成链路树
+  - ClusterBuilderSlot：负责构建某个资源的ClusterNode，ClusterNode可以保存资源的运行信息（响应时间、QPS、block 数目、线程数、异常数等）以及来源信息（origin名称）
+  - StatisticSlot：负责统计实时调用数据，包括运行信息、来源信息等
+- 规则判断部分（rule checking）
+  - AuthoritySlot：负责授权规则（来源控制）
+  - SystemSlot：负责系统保护规则
+  - ParamFlowSlot：负责热点参数限流规则
+  - FlowSlot：负责限流规则
+  - DegradeSlot：负责降级规则
+
+#### Node
+
+链路节点
+
+Sentinel中的簇点链路是由一个个的Node组成的，Node是一个接口，包括下面的实现：
+
+![image-20210925103029924](javaNote.assets/image-20210925103029924.png)
+
+所有的节点都可以记录对资源的访问统计数据，所以都是StatisticNode的子类。
+
+按照作用分为两类Node：
+
+- DefaultNode：代表链路树中的每一个资源，一个资源出现在不同链路中时，会创建不同的DefaultNode节点。而树的入口节点叫EntranceNode，是一种特殊的DefaultNode
+- ClusterNode：代表资源，一个资源不管出现在多少链路中，只会有一个ClusterNode。记录的是当前资源被访问的所有统计数据之和。
+
+
+
+DefaultNode记录的是资源在当前链路中的访问数据，用来实现基于链路模式的限流规则。ClusterNode记录的是资源在所有链路中的访问数据，实现默认模式、关联模式的限流规则。
+
+
+
+例如：我们在一个SpringMVC项目中，有两个业务：
+
+- 业务1：controller中的资源`/order/query`访问了service中的资源`/goods`
+- 业务2：controller中的资源`/order/save`访问了service中的资源`/goods`
+
+创建的链路图如下：
+
+![image-20210925104726158](javaNote.assets/image-20210925104726158.png)
+
+#### Entry
+
+基于**AOP**思想，对资源标记的方法环绕增强，完成对**资源**Entry的创建
+
+![image-20220728221012195](javaNote.assets/image-20220728221012195.png)
+
+```java
+@Aspect
+public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
+	// 切点是添加了 @SentinelResource注解的类
+    @Pointcut("@annotation(com.alibaba.csp.sentinel.annotation.SentinelResource)")
+    public void sentinelResourceAnnotationPointcut() {
+    }
+	
+    // 环绕增强
+    @Around("sentinelResourceAnnotationPointcut()")
+    public Object invokeResourceWithSentinel(ProceedingJoinPoint pjp) throws Throwable {
+        // 获取受保护的方法
+        Method originMethod = resolveMethod(pjp);
+		// 获取 @SentinelResource注解
+        SentinelResource annotation = originMethod.getAnnotation(SentinelResource.class);
+        if (annotation == null) {
+            // Should not go through here.
+            throw new IllegalStateException("Wrong state for SentinelResource annotation");
+        }
+        // 获取注解上的资源名称
+        String resourceName = getResourceName(annotation.value(), originMethod);
+        EntryType entryType = annotation.entryType();
+        int resourceType = annotation.resourceType();
+        Entry entry = null;
+        try {
+            // 创建资源 Entry
+            entry = SphU.entry(resourceName, resourceType, entryType, pjp.getArgs());
+            // 执行受保护的方法
+            Object result = pjp.proceed();
+            return result;
+        } catch (BlockException ex) {
+            return handleBlockException(pjp, annotation, ex);
+        } catch (Throwable ex) {
+            Class<? extends Throwable>[] exceptionsToIgnore = annotation.exceptionsToIgnore();
+            // The ignore list will be checked first.
+            if (exceptionsToIgnore.length > 0 && exceptionBelongsTo(ex, exceptionsToIgnore)) {
+                throw ex;
+            }
+            if (exceptionBelongsTo(ex, annotation.exceptionsToTrace())) {
+                traceException(ex);
+                return handleFallback(pjp, annotation, ex);
+            }
+
+            // No fallback function can handle the exception, so throw it out.
+            throw ex;
+        } finally {
+            if (entry != null) {
+                entry.exit(1, pjp.getArgs());
+            }
+        }
+    }
+}
+```
+
+#### Context
+
+什么是Context呢？
+
+- Context 代表调用链路上下文，贯穿一次调用链路中的所有资源（ `Entry`），基于ThreadLocal。
+- Context 维持着入口节点（`entranceNode`）、本次调用链路的 curNode（当前资源节点）、调用来源（`origin`）等信息。
+- 后续的Slot都可以通过Context拿到DefaultNode或者ClusterNode，从而获取统计数据，完成规则判断
+- Context初始化的过程中，会创建EntranceNode，contextName就是EntranceNode的名称
+
+对应的API如下：
+
+```java
+// 创建context，包含两个参数：context名称、 来源名称
+ContextUtil.enter("contextName", "originName");
+```
+
+
+
+在`AbstractSentinelInterceptor`中初始化
+
+`HandlerInterceptor`拦截器会拦截一切进入controller的方法，执行`preHandle`前置拦截方法，而Context的初始化就是在这里完成的。
+
+```java
+@Override
+public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+    throws Exception {
+    try {
+        // 获取资源名称，一般是controller方法的@RequestMapping路径，例如/order/{orderId}
+        String resourceName = getResourceName(request);
+        if (StringUtil.isEmpty(resourceName)) {
+            return true;
+        }
+        // 从request中获取请求来源，将来做 授权规则 判断时会用
+        String origin = parseOrigin(request);
+        
+        // 获取 contextName，默认是sentinel_spring_web_context
+        String contextName = getContextName(request);
+        // 创建 Context
+        ContextUtil.enter(contextName, origin);
+        // 创建资源，名称就是当前请求的controller方法的映射路径
+        Entry entry = SphU.entry(resourceName, ResourceTypeConstants.COMMON_WEB, EntryType.IN);
+        request.setAttribute(baseWebMvcConfig.getRequestAttributeName(), entry);
+        return true;
+    } catch (BlockException e) {
+        try {
+            handleBlockException(request, response, e);
+        } finally {
+            ContextUtil.exit();
+        }
+        return false;
+    }
+}
+```
+
+#### ProcessorSlotChain执行流程
+
+##### StatisticSlot
+
+StatisticSlot负责统计实时调用数据，包括运行信息（访问次数、线程数）、来源信息等。
+
+StatisticSlot是实现限流的关键，其中基于**滑动时间窗口算法**维护了计数器，统计进入某个资源的请求次数。
+
+核心代码：
+
+```java
+@Override
+public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, 
+                  int count, boolean prioritized, Object... args) throws Throwable {
+    try {
+        // 放行到下一个 slot，做限流、降级等判断
+        fireEntry(context, resourceWrapper, node, count, prioritized, args);
+
+        // 请求通过了, 线程计数器 +1 ，用作线程隔离
+        node.increaseThreadNum();
+        // 请求计数器 +1 用作限流
+        node.addPassRequest(count);
+
+        if (context.getCurEntry().getOriginNode() != null) {
+            // 如果有 origin，来源计数器也都要 +1
+            context.getCurEntry().getOriginNode().increaseThreadNum();
+            context.getCurEntry().getOriginNode().addPassRequest(count);
+        }
+
+        if (resourceWrapper.getEntryType() == EntryType.IN) {
+            // 如果是入口资源，还要给全局计数器 +1.
+            Constants.ENTRY_NODE.increaseThreadNum();
+            Constants.ENTRY_NODE.addPassRequest(count);
+        }
+
+        // 请求通过后的回调.
+        for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks()) {
+            handler.onPass(context, resourceWrapper, node, count, args);
+        }
+    } catch (Throwable e) {
+        // 各种异常处理就省略了。。。
+        context.getCurEntry().setError(e);
+
+        throw e;
+    }
+}
+```
+
+
+
+另外，需要注意的是，所有的计数+1动作都包括两部分，以` node.addPassRequest(count);`为例：
+
+```java
+@Override
+public void addPassRequest(int count) {
+    // DefaultNode的计数器，代表当前链路的 计数器
+    super.addPassRequest(count);
+    // ClusterNode计数器，代表当前资源的 总计数器
+    this.clusterNode.addPassRequest(count);
+}
+```
+
+具体计数方式，我们后续再看。
+
+接下来，进入规则校验的相关slot了，依次是：
+
+- AuthoritySlot：负责授权规则（来源控制）
+- SystemSlot：负责系统保护规则
+- ParamFlowSlot：负责热点参数限流规则
+- FlowSlot：负责限流规则
+- DegradeSlot：负责降级规则
+
+AuthoritySlot
+
 ## 设计模式
 
 ### 三种类型
 
-#### 1、创建型
+#### 1、创建型5
 
-单例模式，工厂模式，原型模式、建造者模式
+单例模式，工厂模式，原型模式、建造者模式、抽象工厂模式
 
-#### 2、结构型
+#### 2、结构型7
 
-适配器模式、桥接模式、**装饰模式**、组合模式、外观模式、享
+适配器模式、桥接模式、**装饰模式**、组合模式、外观模式、享元模式、**代理模式**。
 
-元模式、**代理模式**。
-
-#### 3、行为型
+#### 3、行为型11
 
 模版方法模式、命令模式、访问者模式、迭代器模式、观察者模式、中介者模式、备忘录模式、解释器模式（Interpreter模式）、状态模式、策略模式、责任链模式
 
@@ -6875,9 +7779,9 @@ https://blog.csdn.net/daaikuaichuan/article/details/98627822
 
 
 
-7.***模式 Proxy   ***
+7.代理模式 proxy
 
-***为其他对象提供一种***，并由***对象控制对原对象的引用，以间接控制对原对象的访问。
+为其他对象提供一种，并由***对象控制对原对象的引用，以间接控制对原对象的访问。
 
 ### 依赖关系：
 
@@ -8041,13 +8945,19 @@ str1.localeCompare(str2)
 
 ### 自我介绍
 
-面试官你好，我叫林涣锋，今天我应聘的是贵公司的游戏研发工程师，我来自东莞理工学院软件工程卓越计划班
+面试官你好，我叫林涣锋，请问可以听得到嘛，我来自东莞理工学院软件工程卓越计划班，今天我应聘的是多益的游戏开发岗位
 
-大学期间，我参与**开发了许多项目**，在其中主要担任技术负责人的角色，负责项目的核心技术开发，技术选型和系统架构，积累一定的项目实战开发能力，还有系统技术架构和团队分工协作管理经验。同时，作为负责人申报了学校的创新创业项目，也积极参加互联网+，蓝桥杯算法比赛等专业竞赛，积累一定的竞赛经验。在课内方面，担任班级团支书，校学生会干事，校审计处办公室助理，社会实践立项分队负责人等，也有着的丰富的大学社团经验。
+大学期间，我参与**开发了许多项目**，在其中主要担任技术负责人的角色，负责项目的核心开发和技术难点解决，负责系统架构设计和相关技术选型，对分布式和为微服务架构有一定的了解，积累一定的项目实战开发能力和团队分工协作经验。
 
-最后，作为一名游戏爱好者，我对游戏开发也有着很高的热情，感谢贵公司的面试机会。
+另外，我多次担任负责人成功申报了学校的创新创业项目，也积极参加挑战杯，互联网+，蓝桥杯算法竞赛等专业竞赛，积累了竞赛方面的相关经验。
 
-这就是我的自我介绍，希望能够胜任该职位。
+在课内方面，我的计算机专业成绩优异，多次获得奖学金
+
+大学实践方面，我担任了校审计处学生助理，社会实践分队负责人，班级团支书等。
+
+最后，作为一名游戏爱好者，我渴望能够进入游戏开发行业。
+
+这就是我的自我介绍，感谢贵公司的面试机会。
 
 
 
