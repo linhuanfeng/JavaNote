@@ -143,6 +143,247 @@ cd devtools
 
 ## Spring
 
+### Bean的作用域
+
+- **singleton** : IoC 容器中只有唯一的 bean 实例。Spring 中的 bean 默认都是单例的，是对单例设计模式的应用。
+- **prototype** : 每次获取都会创建一个新的 bean 实例。也就是说，连续 `getBean()` 两次，得到的是不同的 Bean 实例。
+- **request** （仅 Web 应用可用）: 每一次 HTTP 请求都会产生一个新的 bean（请求 bean），该 bean 仅在当前 HTTP request 内有效。
+- **session** （仅 Web 应用可用） : 每一次来自新 session 的 HTTP 请求都会产生一个新的 bean（会话 bean），该 bean 仅在当前 HTTP session 内有效。
+- **application/global-session** （仅 Web 应用可用）： 每个 Web 应用在启动时创建一个 Bean（应用 Bean），，该 bean 仅在当前应用启动时间内有效。
+- **websocket** （仅 Web 应用可用）：每一次 WebSocket 会话产生一个新的 bean。
+
+### Resource&Autowire
+
+#### Resource
+
+```
+@Target({TYPE, FIELD, METHOD})
+@Retention(RUNTIME)
+public @interface Resource {
+	String name() default "";
+	Class<?> type() default java.lang.Object.class;
+	...
+}
+```
+
+jdk提供，默认按名称注入（找不到再按类型注入）。
+
+可作用在类，字段，方法
+
+#### Autowire
+
+```
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface Autowired {
+	boolean required() default true;
+}
+```
+
+spring提供，默认按类型注入（找不到再按名称注入）。如果有多个，配合@Qualify(name="")指定名称使用（当然注入bean的时候可以使用@Primary）。
+
+可作用在字段，方法，**构造方法**，注解
+
+### VO&DTO&PO&DO%POJO
+
+举个实际例子，你就了解各种OO
+
+```
+pubclic class Controller{
+	public R save(VO){
+		helloService.save(DTO);
+	}
+}
+pubclic class HelloService(DTO){
+	public String save(DTO){
+		helloDao.save(PO);
+	}
+}
+```
+
+**VO**（View Object）：视图对象，用于展示层，它的作用是把某个指定页面（或组件）的所有数据封装起来。
+
+**DTO**（Data Transfer Object）：泛指用于展示层与服务层之间的数据传输对象。
+
+**PO**（Persistent Object）：持久化对象，它跟持久层（通常是关系型数据库）的数据结构形成一一对应的映射关系，如果持久层是关系型数据库，那么，数据表中的每个字段（或若干个）就对应PO的一个（或若干个）属性。等价于**Entity**。
+
+**DO**（Domain Object）：领域对象，就是从现实世界中抽象出来的有形或无形的业务实体。
+
+**POJO**（plain ordinary java object）纯的传统意义的 java 对象，最基本的 Java Bean ，只有属性字段及 setter 和 getter 方法，可认为是 DO/DTO/BO/VO 的统称。
+
+Java Bean典型特征:
+
+- 提供一个默认的无参构造函数。
+- 需要被序列化并且实现了 Serializable 接口。
+- 可能有一系列可读写属性，并且一般是 private 的。
+- 可能有一系列的 getter 或 setter 方法。
+
+### Spring IOC四种注入方式
+
+setter方法，构造方法，字段，P命名空间
+
+### Servlet
+
+单例，线程不一定安全。
+
+加载和实例化。
+
+init方法 读取配置文件封装传递给ServletConfig
+
+service
+
+destory
+
+#### 1、生命周期
+
+[servlet](https://so.csdn.net/so/search?q=servlet&spm=1001.2101.3001.7020) 声明周期可以分四个阶段：
+
+- 类装载过程
+- init() 初始化过程
+- service() 服务过程，选择doGet \ doPost
+- destroy() 销毁过程
+
+servlet接口如下
+
+```java
+public interface Servlet {
+
+
+    void init(ServletConfig var1) throws ServletException;
+
+    ServletConfig getServletConfig();
+
+    void service(ServletRequest var1, ServletResponse var2) throws ServletException, IOException;
+
+    String getServletInfo();
+
+    void destroy();
+
+}
+```
+
+1、创建servlet实例
+
+时期：默认是第一个请求该servlet的时候就初始化此servlet，该servlet实例便一直存在，直到长
+
+ 时间不调用、服务器关闭才销毁 或者 类文件更新后重新载入 。也可手动设置：在服务器
+
+ 启动时便加载此servlet 。
+
+```java
+<servlet>
+
+	<servlet-name>Xxx</servlet-name>
+
+     <servlet-class>com.lingz.Xxx</servlet-class>
+
+     <load-on-startup>1</load-on-startup>
+
+</servlet>
+```
+
+2、init()初始化
+
+ servlet实例一创建出来，便调用init(ServletConfig var1) 进行初始化， 其中的ServletConfig参数对象携带了该servlet的配置信息，比如初始化参数，此ServletConfig参数由服务器创建。
+
+（1）那么，如何配置 servlet的初始化参数？
+
+```java
+<servlet>
+
+	<servlet-name>Xxx</servlet-name>
+
+	<servlet-class>com.lingz.Xxx</servlet-class>
+
+  	<!--两个自定义的初始化参数-->
+
+  	<init-param>
+
+  		<param-name>value1</param-name>
+
+  		<param-value>key1</param-value>
+
+  	</init-param>
+
+    　　<init-param>
+
+  		<param-name>value2</param-name>
+
+  		<param-value>key2</param-value>
+
+  	</init-param>
+
+</servlet>
+```
+
+ 通过这种配置方式，就不需要在Servlet中添加、修改，直接修改xml文件即可。
+
+（2）如何读取上面的参数呢？
+
+ 通过 ServletConfig类提供的 getInitParameter(String name) 获取初始化参数
+
+```java
+public interface ServletConfig {
+
+    String getServletName();
+
+    ServletContext getServletContext();
+
+    String getInitParameter(String var1);
+
+    Enumeration<String> getInitParameterNames();
+
+}
+```
+
+（3）init(ServletConfig var1) 在Servlet生命周期中，只执行一次。并且是单线程执行，不需要担心多线程安全。
+
+3、service() 服务过程
+
+（1）请求发到对应的Servlet，Servlet调用service（）,service() 根据请求调用doGet \ doPost
+
+ service方法是处理业务的核心。
+
+（2）service() 与多线程
+
+ servlet 是单例的，当多个请求请求同一个servlet时，需要主要注意线程安全，不过也存在可以不必考虑线程安全的情况。
+
+①线程安全情况
+
+- 如果service()方法没有访问Servlet的成员变量也没有访问全局的资源比如静态变量、文件、数据库连接等，而是只使用了当前线程自己的资源，比如非指向全局资源的临时变量、request和response对象等。该方法本身就是线程安全的，不必进行任何的同步控制。
+- 如果service()方法访问了Servlet的成员变量，但是对该变量的操作是只读操作，该方法本身就是线程安全的，不必进行任何的同步控制。
+
+②线程不安全情况
+
+- 如果service()方法访问了全局的静态变量，如果同一时刻系统中也可能有其它线程访问该静态变量，如果既有读也有写的操作，通常需要加上同步控制语句。
+- 如果service()方法访问了全局的资源，比如文件、数据库连接等，通常需要加上同步控制语句。
+
+4 、destroy()销毁
+
+ 当web服务器认为此servlet没有存在的必要、类重新加载、服务器关闭、长时间未被访问，则可以从内存中销毁。而回收该Servlet内存前必须调用destroy()，web服务器保证该方法被调用时已经结束了请求调用的service()或等待剩余的请求执行完，并且不会再接收请求。当全部请求处理完并响应后，即可destroy() 并进行内存回收
+
+ 
+
+#### 2、执行流程
+
+通过上面的描述，其实我们对执行流程已有了大体的认知：
+
+```markdown
+1. 根据时机，Web容器加载对应的Servlet类,加载后进行init()初始化。
+ - 设置了容器启动时初始化
+ - 请求第一次请求此Servlet时初始化
+ - Servlet类文件被更新后，重新装载Servlet
+
+2. 接收到请求，容器根据配置将请求交给对应的Servlet，同时创建HttpServletRequest 和 HttpServletResponse 对象，一并交给Servlet。
+
+3. 在service()中根据HttpServletRequest得请求类型等信息，调用doGet\doPost 进行业务处理。
+
+4. 处理后通过HttpServletResponse获得相应信息，返回给Web容器。
+
+5. Web容器再将响应返回给客户端。
+```
+
 ### SpringBoot自动装配
 
 SpringBootApplication被由下面三个注解标注
@@ -344,7 +585,29 @@ public class Toy {
 
 有很多够钩子函数，主要分为BeanFactoryPostProcessor，BeanPostProcessor
 
-refresh方法
+#### refresh方法（spring启动流程）
+
+首先，总体下refresh主要干了什么事
+
+1、记录下容器的启动时间、标记“已启动”状态
+
+2、创建容器DefaultListableBeanFactory，并加载beanDefinitions
+
+3、对容器进行配置，比如注册类加载器ClassLoader和post-processors
+
+4、调用 BeanFactoryPostProcessor 的 postProcessBeanFactory ，可对beanDefinition进行修改
+
+5、注册 BeanPostProcessor 的实现类，可用于拦截bean的创建过程
+
+6、国际化，事件广播器
+
+7、初始化所有的 singleton beans（重点重点）
+
+8、最后，广播事件，ApplicationContext 初始化完成
+
+
+
+接下来，对代码逐行解析
 
 ```java
 @Override
@@ -373,7 +636,7 @@ public void refresh() throws BeansException, IllegalStateException {
          // 调用 BeanFactoryPostProcessor 各个实现类的 postProcessBeanFactory(factory) 方法，可修改beanDefinition
          invokeBeanFactoryPostProcessors(beanFactory);
 
-         // 注册 BeanPostProcessor 的实现类，注意看和 BeanFactoryPostProcessor 的区别
+         // 注册 BeanPostProcessor 的实现类，可用于拦截bean的创建过程
          // 此接口两个方法: postProcessBeforeInitialization 和 postProcessAfterInitialization
          // 两个方法分别在 Bean 初始化之前和初始化之后得到执行。注意，到这里 Bean 还没初始化
          registerBeanPostProcessors(beanFactory);
@@ -611,7 +874,7 @@ session数据保存在服务器，model数据放入视图中,存入request域中
 session可以在不同页面使用。model只能在Controller返回的页面使用
 ```
 
-#### Bean生命周期图
+#### Bean生命周期
 
 https://www.cnblogs.com/zrtqsk/p/3735273.html
 
@@ -682,11 +945,172 @@ postProcessBeanDefinitionRegistry负责扫描注解变成beanDefinition对象，
 
 #### 动态代理
 
- Spring代理实际上是对**JDK代理**（基于接口）和**CGLIB代理（**基于子类）做了一层封装，而动态代理则在运行时借助于 JDK 动态代理、CGLIB 等在内存中“临时”生成 **AOP 动态代理类**，因此也被称为运行时增强。
+##### jdk动态代理是：反射匿名类
+
+- 利用反射机制 生成一个
+- **实现代理接口的匿名类**
+- 在调用具体方法前调用InvokeHandler来处理。
+
+##### CGLIB字节码生成：字节码生成
+
+- 利用asm开源包，
+- 对代理**对象类的class文件** 加载进来，
+- 通过**修改其字节码**生成子类来处理。
+
+1、如果目标对象实现了接口，
+
+- 默认 情况下会 采用JDK的动态代理实现AOP
+
+2、如果目标对象实现了接口，可以强制使用CGLIB实现AOP
+
+3、如果目标对象没有实现了接口，
+
+- 必须采用CGLIB库，spring会自动在JDK动态代理和CGLIB之间转换
+
+##### 如何强制使用CGLIB实现AOP？
+
+（1）添加CGLIB库，SPRING_HOME/cglib/*.jar
+（2）在spring配置文件中加入<aop:aspectj-autoproxy proxy-target-class=“true”/>
+
+JDK动态代理和CGLIB字节码生成的区别？
+（1）JDK动态代理只能 对实现了接口的类 生成代理，而不能针对类
+（2）CGLIB是针对 类 实现代理，
+
+- 主要是对指定的类生成一个子类，
+- 覆盖其中的方法
+- 因为是继承，所以该类或方法最好不要声明成final
+
+##### 代码实现
+
+用户管理接口
+
+```java
+//用户管理接口
+public interface UserManager {
+    //新增用户抽象方法
+    void addUser(String userName,String password);
+    //删除用户抽象方法
+    void delUser(String userName);
+    
+}
+12345678
+```
+
+用户管理接口实现类
+
+```java
+//用户管理实现类,实现用户管理接口
+public class UserManagerImpl implements UserManager{
+    //重写新增用户方法
+    @Override
+    public void addUser(String userName, String password) {
+        System.out.println("调用了新增的方法！");
+        System.out.println("传入参数为 userName: "+userName+" password: "+password);
+    }
+    //重写删除用户方法
+    @Override
+    public void delUser(String userName) {
+        System.out.println("调用了删除的方法！");
+        System.out.println("传入参数为 userName: "+userName);
+    }
+    
+}
+12345678910111213141516
+```
+
+###### JDK动态代理
+
+```java
+//JDK动态代理实现InvocationHandler接口
+public class JdkProxy implements InvocationHandler {
+    private Object target ;//需要代理的目标对象
+    
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        System.out.println("JDK动态代理，监听开始！");
+        Object result = method.invoke(target, args);
+        System.out.println("JDK动态代理，监听结束！");
+        return result;
+    }
+    //定义获取代理对象方法
+    private Object getJDKProxy(Object targetObject){
+        //为目标对象target赋值
+        this.target = targetObject;
+        //JDK动态代理只能针对实现了接口的类进行代理，newProxyInstance 函数所需参数就可看出
+        return Proxy.newProxyInstance(targetObject.getClass().getClassLoader(), targetObject.getClass().getInterfaces(), this);
+    }
+    
+    public static void main(String[] args) {
+        JdkProxy jdkProxy = new JdkProxy();//实例化JDKProxy对象
+        UserManager user = (UserManager) jdkProxy.getJDKProxy(new UserManagerImpl());//获取代理对象
+        user.addUser("admin", "123123");//执行新增方法
+    }
+    
+}
+1234567891011121314151617181920212223242526
+```
+
+JDK动态代理运行结果
+
+```
+JDK动态代理，监听开始！
+调用了新增的方法！
+传入参数为 userName: admin password: 123123
+JDK动态代理，监听结束！
+1234
+```
+
+###### Cglib动态代理
+
+Cglib动态代理（需要导入两个jar包，asm-5.2.jar,cglib-3.2.5.jar。版本自行选择）
+
+```java
+//Cglib动态代理，实现MethodInterceptor接口
+public class CglibProxy implements MethodInterceptor {
+    private Object target;//需要代理的目标对象
+    
+    //重写拦截方法
+    @Override
+    public Object intercept(Object obj, Method method, Object[] arr, MethodProxy proxy) throws Throwable {
+        System.out.println("Cglib动态代理，监听开始！");
+        Object invoke = method.invoke(target, arr);//方法执行，参数：target 目标对象 arr参数数组
+        System.out.println("Cglib动态代理，监听结束！");
+        return invoke;
+    }
+    //定义获取代理对象方法
+    public Object getCglibProxy(Object objectTarget){
+        //为目标对象target赋值
+        this.target = objectTarget;
+        Enhancer enhancer = new Enhancer();
+        //设置父类,因为Cglib是针对指定的类生成一个子类，所以需要指定父类
+        enhancer.setSuperclass(objectTarget.getClass());
+        enhancer.setCallback(this);// 设置回调 
+        Object result = enhancer.create();//创建并返回代理对象
+        return result;
+    }
+    
+    public static void main(String[] args) {
+        CglibProxy cglib = new CglibProxy();//实例化CglibProxy对象
+        UserManager user =  (UserManager) cglib.getCglibProxy(new UserManagerImpl());//获取代理对象
+        user.delUser("admin");//执行删除方法
+    }
+    
+}
+12345678910111213141516171819202122232425262728293031
+```
+
+Cglib动态代理运行结果
+
+```
+Cglib动态代理，监听开始！
+调用了新增的方法！
+传入参数为 userName: admin password: 123123
+Cglib动态代理，监听结束！
+```
+
+
 
 并且引入了AOP概念:Aspect、advice、joinpoint等等，同时引入了AspectJ中的一些注解@pointCut,@after,@before等等。
-
-
 
 ![image-20210919132927505](javaNote.assets/image-20210919132927505.png)
 
@@ -694,7 +1118,7 @@ postProcessBeanDefinitionRegistry负责扫描注解变成beanDefinition对象，
 
 ![image-20210919094313571](javaNote.assets/image-20210919094313571.png)
 
-##### spring事务
+### spring事务
 
 ![image-20210922094148429](javaNote.assets/image-20210922094148429.png)
 
@@ -946,6 +1370,381 @@ https://blog.csdn.net/qq_41775769/article/details/120090159
 
 ## java基础
 
+### IO/NIO
+
+![image-20220910205954413](javaNote.assets/image-20220910205954413.png)
+
+#### **Java NIO和IO的主要区别**
+
+```text
+IO                NIO
+面向流            面向缓冲
+阻塞IO           非阻塞IO
+无                选择器
+```
+
+#### **面向流与面向缓冲**
+
+Java NIO和IO之间第一个最大的区别是，IO是面向流的，NIO是面向缓冲区的。
+
+ Java IO面向流意味着**每次从流中读一个或多个字节**，直至读取所有字节，它们**没有被缓存在任何地方**。此外，它**不能前后移动流中的数据**。如果需要前后移动从流中读取的数据，需要先将它缓存到一个缓冲区。 
+
+Java NIO的把数据读取到一个缓冲区，需要时**可在缓冲区中前后移动**。这就增加了处理过程中的灵活性。
+
+**通道是双向的，可同时读写**，而流是单向的**(一个流必须是 InputStream 或者 OutputStream 的子类)。
+
+#### 阻塞与非阻塞IO
+
+Java IO的各种流是阻塞的。这意味着，当一个线程**调用read() 或 write()时，该线程被阻塞**，直到有一些数据被读取，或数据完全写入。该线程**在此期间不能再干任何事情了**。 
+
+Java NIO的非阻塞模式，使一个线程从某**通道**发送请求读取数据，但是它仅能得到目前可用的数据，**如果目前没有数据可用时，就什么都不会获取**。而不是保持线程阻塞，所以直至数据变的可以读取之前，该线程可以继续做其他的事情。 非阻塞写也是如此。一个线程请求写入一些数据到某通道，但**不需要等待它完全写入，这个线程同时可以去做别的事情**。 线程通常将非阻塞IO的空闲时间用于在其它通道上执行IO操作，所以**一个单独的线程现在可以管理多个输入和输出通道（channel）**。
+
+#### 选择器（Selectors）
+
+Java NIO的选择器允许**一个单独的线程来监视多个输入通道**，你可以**注册多个通道使用一个选择器**，然后使用一个单独的线程来“选择”通道：这些通道里已经有可以处理的输入，或者选择已准备写入的通道。这种选择机制，使得一个单独的线程很容易来管理多个通道。
+
+#### 数据处理
+
+在IO设计中，我们从InputStream或 Reader逐字节读取数据。假设你正在处理一基于行的文本数据流，例如：
+
+```text
+Name: Anna
+Age: 25
+Email: anna@mailserver.com
+Phone: 1234567890
+```
+
+该文本行的流可以这样处理：
+
+```text
+csharp InputStream input = … ; // get the InputStream from the
+client socket
+                                view sourceprint?
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+                                String nameLine   = reader.readLine();
+                                String ageLine    = reader.readLine();
+                                String emailLine  = reader.readLine();                                
+                                String phoneLine  = reader.readLine()
+```
+
+请注意处理状态由程序执行多久决定。换句话说，一旦reader.readLine()方法返回，你就知道肯定文本行就已读完， readline()阻塞直到整行读完，这就是原因。你也知道此行包含名称；同样，第二个readline()调用返回的时候，你知道这行包含年龄等。 正如你可以看到，该处理程序仅在有新数据读入时运行，并知道每步的数据是什么。一旦正在运行的线程已处理过读入的某些数据，该线程不会再回退数据（大多如此）。下图也说明了这条原则：
+
+![img](javaNote.assets/v2-cb5356ba8897eccdfb5bfe7e463eb67e_720w.jpg)
+
+
+
+
+
+（Java IO: 从一个阻塞的流中读数据） 而一个NIO的实现会有所不同，下面是一个简单的例子：
+
+```text
+ByteBuffer buffer = ByteBuffer.allocate(48);
+int bytesRead = inChannel.read(buffer);
+```
+
+注意第二行，从通道读取字节到ByteBuffer。当这个方法调用返回时，你不知道你所需的所有数据是否在缓冲区内。你所知道的是，该缓冲区包含一些字节，这使得处理有点困难。
+假设第一次 read(buffer)调用后，读入缓冲区的数据只有半行，例如，“Name:An”，你能处理数据吗？显然不能，需要等待，直到整行数据读入缓存，在此之前，对数据的任何处理毫无意义。
+
+所以，你怎么知道是否该缓冲区包含足够的数据可以处理呢？好了，你不知道。发现的方法只能查看缓冲区中的数据。其结果是，在你知道所有数据都在缓冲区里之前，你必须检查几次缓冲区的数据。这不仅效率低下，而且可以使程序设计方案杂乱不堪。例如：
+
+```text
+ByteBuffer buffer = ByteBuffer.allocate(48);
+
+int bytesRead = inChannel.read(buffer);
+
+while(! bufferFull(bytesRead) ) {
+
+bytesRead = inChannel.read(buffer);
+}
+```
+
+bufferFull()方法必须跟踪有多少数据读入缓冲区，并返回真或假，这取决于缓冲区是否已满。换句话说，如果缓冲区准备好被处理，那么表示缓冲区满了。
+
+bufferFull()方法扫描缓冲区，但必须保持在bufferFull（）方法被调用之前状态相同。如果没有，下一个读入缓冲区的数据可能无法读到正确的位置。这是不可能的，但却是需要注意的又一问题。
+
+如果缓冲区已满，它可以被处理。如果它不满，并且在你的实际案例中有意义，你或许能处理其中的部分数据。但是许多情况下并非如此。下图展示了“缓冲区数据循环就绪”：
+
+![img](javaNote.assets/v2-add18281f433ed79a8056f517972421e_720w.jpg)
+
+
+**Java NIO:从一个通道里读数据，直到所有的数据都读到缓冲区里.**
+NIO可让您只使用一个（或几个）单线程管理多个通道（网络连接或文件），但付出的代价是解析数据可能会比从一个阻塞流中读取数据更复杂。
+
+如果需要管理同时打开的成千上万个连接，这些连接每次只是发送少量的数据，例如聊天服务器，实现NIO的服务器可能是一个优势。同样，如果你需要维持许多打开的连接到其他计算机上，如P2P网络中，使用一个单独的线程来管理你所有出站连接，可能是一个优势。一个线程多个连接的设计方案如下图所示：
+
+![img](javaNote.assets/v2-12f14ec6330ff873e9504a417f372305_720w.jpg)
+
+
+
+
+
+**Java NIO: 单线程管理多个连接**
+如果你有少量的连接使用非常高的带宽，一次发送大量的数据，也许典型的IO服务器实现可能非常契合。下图说明了一个典型的IO服务器设计：
+
+![img](javaNote.assets/v2-12f14ec6330ff873e9504a417f372305_720w.jpg)
+
+
+Java IO: 一个典型的IO服务器设计- 一个连接通过一个线程处理.
+
+### JDBC步骤
+
+// 1、加载驱动
+
+Class.forName(driver);
+
+// 2、链接数据库
+
+java.sql.Connection con = DriverManager.getConnection(url, user, password);
+
+if (!con.isClosed()) {// 判断数据库是否链接成功
+
+System.out.println("已成功链接数据库！");
+
+// 3、创建Statement对象
+
+java.sql.Statement st = con.createStatement();
+
+// 4、执行sql语句
+
+rs = st.executeQuery(sql);// 查询之后返回结果集
+
+// 5、打印出结果
+
+while (rs.next()) {
+
+System.out.println( rs.getString("Id") + "\t" + rs.getString("name") + "\t" + rs.getString("password"));
+
+}
+
+}
+
+rs.close();// 关闭资源
+
+con.close();// 关闭数据库
+
+### 类加载器
+
+![image-20220904223340890](javaNote.assets/image-20220904223340890.png)
+
+### sleep&wait&join&yield
+
+1.sleep会使当前线程睡眠指定时间，不释放锁
+2.yield会使当前线程重回到可执行状态，等待cpu的调度，不释放锁
+3.wait会使当前线程回到线程池中等待，释放锁，当被其他线程使用notify，notifyAll唤醒时进入可执行状态
+4.当前线程调用 某线程.join（）时会使当前线程等待某线程执行完毕再结束，**底层调用了wait，释放锁**
+
+sleep，wait和join都会进入阻塞状态
+
+sleep、wait的使用范围：
+sleep: sleep是Thread类中的静态方法。因此无论是在a线程中调用b的sleep方法，还是在b线程中调用a的sleep方法，谁调用谁就sleep。也因此，**sleep可以在任何地方使用**。
+wait、notify、notifyAll 就很惨了，只能在**同步控制方法**或**同步控制块**中使用。
+
+![image-20220904222523241](javaNote.assets/image-20220904222523241.png)
+
+### 线程池
+
+#### 七大参数
+
+![image-20220904151955781](javaNote.assets/image-20220904151955781.png)
+
+#### 工作流程
+
+![img](javaNote.assets/b1543b01a1134b13ab020887a4aa3566.png)
+
+#### 四种拒绝策略
+
+1. AbortPolicy
+
+当任务添加到线程池中被拒绝时，直接丢弃任务，并抛出
+
+RejectedExecutionException异常。
+
+2. DiscardPolicy
+
+当任务添加到线程池中被拒绝时，丢弃被拒绝的任务，不抛异常。
+
+3. DiscardOldestPolicy
+
+当任务添加到线程池中被拒绝时，丢弃任务队列中最旧的未处理任务，然后将被拒绝的任务添加到等待队列中。
+
+ 4. CallerRunsPolicy
+
+被拒绝任务的处理程序，直接在execute方法的调用线程中运行被拒绝的任务。
+
+总结：就是被拒绝的任务，直接在主线程中运行，不再进入线程池。
+
+#### 自带四种线程池
+
+Executors.new**，本质通过ThreadPoolExecutor创建
+
+newSingleThreadExexcutor：单线程数的线程池（核心线程数=最大线程数=1）
+newFixedThreadPool：固定线程数的线程池（核心线程数=最大线程数=自定义）
+newCacheThreadPool：可缓存的线程池（核心线程数=0，最大线程数=Integer.MAX_VALUE）
+newScheduledThreadPool：支持定时或周期任务的线程池（核心线程数=自定义，最大线程数=Integer.MAX_VALUE）
+
+#### 阻塞队列
+
+```
+/**
+ * 1、ArrayBlockingQueue ：一个由数组结构组成的有界阻塞队列
+ *
+ * 2、LinkedBlockingQueue ：一个由链表结构组成的有界阻塞队列（常用）
+ *
+ * 3、PriorityBlockingQueue ：一个支持优先级排序的无界阻塞队列
+ *
+ * 4、DelayQueue： 一个使用优先级队列实现的无界阻塞队列
+ *
+ * 5、SynchronousQueue： 一个不存储元素的阻塞队列（常用）
+ *
+ * 6、LinkedTransferQueue： 一个由链表结构组成的无界阻塞队列
+ *
+ * 7、LinkedBlockingDeque： 一个由链表结构组成的双向阻塞队列
+ */
+```
+
+### 避免多线程竞争
+
+1) 不可变对象；
+
+2) 互斥锁；
+
+3) ThreadLocal 对象；
+
+4) CAS；
+
+### 守护线程
+
+1）、当用户线程全部结束，那么守护线程会跟着虚拟机一同退出了。
+
+2）、 **在Daemon线程中产生的新线程也是Daemon的**。 （这一点又是有着本质的区别了：守护进程fork()出来的子进程不再是守护进程，尽管它把父进程的进程相关信息复制过去了，但是子进程的进程的父进程不是init进程，所谓的守护进程本质上说就是“父进程挂掉，init收养，然后文件0,1,2都是/dev/null，当前目录到/”）
+
+3）、thread.setDaemon(true)必须在thread.start()之前设置，否则会跑出一个IllegalThreadStateException异常。你不能把正在运行的常规线程设置为守护线程。 
+
+### String类
+
+#### 不可变性
+
+- 由于字符串无论在任何 Java 系统中都广泛使用，会用来存储敏感信息，如账号，密码，网络路径，文件处理等场景里，保证字符串 String 类的安全性就尤为重要了，如果字符串是可变的，容易被篡改，那我们就无法保证使用字符串进行操作时，它是安全的，很有可能出现 **SQL 注入**，访问危险文件等操作。
+- 在多线程中，只有不变的对象和值是**线程安全**的，可以在多个线程中共享数据。由于 String 天然的不可变，当一个线程”修改“了字符串的值，只会产生一个新的字符串对象，不会对其他线程的访问产生副作用，访问的都是同样的字符串数据，**不需要任何同步操作**。
+- 字符串作为基础的数据结构，大量地应用在一些**集合容器**之中，尤其是一些散列集合，在散列集合中，存放元素都要根据对象的 **hashCode**() 方法来确定元素的位置。由于字符串 hashcode 属性不会变更，保证了唯一性，使得类似 HashMap，HashSet 等容器才能实现相应的缓存功能。由于 String 的不可变，避免重复计算 hashcode，只要使用缓存的 hashcode 即可，这样一来大大提高了在散列集合中使用 String 对象的性能。
+- 当字符串不可变时，**字符串常量池**才有意义。字符串常量池的出现，可以减少创建相同字面量的字符串，让不同的引用指向池中同一个字符串，**为运行时节约很多的堆内存**。若字符串可变，字符串常量池失去意义，基于常量池的 String.intern() 方法也失效，每次创建新的字符串将在堆内开辟出新的空间，占据更多的内存。
+
+#### String构造方法
+
+![image-20220904115721518](javaNote.assets/image-20220904115721518.png)
+
+### StringBuilder
+
+![image-20220907230422145](javaNote.assets/image-20220907230422145.png)
+
+### 反射
+
+- 程序**运行时**，可以通过反射获得任意一个类的Class对象，并通过这个对象查看这个**类的信息**；
+- 程序运行时，可以通过反射创建任意一个类的实例，并访问该实例的成员；
+- 程序运行时，可以通过反射机制生成一个**类的动态代理类**或动态代理对象。
+
+通过反射机制加载数据库的驱动程序
+
+多数框架都支持注解/XML配置，从配置中解析出来的类是字符串，需要利用反射机制实例化
+
+面向切面编程（AOP）的实现方案，是在程序运行时创建目标对象的代理类，这必须由反射机制来实现
+
+### JWT
+
+#### 1.Header
+
+描述JWT元数据的JSON对象，签名使用的算法，令牌的类型。最后，使用Base64 URL算法将上述JSON对象转换为字符串保存
+
+```json
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+```
+
+#### 2.Payload
+
+用户信息,过期时间
+
+```
+iss：发行人
+exp：到期时间
+sub：主题
+aud：用户
+nbf：在此之前不可用
+iat：发布时间
+jti：JWT ID用于标识该JWT
+```
+
+默认情况下JWT是未加密的，因为只是采用base64算法，拿到JWT字符串后可以转换回原本的JSON数据，任何人都可以解读其内容，因此不要构建隐私信息字段，比如用户的密码一定不能保存到JWT中，以防止信息泄露。JWT只是适合在网络中传输一些非敏感的信息
+
+#### 3.Signature
+
+**签名哈希**部分是对上面两部分数据签名，以确保数据不会被篡改
+
+### Object类
+
+Object类的八个方法
+
+```
+clone
+equals
+hashCode
+toString
+wait
+notify
+finalize
+getClass
+```
+
+![image-20220820210529660](javaNote.assets/image-20220820210529660.png)
+
+### classpath
+
+classpath是值类路径，不是环境变量
+
+
+
+![image-20220820204348440](javaNote.assets/image-20220820204348440.png)
+
+###  switch
+
+底层转为int类型
+
+Java中Switch支持byte、short、char、int四种基本类型（由于自动拆装箱，对应的包装类型也是支持的）,枚举和String类型(利用hashCode函数)，但不支持long类型
+一、底层实现
+java中switch是**将所有类型转换成int类型来进行判断**。关于long，因为long类型表示的范围大于int类型，所以无法进行转换，因此switch不支持long类型
+
+二、基本类型以及其包装类转换成int类型
+基本类型都为强转，char类型为取ascll码，包装类强转前有个自动拆装箱的操作。
+
+三、枚举类转换成int类型
+在switch中枚举类型的int值为枚举元素在枚举类中的序号。
+
+四、String类型转换成int类型
+对于String来说其int值即为String类的哈希值，即利用hashCode()函数，考虑到哈希值相等的情况，底层中加入了equals()函数。
+
+jdk8只能是byte、char(两个字节)、int、String
+
+![image-20220815215514009](javaNote.assets/image-20220815215514009.png)
+
+### Ascii码表
+
+![image-20220802102830143](javaNote.assets/image-20220802102830143.png)
+
+### 标识符
+
+标识符可以是字母，数字、下划线和美元符号$。
+但不能以数字开头。
+
+注意点不是标识符
+
+![image-20220801221900160](javaNote.assets/image-20220801221900160.png)
+
+静态方法属于类，实例方法属于实例
+
+![image-20220801222017319](javaNote.assets/image-20220801222017319.png)
+
 ### @Inherited
 
 子类会继承父类的注解，接口继承和类实现接口都不会生效。
@@ -977,39 +1776,63 @@ yum install -y java-1.8.0-openjdk-devel.x86_64
 
 ```
 
-
-
 ### ThreadLocal
 
-为了叙述方便，我们先声明变量ThreadLocal<T> threadLocal=new ThreadLocal<>()
+#### 设计原理
 
-ThreadLocal字面意思线程变量，每个线程都有自己的变量副本，起到线程隔离的作用。
+- 通过threadLocal对象的set方法存储的值实际是存在每个Thread对象的属性中：ThreadLocal.**ThreadLocalMap** threadLocals。
+- ThreadLocalMap内部结构为Entry键值对，其**Key为ThreadLocal对象（弱引用）**，**Value为变量副本**。
 
-ThreadLocal其实只是一个工具包装，真正存变量副本还是Thread线程对象里面的ThreadLocalMap
+一言以蔽之：**ThreadLocal是将线程需要访问的数据存储在线程对象自身中，从而避免多线程的竞争**。
 
-**ThreadLocalMap**是ThreadLocal的静态内部类，维护着一个Entry<K,V>数组，数组的下标就是threadLocalHashCode（threadLocal对象的独一无二的threadLocalHashCode）,K存放ThreadLocal对象，V存放线程的变量副本（value）
+ThreadLocalMap的Entry数组的下标就是threadLocal.threadLocalHashCode）
 
-**Entry<K,V>**又是ThreadLocalMap的静态内部类，声明如下
+#### 内存泄漏问题
 
-Entry类定义如下，继承了WeakReference弱引用，由于是弱引用，下一次垃圾回收的就会被清除。那么问题来了，value又是强引用，那岂不是**内存泄漏**了。
+Entry的key是**弱引用**（不管内存是否足够，下一次垃圾回收的就会被清除），如果key被回收了变为null，value又是强引用一直存在，那么造成**内存泄漏**。
 
-所以手动ThreadLocalMap.remove()很关键了，用完就要调用
+解决措施：set和remove配对使用
 
-```java
-        static class Entry extends WeakReference<ThreadLocal<?>> {
-            /** The value associated with this ThreadLocal. */
-            Object value;
+![在这里插入图片描述](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA54y_5aeL5aSn54yp54yp,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center.png)
 
-            Entry(ThreadLocal<?> k, Object v) {
-                super(k);
-                value = v;
-            }
-        }
+#### 为什么不可以设置为强引用
+
+因为用户用完把threadLocal ref=null，但是由于thread对象对ThreadLocalMap是强引用，ThreadLocalMap中key对threadLocal 是强引用，那么就导致threadLocal 还是不能被回收。那么把threadLocal设置为弱引用才不会违背用户想要回收threadLocal 的意图。
+
+#### 最佳实践
+
+spring单例bean如何保证线程安全：使用ThreadLocal，每个线程都保留一个变量副本（注意是新建一个变量副本，如果threadlocal引用同一个对象，那么做不到线程安全）。
+
+比如，数据库连接，每个线程持有的都是新建的connection副本
+
+```
+public class TopicDao {  
+    //①使用ThreadLocal保存Connection变量  
+    private static ThreadLocal <Connection> connThreadLocal = newThreadLocal<Connection>();  
+    public static Connection getConnection() {  
+       // ②如果connThreadLocal没有本线程对应的Connection创建一个新的Connection，  
+       // 并将其保存到线程本地变量中。  
+       if (connThreadLocal.get() == null) { 
+           Connection conn = getConnection();  
+           connThreadLocal.set(conn);  
+           return conn;  
+       }
+       // ③直接返回线程本地变量
+       return connThreadLocal.get();  
+    }
+ 
+    public void addTopic() {  
+       // ④从ThreadLocal中获取线程对应的Connection  
+       try {
+           Statement stat = getConnection().createStatement();  
+       } catch (SQLException e) {  
+           e.printStackTrace();  
+       }
+    }
+}
 ```
 
-ThreadLocalMap又都是每个线程私有的变量，自然就起到了线程隔离的作用
-
-
+#### 源码
 
 threadLocal.set()其实就是设置当前Thread线程对象的成员变量ThreadLocalMap
 
@@ -1110,9 +1933,23 @@ threadLocal.get()
     }
 ```
 
+[ThreadLocal内存泄露原因，如何避免](https://blog.csdn.net/qq_38969734/article/details/124001401)
+
+[头条二面：你确定ThreadLocal真的会造成内存泄露？](https://zhuanlan.zhihu.com/p/402856377)
+
 ### synchronized
 
-有个锁升级的过程，尽量避免用户态和内核态的切换
+- 修饰实例方法，对当前实例对象this加锁
+- 修饰静态方法，对当前类的Class对象加锁
+- 修饰代码块，指定一个加锁的对象，给对象加锁
+
+根据上面三条可以去掉AC，D的话我觉得是可重入锁。
+
+![image-20220808203408805](javaNote.assets/image-20220808203408805.png)
+
+#### 锁升级
+
+Java线程和操作系统线程是一一对应的，避免用户态和内核态的频繁切换
 
 **无锁-》偏向锁-》轻量级锁-》重量级锁**
 
@@ -1120,7 +1957,7 @@ threadLocal.get()
 
 - 偏向锁：大部分场景下只有一个线程来获取资源，该线程访问同步代码块并获取锁时，对象头标志位 1 01（偏向模式），使用CAS把线程id记录在Mark Word中。以后这个线程进来就不用同步操作了
 
-- 轻量级锁：多个线程竞争就会切换到轻量级锁，也就是自旋锁，避免了用户态到内核态的切换（monitor会阻塞和唤醒线程，线程的阻塞和唤醒需要CPU从用户态到内核态的切换）
+- 轻量级锁：多个线程竞争就会切换到轻量级锁，也就是**自旋锁**，避免了用户态到内核态的切换（monitor会阻塞和唤醒线程，线程的阻塞和唤醒需要CPU从用户态到内核态的切换）
 
   适应性自旋锁是一种优化，动态调准自旋时间（对某个锁很少自旋成功直接跳过；刚获得过这个锁，那么运行自旋时间长一点）
 
@@ -1136,6 +1973,8 @@ threadLocal.get()
 
 - 标记字段：对象hahCode，分代年龄，锁标志位
 - 类型指针：指向类元数据的指针，表示哪个类的实例
+
+### volatile
 
 ### AQS
 
@@ -1273,7 +2112,15 @@ SPI即**扩展点发现机制**，就是通过读取指定目录下的配置文�
 读取指定目录下的配置文件并加载，并根据注解配置以及URL属性值确定哪个实现类执行操作
 ```
 
-### 数据类型
+### 八大基本数据类型
+
+注意char和short都是占用两个字节
+
+一个字节的只有byte和boolean
+
+switch支持byte,char,int,String
+
+![image-20220815215718702](javaNote.assets/image-20220815215718702.png)
 
 ```
  (byte，short，char)--int--long--float—double
@@ -1284,19 +2131,52 @@ SPI即**扩展点发现机制**，就是通过读取指定目录下的配置文�
  像short和char这种是平级的就得强制转换
 ```
 
+三元运算符自动类型转换，提高成浮点数，所以变成9.0
+
+![image-20220908222205555](javaNote.assets/image-20220908222205555.png)
+
+**数组可以看作是对象，但不是原生类**
+
+### 浮点数比较
+
+#### 1、绝对值比较差值范围 
+
+指定一个误差范围，两个浮点数的差值在此范围之内，则认为是相等的
+
+```
+/**
+ 浮点数比较的第一种方式(失精度的方式)
+ 指定一个误差范围，两个浮点数的差值在此范围之内，则认为是相等的。
+*/
+float diff = 1e-6f;
+if (Math.abs(value1 - value2) < diff) {
+System.out.println("value1的值与value2的值相等");
+}
+```
+
+#### 2、使用BigDecimal
+
 ### 接口和抽象类
 
 **抽象类好处**
 
-负责方法约定和逻辑调用（免去大量重复的代码和逻辑），让实现延迟到子类实现，也让子类更加简洁
+**自下而上**的思想
 
-使用上转型，不需要修改方法代码，只需要替换实现类即可
+负责方法约定和逻辑调用（**复用**共同的代码和逻辑），让实现**延迟到子类实现**，也让子类更加简洁
 
-抽象能让代码复用和简洁
+注意只能定义变量和方法不能有其他语句。
+
+![image-20220805155237034](javaNote.assets/image-20220805155237034.png)
 
 **接口**
 
-都是抽象的
+**自上而下**的行为约束
+
+#### 抽象类和接口的关系
+
+看到这里，相信有很多小伙伴会有疑问，能否使用抽象类替换接口，毕竟两者概念上很容易模糊。在个人看来，JAVA中，除了类只能被单继承，但是接口可以多实现(接口之间可以多继承)这个限制外，最重要的是两者设计的一个目的。
+
+**抽象类设计出来的目的是为了抽取出某一个种类的一些共有特性或者默认行为，以达到代码复用的目的。而接口则是为了规定某一种标准而设计出来，它强调的是规范，在面向对象语言中体现就是多态性的使用。** 所以，如果出现该设计为抽象类还是接口纠结的场景，建议可以从设计的动机方面进行考虑，应该能得到一个比较好的结果。
 
 ### 实例方法
 
@@ -1360,6 +2240,34 @@ protect比def不同包子类也可以访问
 
 私有                 private                       y
 
+### ArrayList的扩容机制
+
+https://zhuanlan.zhihu.com/p/145554951
+
+无参构造的时候，初始为空数组DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {}
+第一次add添加元素后，会扩容为10，
+
+```
+    private static int calculateCapacity(Object[] elementData, int minCapacity) {
+        if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
+            return Math.max(DEFAULT_CAPACITY, minCapacity);
+        }
+        return minCapacity;
+    }
+```
+
+大于10之后，每次扩容增加**原来的一半**
+
+```java
+    private void grow(int minCapacity) {
+    	...
+        int newCapacity = oldCapacity + (oldCapacity >> 1);
+       	... 
+    }
+```
+
+
+
 ### HashMap
 
 **put()方法逻辑**
@@ -1419,8 +2327,8 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
         // 如果桶位不存在
     	else { 
             Node<K,V> e; K k;
-            // hashCode是否相等并且地址或equals要相等
-            if (p.hash == hash && // 比较hash值是否相等，并且key的地址或equals方法要相等
+            // 若hashCode相等并且地址或equals相等则表示同一个，所以进行覆盖
+            if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k)))) 
                 e = p;
             else if (p instanceof TreeNode) // 是否是红黑树结点类型，是直接插入
@@ -1435,7 +2343,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                             treeifyBin(tab, hash);
                         break;
                     }
-                    if (e.hash == hash &&
+                    if (e.hash == hash && // 找到了hashCode相等的并且equals相等，则退出，后面进行覆盖
                         ((k = e.key) == key || (key != null && key.equals(k))))
                         break;
                     p = e; // 记录下一个结点
@@ -1474,9 +2382,19 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 
 #### **resize()扩容**
 
-由于2倍扩容，所以原桶元素**不用rehash()**,要么在原位置要么在移动原容量。
+2被扩容
 
-原理：首先我们知道，按公式hash&(oldCap-1)来计算元素下标，而2倍扩容，即高位增加1，那么增加的哪一位如果原hash值就是0,那么该元素位置不变；反之就是计算出来的下标增加了原来的容量
+如果长度是2的倍数，那么取模等价于hash&(oldCap-1)
+
+只需要**看看原来的hash值新增的那个bit是1还是0就好了**，是0的话索引没变，是1的话索引变成“原索引+oldCap”
+
+由于2倍（<<1）扩容，所以原桶元素**不用rehash()**,要么在原位置要么在移动原容量。
+
+原理：首先我们知道，**按公式hash&(oldCap-1)**来计算元素下标，而2倍扩容，即高位增加1。
+
+如果增加的哪一位原hash值就是0,那么按位与之后该元素位置不变；
+
+如果为1，那就等于增加原来的容量
 
 ```java
     /**
@@ -1628,11 +2546,15 @@ initCap/loadfactor+1，如果暂时无法知道初始值，请设置16（初始�
 
 推荐使用entrySet遍历,遍历一次就去出key和value
 
-### HashMap.computeIfAbsent
+#### HashMap为什么线程不安全？
+
+HashMap在并发执行**put操作时，可能会导致形成循环链表**，从而引起死循环。
+
+#### HashMap.computeIfAbsent
 
 如果需要向Map中push一个键值对，需要判断K key在当前map中是否已经存在，不存在则通过后面的 Function<? super K, ? extends V> mappingFunction 来进行value计算，且将结果当作value同key一起push到Map中。
 
-### Class.getEnclosingClass 和 Class.getDeclaringClass
+#### Class.getEnclosingClass 和 Class.getDeclaringClass
 
 1、getDeclaringClass
   return the declaring class for this class
@@ -1677,15 +2599,6 @@ d不同子类对象表现出不同的行为
 ```
 
 ![image-20220529223356396](javaNote.assets/image-20220529223356396.png)
-
-### ArrayList的扩容机制
-
-https://zhuanlan.zhihu.com/p/145554951
-
-```
-// 无参构造的时候，初始为空数组DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {}
-// 第一次add添加元素后，会扩容为10，扩容大小为原始的1.5倍，数次扩容时由于小于默认的10，所以取10，之后每次扩容都是0.5
-```
 
 ### Maven多模块构建找不到指定类Jenkins
 
@@ -1737,7 +2650,9 @@ diamond operator is not supported in -source 1.5
 3. runtime：编译不需要，在运行期有效，需要导入包中。（接口与实现分离）
 4. test：测试需要，不会打入包中
 
-### 线程池四种拒绝策略
+### 线程池
+
+
 
 ```
 AbortPolicy：丢弃并报异常
@@ -1840,6 +2755,58 @@ HashMap,LinkedHashMapk可以存null，**TreeMap key不能为null**（空指针�
 
 **HashTable**,ConcurrentHashMap, 可以和value都不能为null
 
+#### list和set的区别
+
+1、List,Set都是继承自Collection接口
+2、
+
+List特点：元素有放入顺序，元素可重复 ；list支持for循环，也就是通过下标来遍历，也可以用迭代器
+
+Set特点：元素无放入顺序，元素不可重复，重复元素会覆盖掉，（元素虽然无放入顺序，但是元素在set中的位置是有该元素的HashCode决定的，其位置其实是固定的，加入Set 的Object必须定义equals()方法 ；
+
+set只能用迭代，因为他无序，无法用下标来取得想要的值。）
+
+
+
+List 以特定次序来持有元素，可有重复元素。Set 无法拥有重复元素,内部排序
+
+3.
+
+List：和数组类似，List可以动态增长，查找元素效率高，插入删除元素效率低，因为会引起其他元素位置改变。
+
+Set：检索元素效率低下，删除和插入效率高，插入和删除不会引起元素位置改变。
+
+
+1.Vector
+底层结构是数组
+线程比较安全 也会出现不安全的情况
+同步的
+2.ArrayList
+底层结构是数组
+不是同步的
+查询速度快 增删速度慢(底层数据结构决定的)
+3.LinkedList
+链表实现的
+不是同步的
+增删速度快 查询速度慢(底层数据结构决定的)
+不建议使用多态方式创建对象
+
+
+
+1.HashSet
+无序集合 (存储元素和取出元素的顺序有可能不一致)
+底层是一个哈希表结构(查询速度快)
+集合元素值可以是null
+
+2.LinkedHashSet
+是HashSet的子类
+有序集合 (存储元素和取出元素的顺序一致)
+底层是一个哈希表结构+链表结构(所以有序)
+
+2.TreeSet
+是SortedSet接口的实现类，TreeSet可以确保集合元素处于排序状态
+底层是一个红黑树结构，默认整形排序为从小到大。
+
 ### ' >> ' 和 ‘ >>> ’
 
 前者是有符号，即符号位不动
@@ -1878,6 +2845,61 @@ HashMap,LinkedHashMapk可以存null，**TreeMap key不能为null**（空指针�
 
 
 ![image-20220610155822497](javaNote.assets/image-20220610155822497.png)
+
+### 异常体系
+
+**Throwable**是异常的顶层父类，代表所有的非正常情况。它有两个直接子类，分别是Error、Exception。
+
+**Error**是错误，一般是指与虚拟机相关的问题，如系统崩溃、虚拟机错误、动态链接失败等，这种错误无法恢复或不可能捕获，将导致应用程序中断。通常应用程序无法处理这些错误，因此应用程序不应该试图使用catch块来捕获Error对象。在定义方法时，也无须在其throws子句中声明该方法可能抛出Error及其任何子类。
+
+**Exception**是异常，它被分为两大类，分别是CheckedException和RuntimeException。
+
+
+
+所有的RuntimeException类及其子类的实例被称为Runtime异常
+
+其它被称为CheckedException。
+
+
+
+RuntimeException则更加灵活，Runtime异常无须显式声明抛出，如果程序需要捕获Runtime异常，也可以使用try...catch块来实现。
+
+Java认为CheckedException都是可以被处理（修复）的异常，所以Java程序必须**显式捕获**Checked异常。如果程序没有处理Checked异常，该程序在编译时就会发生错误，无法通过编译。
+
+
+
+RuntimeException不需要显示捕获
+
+CheckedException 需要显示捕获，比如ClassNotFoundException、IllegalAccessException需要显示捕获
+
+
+
+```
+ 一、runtimeException子类：不需要显示捕获
+ ClassCastException
+ NullPointerException
+ IndexOutOfBoundsException
+ ArithmeticException
+
+ IllegalMonitorStateException
+ IllegalStateException
+
+ UnsupportedOperationException
+ ConcurrentModificationException
+ NoSuchElementException
+
+
+
+ 二、CheckedException子类：需要显示捕获
+IOException
+ClassNotFoundException
+IllegalAccessException
+InterruptedException
+```
+
+
+
+![img](javaNote.assets/a56cb21fa0b7b4fdef99df3012fce197.png)
 
 ### final关键字
 
@@ -2028,18 +3050,12 @@ area : 12
 
 ### String.intern
 
+返回字符串常量池中的地址，如果没有，将对象的地址复制一份放入字符串常量池中再返回
+
 ![image-20211107132224715](javaNote.assets/image-20211107132224715.png)
 
 ```
-package cn.hgnulb.jd;
-
-/**
- * true
- * false
- * true
- */
 public class Demo {
-
     public static void main(String[] args) {
         String s1 = "abc";
         String s2 = "abc";
@@ -2634,6 +3650,454 @@ messageconverter
 
 ## JVM
 
+### JVM核心参数
+
+**JVM 内存相关的几个核心参数**
+
+| 序号   | 参数                                           | 解释                                                         |
+| ------ | ---------------------------------------------- | ------------------------------------------------------------ |
+| **1**  | **-Xms**                                       | Java 堆内存初始大小                                          |
+| **2**  | **-Xmx**                                       | Java 堆内存最大大小                                          |
+| **3**  | **-Xmn**                                       | Java 堆内存新生代大小，堆内存 - 新生代 = 老年代大小          |
+| **4**  | **-Xss**                                       | 线程栈内存大小                                               |
+| 5      | **-XX:PermSize** / **-XX:MetaspaceSize**       | 永久代 / 元空间初始大小 （jdk 1.7 / jdk 1.8 ）               |
+| 6      | **-XX:MaxPermSize** / **-XX:MaxMetaspaceSize** | 永久代 / 元空间（默认无上限）最大大小 （jdk 1.7 / jdk 1.8 ） |
+| **7**  | **-XX:MaxTenuringThreshold**                   | 指定次数GC后对象进入老年代                                   |
+| 8      | **-XX:HandlePromotionFailure**                 | 是否设置空间分配担保，jdk 1.7 后废弃                         |
+| **9**  | **-XX:SurvivorRatio**                          | 新生代 Eden 区域比例（默认8，表示1:1:8）                     |
+| 10     | **-XX:TargetSurvivorRatio**                    | 动态年龄判断比例                                             |
+| **11** | **-XX:PretenureSizeThreshold**                 | 进入老年代的大对象字节                                       |
+| **12** | **-XX:+UseParNewGC**                           | ParNew 垃圾回收器，专用于新生代                              |
+| 13     | **-XX:ParallelGCThreads**                      | ParNew 垃圾回收器线程数                                      |
+| **14** | **-XX:+UseConcMarkSweepGC**                    | CMS 垃圾回收器，专用于老年代                                 |
+| **15** | **-XX:CMSInitiatingOccupancyFraction**         | 触发 CMS 回收的内存比例，默认 92%                            |
+| **16** | **-XX:+UseCMSInitiatingOccupancyOnly**         | 使用指定的 CMS 回收比例（no.15），如果不指定，在第一次使用后，JVM 会根据运行时数据动态调整，一般不指定此参数。 |
+| **17** | **-XX:+ UseCMSCompactAtFullCollection**        | CMS 回收后进行内存整理，JDK 1.8 已弃用，后续版本可能会删除   |
+| **18** | **-XX:+CMSFullGCsBeforeCompaction**            | 几次 CMS 回收后进行内存整理，默认 0，JDK 1.8 已弃用，后续版本可能会删除 |
+| **19** | **-XX:+CMSParallelInitialMarkEnabled**         | CMS “初始标记阶段” 开启多线程并发执行                        |
+| **20** | **-XX:+CMSScavengeBeforeRemark**               | CMS “重新标记阶段” 前执行 YGC，尽量减少扫描对象              |
+| **21** | **-XX:+CMSParallelRemarkEnabled**              | 开启并行的Remark，与（no.20）一起用                          |
+| **22** | **-XX:+DisableExplicitGC**                     | 禁止显式触发 GC，如：Runtime.getRuntime().gc();              |
+| **23** | **-XX:+HeapDumpOnOutOfMemoryError**            | OOM时自动 dump 内存快照                                      |
+| **24** | **-XX:HeapDumpPath**                           | 内存快照存放路径                                             |
+| **25** | **-XX:+UseG1GC**                               | 指定 G1 垃圾回收器                                           |
+| 26     | **-XX:G1HeapRegionSize**                       | 指定 Region 块的大小                                         |
+| 27     | **-XX:G1NewSizePercent**                       | 新生代初始占比，默认 5%                                      |
+| 28     | **-XX:G1MaxNewSizePercent**                    | 新生代最大占比，默认 60%                                     |
+| 29     | **-XX:InitiatingHeapOccupancyPercent**         | 堆内存中老年代占比多少会触发混合回收，默认 45%               |
+| 30     | **-XX:G1MixedGCCountTarget**                   | 混合回收阶段，控制回收次数，默认为 8 次                      |
+| 31     | **-XX:G1HeapWastePercent**                     | 混合回收阶段，Region 空闲比例，达到时会暂停回收              |
+| 32     | **-XX:G1MixedGCLiveThresholdPercent**          | 指定 Region 中存活对象低于指定值可以回收，默认为 85%         |
+| 33     | **-XX:GCTimeRatio**                            | 希望在GC花费不超过应用程序执行时间的1/(1+n)，n为大于0小于100的整数。 |
+| **34** | **-XX:MaxGCPauseMillis**                       | STW 的时间                                                   |
+| **35** | **-XX:G1ReservePercent**                       | G1为**分配担保预留的空间**比例，即老年代**给新生代预留的空间比例**，超过此比例老年代就会 FGC，默认 10% |
+| **36** | **-XX:+PrintGCDetails**                        | 打印 GC 日志详情                                             |
+| 37     | **-XX:+PrintFlagsInitial**                     | 打印 JVM 初始化参数                                          |
+| 38     | **-XX:+PrintGCTimeStamps**                     | 输出GC的时间戳（以基准时间的形式）                           |
+| 39     | **-XX:+PrintGCDateStamps**                     | 输出GC的时间戳（以日期的形式，如 2013-05-04T21:53:59.234+0800） |
+| 40     | **-XX:+PrintCommandLineFlags**                 | 打印HotSpotVM 采用的自动优化参数                             |
+| 41     | **-XX:+PrintTenuringDistribution**             | JVM 在每次新生代GC时，打印出幸存区中对象的年龄分布。         |
+| 42     | **-XX:+PrintGCApplicationStoppedTime**         | 打印 STW 停顿时间                                            |
+| 43     | **-XX:+PrintGCApplicationConcurrentTime**      | 打印非 STW 运行时间                                          |
+| **44** | **-Xloggc**                                    | 指定GC log的位置，以文件输出                                 |
+| 45     | **-XX:CompressedClassSpaceSize**               | 指定 Metaspace 下类压缩空间大小，**指定这个参数时，对 Metaspace 大小的指定才有效** |
+| 46     | **-XX:-UseCompressedClassPointers**            | 关闭类压缩功能                                               |
+| 47     | **-XX:+UnlockExperimentalVMOptions**           | 解锁实验参数，允许使用实验性参数，JVM中有些参数不能通过-XX直接复制需要先解锁，比如要使用某些参数的时候，可能不会生效，需要设置这个参数来解锁；一般使用在一些低版本jdk想使用高级参数或者可能高版本有的参数情况； |
+
+ **–XX:NewRatio** 默认2，表示new:old=1：2
+
+**JVM模板**
+
+**1. ParNew + CMS 版**
+
+根据服务调整 -Xmx -Xms -Xmn 大小即可
+
+-server 
+
+-Xmx1g  
+
+-Xms640m   
+
+-Xmn512m  
+
+-Xss1m 
+
+-XX:SurvivorRatio=9  
+
+-XX:MetaspaceSize=128m 
+
+-XX:MaxMetaspaceSize=128m 
+
+-XX:CompressedClassSpaceSize=128m
+
+-XX:MaxTenuringThreshold=5 
+
+-XX:+UseParNewGC 
+
+-XX:+UseConcMarkSweepGC 
+
+-XX:CMSInitiatingOccupancyFraction=92 
+
+-XX:+CMSParallelInitialMarkEnabled 
+
+-XX:+CMSScavengeBeforeRemark
+
+-XX:+PrintGCDetails
+
+**2. G1 版**
+
+根据服务调整 -Xmx -Xms -Xmn 大小即可
+
+-server 
+
+-Xmx1g  
+
+-Xms640m   
+
+-Xss1m 
+
+-XX:MetaspaceSize=128m 
+
+-XX:MaxMetaspaceSize=128m 
+
+-XX:CompressedClassSpaceSize=128m
+
+-XX:MaxTenuringThreshold=5 
+
+-XX:+UseG1GC
+
+-XX:+UnlockExperimentalVMOptions
+
+-XX:G1NewSizePercent=30
+
+-XX:G1MaxNewSizePercent=80
+
+-XX:MaxGCPauseMillis=50
+
+-XX:+PrintGCDetails
+
+​    ![0](javaNote.assets/32086)
+
+**基本数据类型占用字节大小**
+
+| 类型     |               | 存储大小                      | 范围                        | 默认值 | 包装类    |
+| -------- | ------------- | ----------------------------- | --------------------------- | ------ | --------- |
+| 整数类型 | int           | 4字节（32位）                 | -2^31 ~ 2^31 -1             | 0      | Integer   |
+| short    | 2字节（16位） | -2^15 ~ 2^15 -1               | 0                           | Short  |           |
+| long     | 8字节（64位） | -2^63 ~ 2^63 -1               | 0                           | Long   |           |
+| byte     | 1字节（8位）  | -2^7 ~ 2^7 -1                 | 0                           | Byte   |           |
+| 浮点类型 | float         | 4字节（32位）                 | 3.402823e+38 ~ 1.401298e-45 | 0.0f   | Float     |
+| double   | 8字节（64位） | 1.797693e+308~ 4.9000000e-324 | 0                           | Double |           |
+| 字符类型 | char          | 2字节（16位）                 | \u0000~\uFFFF               | ‘0’    | Character |
+| 布尔类型 | boolean       | 1/8字节（1位）                | true, false                 | false  | Boolean   |
+
+\1. 分析系统压力点在哪里？ 
+
+\2. 压力点的每秒请求数？ 
+
+\3. 每个请求耗时？ 
+
+\4. 每个请求消耗的内存？ 
+
+\5. 整个系统的所有请求重复1-4。 
+
+\6. 算出部署多少台机器？每个机器多少内存？ 
+
+**大致估算的方法**
+
+1、支付系统高分期需要处理的请求是是不是应该这么算：100万 / （24 * 3600） ≈ 12，根据28法则，大部分请求发生在中午12点到13点以及晚上的18点到19点，所以 80万请求 / （2 * 3600） ≈ 111，即算出如果单台每秒大概是100多个请求
+
+ 2、还有就是在完整的支付系统内存占用需要进行预估中，你提到“可以把之前的计算结果扩大10倍~20倍。也就是说每秒除了内存里创建的支付订单对象还创建数十种对象” 这里如果要计算的话 之前的计算结果是 30 * 500字节 * 20倍 = 300000字节=300KB
+
+​    ![0](javaNote.assets/32087)
+
+**JVM 参数设置思路**
+
+​    ![0](javaNote.assets/32088)
+
+### happens-before规则
+
+1、单线程规则：**同一个线程中的每个操作**都happens-before于出现在**其后**的任何一个操作。
+
+2、对一个**监视器的解锁**操作happens-before于每一个**后续对同一个监视器的加锁操作**。
+
+3、对**volatile**字段的**写入**操作happens-before于每一个后续的对同一个volatile字段的**读**操作。
+
+4、**Thread.start**()的调用操作会happens-before于启动线程里面的操作。
+
+5、一个线程中的所有操作都happens-before于其他线程成功返回在该线程上的**join**()调用后的所有操作。
+
+6、一个对象构造函数的结束操作happens-before与该对象的finalize的开始操作。
+
+7、传递性规则：如果A操作happens-before于B操作，而B操作happens-before与C操作，那么A动作happens-before于C操作。
+
+8、实际上这组happens-before规则定义了操作之间的**内存可见性**，如果A操作happens-before B操作，那么A操作的执行结果(比如对变量的写入)必定在执行B操作时可见。
+
+1. **程序顺序**规则
+2. **监视器**锁规则
+3. **volatile**变量规则
+4. **传递性**
+5. **start**()规则
+6. **join**()规则
+
+简介
+happens-before是JMM的核心概念。理解happens-before是了解JMM的关键。
+
+
+1、设计意图
+JMM的设计需要考虑两个方面，分别是程序员角度和编译器、处理器角度：
+
+程序员角度，希望内存模型易于理解、易于编程。希望是一个强内存模型。
+编译器和处理器角度，希望减少对它们的束缚，以至于编译器和处理器可以做更多的性能优化。希望是一个弱内存模型。
+
+因此JSR-133专家组设计JMM的核心目标就两个：
+
+为程序员提供足够强的内存模型
+对编译器和处理器的限制尽可能少
+
+下面通过一段代码来看JSR-133如何实现这两个目标：
+
+double pi = 3.14;			//A
+double r  = 1.0;			//B
+double area = pi * r * r 	//C
+1
+2
+3
+上述代码存在如下happens-before关系：
+
+A happens-before B
+B happens-before C
+A happens-before C
+这3个happens-before关系中，第二个和第三个是必须的，而第一个是非必须的（A、B操作之间重排序，程序执行结果不会发生改变）。
+JMM把happens-before要求禁止的重排序分为下面的两类：
+
+会改变程序执行结果的重排序
+不会改变程序执行结果的重排序
+JMM对这两种不同性质的重排序，采取了不同的策略：
+
+对于会改变程序执行结果的重排序，JMM要求编译器和处理器必须禁止
+对于不会改变程序执行结果的重排序，JMM不做要求（JMM运行）
+
+
+JMM设计示意图：
+
+![在这里插入图片描述](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMTI1MjE5,size_16,color_FFFFFF,t_70#pic_center.png)
+
+JMM设计示意图
+总结：
+
+JMM给程序员提供的happens-before规则能满足程序员的需求。简单易懂，具有足够强的内存可见性保证。
+JMM对编译器和处理器的束缚尽可能少。遵循的原则是：不改变程序的执行结果（正确同步或单线程执行），编译器和处理器可以任意优化。
+2、happens-before的定义
+起源：
+happens-before规则来源于Leslie Lamport《Time, Clocks and the Ordering of Events in a Distributed System》。该论文中使用happens-before来定义分布式系统中事件之间的偏序关系（partial ordering），该文中给出了一个分布式算法，能用来将偏序关系扩展为某种全序关系。
+
+
+Java中的应用：
+JSR-133使用happens-before来指定两个操作之间的执行顺序。JMM可以通过happens-before关系向程序员提供跨线程的内存可见性保证。
+
+
+《JSR-133：Java Memory Model and Thread Specification》对happens-before关系的定义如下：
+
+如果操作A happens-before 操作B，那么A操作的执行结果将会对操作B可见，且操作A的执行顺序排在操作B之前——JMM对程序员的承诺
+两个操作存在happens-before关系，并不意味着Java平台的具体实现必须按照happens-before的顺序来执行。如果重排序不改变程序执行结果（与happens-before）规则一致，那么这种重排序是不非法的（JMM允许这种重排序）。——JMM对编译器和处理器的束缚原则
+
+happens-before和as-if-serial语义：
+从上述来看，happens-before和as-if-serial语义本质上是一回事
+
+as-if-serial语义保证单线程内程序的执行结果不被改变，happens-before关系保证正确同步的多线程程序的执行结果不改变
+as-if-serial语义给编程者一种单线程是按程序顺序执行的幻境；happens-before关系给编程者一种正确同步的多线程是按照happens-before指定的顺序执行的幻境。
+两者的目的都是为了在不改变程序执行结果的前提下，尽可能的提高程序的执行效率。
+
+
+3、happens-before规则
+《JSR-133：Java Memory Model and Thread Specification》定义了如下happens-before规则
+
+程序顺序规则
+监视器锁规则
+volatile变量规则
+传递性
+start()规则
+join()规则
+
+3.1 volatile写-读
+volatile写-读建立的happens-before关系
+
+![在这里插入图片描述](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMTI1MjE5,size_16,color_FFFFFF,t_70#pic_center-166234430247113.png)
+
+happens-before关系示意图
+
+分析上图：
+1 happens-before 2和3 happens-before 4由程序顺序规则产生。由于编译器和处理器遵循as-if-serial语义，也就是说，as-if-serial语义保证了程序顺序规则。因此可以把程序顺序规则看成是对as-if-serial语义的“封装”。
+2 happens-before 3 是有volatile规则产生。一个volatile变量的读，总是能看到（任意线程）对这个volatile变量的最后写入。
+1 happens-before 4 是由传递性规则产生的。这里的传递性是由volatile的内存屏障插入策略和volatile的编译器重排序规则来共同保证的。
+
+
+
+3.2 start()规则
+假设线程A在执行的过程中，通过执行ThreadB.start()来启动线程B；同时，假设线程A在执行ThreadB.start()之前修改了一个共享变量，线程B在执行后会读取这些共享变量。
+start()程序对应的happens-before关系图：
+
+![在这里插入图片描述]()
+
+
+分析上图：
+
+1 happens-before 2 由程序顺序规则产生
+2 happens-before 4 由start规则产生
+1 happens-before 4 由传递性规则产生
+因此线程A执行ThreadB.start()之前对共享变量所做的修改，在线程B执行后都将确保对线程B可见。
+
+3.3 join()规则
+假设线程A执行的过程中，通过执行ThreadB.join()来等待线程B终止；则线程B在终止之前修改了一些共享变量，线程A从ThreadB.join()返回后会读这些共享变量。
+join()程序的happens-before关系图：
+
+![在这里插入图片描述](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMTI1MjE5,size_16,color_FFFFFF,t_70#pic_center-166234432148217.png)
+
+
+分析上图：
+
+2 happens-before 4 由join()规则产生
+4 happens-before 5 由程序顺序规则产生
+2 happens-before 5 由传递性规则产生
+因此线程A执行操作ThreadB.join()并成功返回，线程B中任意操作都将对线程A可见。
+
+### JVM四种内存屏障
+
+LoadLoad Barriers	Load1;LoadLoad;Load2	该屏障确保Load1数据的装载先于Load2及其后所有装载指令的的操作
+
+StoreStore Barriers	Store1;StoreStore;Store2	该屏障确保Store1立刻刷新数据到内存(使其对其他处理器可见)的操作先于Store2及其后所有存储指令的操作
+
+LoadStore Barriers	Load1;LoadStore;Store2	确保Load1的数据装载先于Store2及其后所有的存储指令刷新数据到内存的操作
+
+StoreLoad Barriers	Store1;StoreLoad;Load2	该屏障确Store1立刻刷新数据到内存的操作先于Load2及其后所有装载装载指令的操作。它会使该屏障之前的所有内存访问指令(存储指令和访问指令)完成之后,才执行该屏障之后的内存访问指令
+
+### 对象晋升老年代
+
+https://blog.csdn.net/qq_31387317/article/details/124929752
+
+#### 1、动态对象年龄判断机制
+
+假如说当前放对象的survivor区域里，一批对象的总大小大于了这块survivor区域的内存大小的50%，那么此时大于等于这批对象年龄最大的年龄的对象，就可以直接进入老年代了(一岁开始累加：1+2+。。+n>50%内存区域 ,超过n年龄的对象进入老年代)。
+
+#### 2、新生代存活对象太多直接进入老年代
+
+这里优化思路是：主要是在Survivor的大小这块下功夫。我们要避免动态年龄审核和Survivor放不下的情况。要想保证这点，我们就要知道，我们系统的高峰时期，JVM中每秒有多少对象新增，每次YoungGC存活了多少对象。如meimiao这就需要用 jstat 了
+
+#### 3、大对象直接进入老年代
+
+-XX:PretenureSizeThreshold 定义多大才是大对象，默认0意思说所有对象都在eden中分配 （字节数）；G1中呢？
+需要注意避免频繁的大对象进入老年代，造成频繁的full gc
+
+#### 4、对象躲过了15次垃圾回收（默认），进入老年代
+
+-XX:MaxTenuringThreshold （可用通过调低该参数，让某些长久存活的对象赶紧进入老年代，释放s区空间）
+该参数只有第一次设置的时候有效，后续有动态年龄判断控制，比如当触发动态年龄判断的时候年龄是n，该参数在会动态调整为N+1
+调低该参数，降低动态年龄判断机制触发的概率。如果系统1分钟或者30秒一次YoungGC，那没必要非得让对象存活十几分钟才进入老年代，一般存活个两三分钟，这个对象大概率就是要存活很久的了。所以，我们当时是调低了这个参数的，设置了5。不然这个对象一直存活，然后在两个Survivor里来回复制，如果这个对象小一点还好，如果这个对象挺大的，那容易触发Survivor的动态年龄审核机制，让一大批对象进入老年代。
+
+#### 5、空间担保机制
+
+1. 当要MinorGC之前，首先会计算老年代剩余空间是否大于新生代所有对象大小之和(防止极端情况下eden区所有对象都幸存)。
+
+- 如果老年代剩余内存可以放得下年轻代所有对象，那么你尽管去MinorGC，肯定不会OOM。
+2. 如果剩余空间不够，但是配置了-XX:-HandlePromotionFailure参数（1.6以后废弃），那么就会计算每次MinorGC后存活对象的平均大小，如果老年代剩余内存大小大于这个平均大小，则大胆认为这次MinorGC回收后，老年代还是可以放得下。
+- 试想不配该参数，eden区对象本身就朝生夕死，就会造成jvm过于悲观的判断内存不够，而频繁的full gc
+3. 如果该次MinorGC之后老年代的确是放不下就进行Fulll GC，如果Full GC完了还是放不下则oom
+4. 所以在MinorGC的时候，可能会发生FullGC
+
+### 触发Full GC
+
+Full GC相对于Minor GC来说，停止用户线程的STW（stop the world）时间过长，至少慢10倍以上，所以要尽量避免，首先说一下Full GC可能产生的原因，接着给出排查方法以及解决策略。
+
+#### 1、System.gc()方法的调用
+
+在代码中调用System.gc()方法会建议JVM进行Full GC，但是注意这只是建议，JVM执行不执行是另外一回事儿，不过在大多数情况下会增加Full GC的次数，导致系统性能下降，一般建议不要手动进行此方法的调用，可以通过-XX:+ DisableExplicitGC来禁止RMI调用System.gc。
+
+#### 3、老年代（Tenured Gen）空间不足
+
+在Survivor区域的对象满足晋升到老年代的条件时，晋升进入老年代的对象大小大于老年代的可用内存，这个时候会触发Full GC。
+
+#### 3、永久代（perm）或元空间（Metaspace）写满
+
+从JDK8开始，永久代(PermGen)的概念被废弃掉了，取而代之的是一个称为Metaspace的存储空间。Metaspace使用的是本地内存，而不是堆内存，也就是说在默认情况下Metaspace的大小只与本地内存大小有关。-XX:MetaspaceSize=21810376B（约为20.8MB）超过这个值就会引发Full GC，这个值不是固定的，是会随着JVM的运行进行动态调整的，与此相关的参数还有多个，详细情况请参考这篇文章[jdk8 Metaspace 调优](https://blog.csdn.net/bolg_hero/article/details/78189621)
+
+#### 4、MaxDirectMemorySize写满
+
+#### 检测JVM堆的情况
+
+1. jvisualvm，jconsole
+2. 采用jps找到进行id，然后使用jstat -gc pid来实时进行检测。
+3. 运行程序前设置-XX:+PrintGCDetails，-XX:+PrintGCDateStamps参数打印GC的详细信息进行分析。
+
+![img](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hvbGxha2U=,size_16,color_FFFFFF,t_70-16628032355858.png)
+
+![img](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hvbGxha2U=,size_16,color_FFFFFF,t_70-16628032355859.png)
+
+![img](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hvbGxha2U=,size_16,color_FFFFFF,t_70-166280323558510.png)
+
+#### 解决策略
+
+如果是发现由于老年代内存过小频繁引起的Full GC，那么可以适当增加老年代的内存大小，如果是发现是由于老年代没有连续空间来让初生代的对象晋升，如果是采用CMS，那么可以设置进行 n 次 CMS 后进行一次压缩式 Full GC，参数如下：
+
+-XX:+UseCMSCompactAtFullCollection：允许在 Full GC 时，启用压缩式 GC
+
+-XX:CMSFullGCBeforeCompaction=n   在进行 n 次，CMS 后，进行一次压缩的 Full GC，用以减少 CMS 产生的碎片。
+
+除此之外，尽量少创建大对象，不要在代码里调用System.gc()，什么时候进行Full GC这种事情还是交给JVM来做。在读取文件后记得释放资源，不要让JVM无法回收垃圾，造成内存泄漏。
+
+本文如果有哪些地方不对，或者有可以补充的地方希望您可以指出来，谢谢了。
+
+#### 一、cms
+
+1、年轻代满了 元空间满了
+2、老年代可用空间小于新生代全部对象的大小，如果没开空间担保，直接Full GC 。
+3、老年代可用内存小于历次新生代GC后进入老年代的平均大小，此时会提前Full GC
+4、新生代minor GC后存活对象大于Survivor，那么就会进行老年代，此时老年代内存不足
+5、老年代内存使用率超过92%（可调）
+6、浮动垃圾大于cms可用空间。
+
+#### 二、G1
+
+G1的垃圾回收不一定是年轻代满了，或者老年代满了才去回收。如果是那样，就和ParNew+CMS没区别了，大内存机器也要STW好久。
+
+1、回收年轻代
+G1是基于每个Region的**性价比去回收**的，比如，Region1里有20M对象，回收2ms，Region2里有50兆对象回收要4ms。如果我们设置系统停顿时间为5ms，那G1会在要求的时间内，尽可能回收更多的对象，它会选择Region2，因为性价比更高。所以，我们系统运行，一直往Eden放对象，如果G1觉得，此时回收一下垃圾，差不多要5ms，那可能G1就回去回收，不会等到年轻代占用60%才去回收。
+2、混合回收
+G1的Old G也不是我们能控制的，如果**老年代占比45%**，就会触发混合回收，回收整个堆内存，但是混合回收也是会**控制在我们设置的停顿时间的范围内的，如果时间不够，就会分多次回收**。
+混合回收不仅会回收老年代，还会回收新生代和大对象。如果一次性全回收掉，那时间就太久了，可能达不到我们设置的预期停顿时间，所以G1这里是分几批来回收的，回收一次，系统运行一会，然后再回收一次。JVM参数可以设置这个值，分几次去回收，默认值是8次，分8次回收。混合回收还有一个参数我们可以设置，就是空闲的Region达到百分之多少，停止回收，默认是5%。
+3、Full GC
+G1何时会触发Full GC，其实G1的混合回收就相当于ParNew + CMS的Full GC了，因为回收了所有的区域，只不过回收时间可以控制在我们指定的范围内。但是**G1的Full GC就没法控制了**，可能要卡顿特别久才能回收完。什么情况下会出现呢，因为G1的整体是**基于复制**算法的，如果回收的过程中，发现存活对象找不到可以复制的Region，放不下了。那就Full GC，开始单线程标记、清理、整理空闲出一批Region，这个过程很慢。
+
+### 命令行工具
+
+#### jps
+
+查看正在运行的Java进程（启动JVM参数）
+
+#### jstat
+
+JVM统计信息，包括内存使用情况，垃圾统计次数等
+
+#### jstack
+
+线程堆栈信息，可查看是否会死锁
+
+#### jinfo
+
+实时查看和修改JVM配置参数
+
+#### jmap
+
+堆内存快照，类加载和实例数量
+
+#### jhat
+
+堆分析工具，跟jmap配合使用
+
+#### jcmd
+
+#### jstatd
+
 ### 垃圾回收
 
 吞吐量：用户线程/（运行用户代码时间+运行垃圾收集时间）。
@@ -2669,7 +4133,7 @@ JVM系统线程：GC 编译 信号 中断任务调度 虚拟机线程（stop wor
 
 如何确定是垃圾
 
-引用计数，可达性分析（GCRoot对象)
+**引用计数，可达性分析**（GCRoot对象)
 
 每次死一堆：用复制算法
 
@@ -2731,8 +4195,10 @@ Cms:初始标记（stop），并发标记，重新标记（stop），并发清�
 
 ### 触发类的加载
 
-- 访问**类变量**或类方法会触发类加载
-- 其它启动类的main方法，new对象，创建子类对象，反射class.forName
+- 访问**类变量**或**类方法**会触发类加载
+- 其它启动类的**main**方法，**new**对象，**创建子类对象**，**反射**class.forName
+
+访问编译器常量不会触发类的加载（编译器常量：public static final = 字面量）
 
 ![img](javaNote.assets/9BEA91D12AFEC41C7E936186E5BFB4B9.png)
 
@@ -2762,6 +4228,8 @@ Class.forName则触发类加载和初始化
 ```
 
 ![image-20220722153404107](javaNote.assets/image-20220722153404107.png)
+
+类的成员变量有默认初始化
 
 ### 父子类加载顺序
 
@@ -2998,6 +4466,14 @@ son 构造方法
 
 #### 方法区
 
+##### 存放内容
+
+**类元信息，常量，静态变量，即时编译代码缓存**。运行时常量池（类元信息，常量池表，存放编译器产生的字面量和符号引用）
+
+字符串常量池是存在堆中的
+
+![image-20210914211051382](javaNote.assets/image-20210914211051382.png)
+
 ##### 栈、堆、方法区的交互关系
 
 ![image-20210914194333267](javaNote.assets/image-20210914194333267.png)
@@ -3018,23 +4494,23 @@ son 构造方法
 
 ![image-20210914210539083](javaNote.assets/image-20210914210539083.png)
 
-![image-20210914211051382](javaNote.assets/image-20210914211051382.png)
+
 
 ![image-20210914211516667](javaNote.assets/image-20210914211516667.png)
 
-常量池
+##### 常量池
 
 ![image-20210914215504672](javaNote.assets/image-20210914215504672.png)
-
-##### 常量池
 
 ![image-20210914215534255](javaNote.assets/image-20210914215534255.png)
 
 ![image-20210914220934866](javaNote.assets/image-20210914220934866.png)
 
-##### 运行时常量池（真实地址）
+##### 运行时常量池
 
-不再是符号引用
+存放编译器产生的各种**字面量**和符号引用（转为**真实地址**）
+
+相对于Class文件常量池，运行时常量池具有动态性
 
 ![image-20210915211156855](javaNote.assets/image-20210915211156855.png)
 
@@ -3056,7 +4532,11 @@ son 构造方法
 
 ##### 永久代为什么要被元空间替换
 
+比较难以管理，大小难以设置（可能动态加载大量的类），容易OOM
+
 ![image-20210916221208074](javaNote.assets/image-20210916221208074.png)
+
+##### 字符串常量池为什么要调整
 
 ![image-20210916222628714](javaNote.assets/image-20210916222628714.png)
 
@@ -3134,6 +4614,8 @@ son 构造方法
 
 ### 执行引擎
 
+JVM将字节码装在到其内部成字节码指令（仅被JVM识别），再由**执行引擎将字节码指令翻译成本地机器语言**
+
 ![image-20210920093417965](javaNote.assets/image-20210920093417965.png)
 
 
@@ -3150,11 +4632,7 @@ son 构造方法
 
 ![image-20210921130055864](javaNote.assets/image-20210921130055864.png)
 
-#### GC
-
-
-
-**GC** **Roots**
+### **GC** **Roots**
 
 ![image-20211107162107077](javaNote.assets/image-20211107162107077.png)
 
@@ -3162,9 +4640,7 @@ son 构造方法
 
 ![image-20211107163833419](javaNote.assets/image-20211107163833419.png)
 
-![image-20211107164209307](javaNote.assets/image-20211107164209307.png)
-
-**对象的finalization机制**
+### **对象的finalize机制**
 
 ![image-20211107165830657](javaNote.assets/image-20211107165830657.png)
 
@@ -3172,7 +4648,7 @@ son 构造方法
 
 ![image-20211109171108493](javaNote.assets/image-20211109171108493.png)
 
-##### CMS()
+### CMS
 
 ![image-20211110193439041](javaNote.assets/image-20211110193439041.png)
 
@@ -3180,7 +4656,49 @@ son 构造方法
 
 ![image-20211110200127901](javaNote.assets/image-20211110200127901.png)
 
-##### G1
+### G1
+
+全能垃圾回收期，大内存，多CPU
+
+
+
+局部就是赋值算法，整体就是整理算法
+
+记忆集和卡表，避免跨代引用的全表扫描
+
+
+
+1、年轻代并行回收（STW，回收eden园区和survivor区）
+
+2、老年代并发标记（堆达到45%）,会触发yGC
+
+3、混合回收（回收整个年轻代和部分老年代）
+
+4、兜底的Full GC
+
+
+
+年轻代GC
+
+GCroot
+
+rset
+
+处理rser
+
+复制存活对象
+
+处理引用，空region记录到空闲链表中
+
+![image-20220915143617545](javaNote.assets/image-20220915143617545.png)
+
+
+
+MIX GC
+
+![image-20220915144122582](javaNote.assets/image-20220915144122582.png)
+
+![image-20220915142907040](javaNote.assets/image-20220915142907040.png)
 
 ![image-20211110202525372](javaNote.assets/image-20211110202525372.png)
 
@@ -3194,11 +4712,283 @@ son 构造方法
 
 ## 操作系统
 
+### MBR
+
+MBR，全称为Master Boot Record，即硬盘的**主引导记录**，它**位于整个硬盘的0磁道0柱面1扇区**（所以**不需要开始标记**），其主要对硬盘进行了组织，是在驱动器最前端的一段引导扇区。
+
+MBR是不属于任何一个操作系统，也不能用操作系统提供的磁盘操作命令来读取它，但可以通过命令来修改和重写。
+
+#### 一、四大组成部分
+
+1、**主引导程序**（偏移地址0000H--0088H），它负责从活动分区中装载，并运行系统引导程序。
+
+2、**出错信息数据区**，偏移地址0089H--00E1H为出错信息，00E2H--01BDH全为0字节。
+
+3、**分区表**（DPT,Disk Partition Table）含4个分区项，偏移地址01BEH--01FDH,每个分区表项长16个字节，共64字节为分区项1、分区项2、分区项3、分区项4。
+
+4、**结束标志字**，偏移地址01FE--01FF的2个字节值为结束标志55AA,称为“魔数”（magic number）。如果该标志错误系统就不能启动。
+
+#### 二、MBR的修复
+
+BR在某些情况下，如病毒或者分区操作不当会引起MBR代码段的损坏，表现的现象就是电脑启动时，屏幕出现黑底一个或几个无意义的字母闪光标或无任何提示闪光标。这种情况在确认硬盘无物理故障后，可以使用一些简单方法进行恢复。
+
+**Dos命令**
+
+使用任意启动盘启动到MSDOS提示符，键入命令：
+
+fdisk /mbr
+
+**Diskgenius**
+
+用启动盘，无论dos版或者pe版均可，启动diskgenius，然后选择菜单“硬盘”-“重建主引导记录”，为避免病毒残留，还可执行一次”硬盘“-”清除保留扇区“
+
+**Windows xp命令**
+
+xp之下，需要安装tool kit附加工具，为系统增加一个fixmbr命令行工具。执行命令之前，先将故障硬盘挂载到一台好的电脑，或者使用xp安装盘启动电脑，然后执行命令：
+
+fixmbr \Device\HardDisk0 此处的0或其他数字需先通过diskpart工具的list driver进行查找。
+
+**Windows 7命令**
+
+修复方式同xp，只是命令换成bootrec /fixmbr
+
+### 子进程
+
+进程得到的是除了代码段是与父进程共享以外，**其他所有的都是得到父进程的一个副本**，子进程的所有资源都继承父进程，得到父进程资源的副本，子进程**可获得父进程的所有堆和栈的数据**，**但二者并不共享地址空间**。两个是单独的进程，继承了以后二者就没有什么关联了，子进程单独运行。
+
+父进程没了，子进程会托管到1号进程中
+
+### 指令周期
+
+指令周期是取出一条指令并执行这条指令的时间
+
+### 线程调度
+
+![image-20220904215024210](javaNote.assets/image-20220904215024210.png)
+
+下列关于线程调度的叙述中，错误的是：( D )
+
+A. 调用线程的sleep()方法,可以使比当前线程优先级低的线程获得运行机会
+
+B. 调用线程的yield()方法,只会使与当前线程相同优先级的线程获得运行机会
+
+C. 当有比当前线程优先级高的线程出现时,高优先级的线程将抢占CPU并运行
+
+D. 具有相同优先级的多个线程的调度一定是分时的.
+
+E.一个线程由于某些原因进入阻塞状态，会放弃CPU
+
+F.分时调度模型是让所有线程轮流获得CPU使用权
+
+解析：
+
+**yield()暂时交出cpu控制权，从running状态转为runnalbe状态**，但是仍有可能被调度，sleep()线程指定休眠一段时间
+
+wait()在其他线程调用此对象的notify()、notifyAll()方法时才能继续执行
+
+### wait()&sleep()&yeild()&join()
+
+1.sleep()方法会给其他线程运行的机会,而**不管其他线程的优先级,**因此会给较低优先级的线程运行的机会;
+
+yeild()方法**只会给优先级相同的或者比自己高的线程运行**的机会
+
+2.sleep()方法声明抛出**InterruptionException**异常,而yeild()方法没有声明抛出任何异常
+
+3.sleep()方法比yeild()方法具有更高的可移植性
+
+4.sleep()方法使线程进入**阻塞**状态yeild()方法使线程进入**就绪**状态当前运行的线程可以调用另一个线程的join()方法,当前运行的线程将转到阻塞状态直到另一个线程运行结束,它才会恢复运行
+
+join()有两种形式:public void join()和public void join(long timeout)可以设置阻塞的时间
+
+sleep()方法进入阻塞状态，当有两个线程（线程1和线程2），线程1的优先级比线程2的优先级高，线程1sleep()则线程2可以获得运行机会
+
+当有比当前线程优先级高的线程出现时，高优先级会抢占CPU并运行，yield()方法，暂停一段时间，且这段时间不确定，它会使与当前线程相同优先级的线程获得运行机会
+
+具有相同优先级的多个线程调度不一定是分时的，**多核CPU可能同时调**
+
+### CPU寻址空间
+
+ 前言：
+  我们都熟知**32为的操作系统的寻址空间的大小为4G**(2^32)，因此我们安装一个32位系统在配置4g的内存条，这似乎非常完美。但是当我们打开任务管理器发现我们的物理内存只有3g左右。
+
+#### 寻址空间：
+
+  寻址空间一般指的是CPU对于内存寻址的能力。通俗地讲，就是**最多能用到多少内存**的一个问题。数据在存储器（RAM）中存放是有规律的，CPU在运算的时间需要把数据取出来，就必须 需要知道数据储存在哪里，这时我们需要挨家挨户地找（也就是在其能够寻址的空间进行查找），这就叫做寻址。
+
+但是**如果地址超出了CPU的寻址范围，CPU就无法找到数据了**。CPU最大查找多大范围的地址叫做寻址能力，CPU的寻址能力以字节为单位。
+
+  那么我们便可以推出，内存的容量并非需要无限的增大，虽然内存容量越大，处理数据的能力也就越强，但是它要受到系统结构，硬件设计，制造成本等多方面因素的影响。最直接的因素就是：系统地址总线的地址寄存器的宽度（位数）。
+
+  计算机的**寻找范围由总线宽度（处理器的地址总线的位数）决定**的，也可以理解为cpu寄存器位数，这二者一般是匹配的。
+
+386及386往上的地址总线和地址寄存器的**宽度为32位**的，**CPU的寻址能力2^32 = 4096M字节= 4G字节**。
+
+所以呢，早期的CPU即使有很大的内存也不能得到利用，而对于现在的PⅡ级的CPU，其寻址能力已经远远超过目前的内存容量。
+
+  所以：地址总线为N位（N通常为8的整数倍；也说N根数据总线 ）的CPU寻址范围是2的N次方字节，即2^N(B)。
+
+16，32，64位通常指的是什么？
+从CPU的发展史来看，从前的8位到现在的64位。
+
+8位就是CPU在一个时钟周期内可以并行处理8位二进制字符0或1，那么16和64以此类推。
+
+从计算的角度理论上来讲64位比32位快一半。但是因为电脑是软硬件相配合才能发挥最佳性能的，所以操作系统也必须从32位的到64位的，而且硬件驱动也必须是64位的。我们在64位CPU的计算机中安装64位的操作系统的32位硬件驱动是不能用的。如果64CPU装32的操作系统的话，那性能不会有明显提升。
+
+为什么是2的N次方，而不是其他数的N次方
+  因为**计算机采用二进制计算的，一根地址总线，我们可想而知他最多能对2个存储单元进行寻址**。因为在任何的二进制计算机中，所有物理元件只有0，1两种状态，所以对应这个例子，我们假设已经把这根唯一的地址总线与两个储存单元a和b连上了，那么究竟怎么确定何时读a何时读b？当地址线上的电压是高电压时我们读a，相反是低电压时，我们读b。如此一来，一根地址总线只能对2个存储单元进行寻址，以此类推那么2根就是对应4个储存单元，所以N根就是对应2^N个储存单元。
+
+  一根地址总线是怎么连接到两个存储单元的？？
+
+什么是存储单元
+  存储单元一般具有储存数据和读写数据的动能，一般以8位二进制作为一个储存单元，也就是一个字节。每个单元有一个地址，是一个整数编码，可以表示为二进制数。
+
+什么是物理内存
+  我们都知道32位的操作系统可以寻找4G大小的内存空间。因此我们安装一个32位系统在配置4G的内存条，看起来是一个完美的方案。可是，当我们安装好系统配好内存，打开任务管理器后，发现我们的物理内存只有3G左右，这是怎么回事呢？
+
+  物理内存：在计算机体系中，物理内存不仅仅包括装在主板上的内存条（RAM），还包括**主板BIOS芯片的ROM**，**显卡上的显存（RAM）和BIOS(ROM)**,以及各种设备上的储存空间。所以说我们的实际的物理内存空间达不到4G，也就是我们那1G空间是给一些**输入输出缓存器等的不可访问的区域**。
+
+### DMA
+
+传统的磁盘IO，整个数据的传输过程，都要需要 CPU 亲自参与搬运数据的过程，而且这个过程，CPU 是不能做其他事情的。
+
+![img](javaNote.assets/I_O 中断.png)
+
+
+
+DMA（直接内存访问）
+
+在进行 **I/O 设备和内存的数据传输的时候，数据搬运的工作全部交给 DMA 控制器**，而 CPU 不再参与任何与数据搬运相关的事情，这样 **CPU 就可以去处理别的事务**。
+
+DMA就是**代替CPU完成IO设备到内核缓存区的拷贝**
+
+![img](javaNote.assets/DRM I_O 过程.png)
+
+- 用户进程调用 read 方法，向操作系统发出 I/O 请求，请求读取数据到自己的内存缓冲区中，进程进入阻塞状态；
+- 操作系统收到请求后，进一步将 I/O 请求发送 DMA，然后让 CPU 执行其他任务；
+- DMA 进一步将 I/O 请求发送给磁盘；
+- 磁盘收到 DMA 的 I/O 请求，把数据从磁盘读取到磁盘控制器的缓冲区中，当磁盘控制器的缓冲区被读满后，向 DMA 发起中断信号，告知自己缓冲区已满；
+- **DMA 收到磁盘的信号，将磁盘控制器缓冲区中的数据拷贝到内核缓冲区中，此时不占用 CPU，CPU 可以执行其他任务**；
+- 当 DMA 读取了足够多的数据，就会发送中断信号给 CPU；
+- CPU 收到 DMA 的信号，知道数据已经准备好，于是将数据从内核拷贝到用户空间，系统调用返回；
+
+### 零拷贝
+
+#### 1、mmap+write
+
+`mmap()` 系统调用函数会直接把内核缓冲区里的数据「**映射**」到用户空间，这样，**操作系统内核与用户空间就不需要再进行任何的数据拷贝操作**。
+
+```c
+buf = mmap(file, len);
+write(sockfd, buf, len);
+```
+
+![img](javaNote.assets/mmap %2B write 零拷贝.png)
+
+![img](javaNote.assets/200501092691998.png)
+
+- 应用进程调用了 `mmap()` 后，DMA 会把磁盘的数据拷贝到内核的缓冲区里。接着，应用进程跟操作系统内核「共享」这个缓冲区；
+- 应用进程再调用 `write()`，操作系统直接将内核缓冲区的数据拷贝到 socket 缓冲区中，这一切都发生在内核态，由 CPU 来搬运数据；
+- 最后，把内核的 socket 缓冲区里的数据，拷贝到网卡的缓冲区里，这个过程是由 DMA 搬运的。
+
+我们可以得知，通过使用 `mmap()` 来代替 `read()`， 可以减少一次数据拷贝的过程。
+
+但这还不是最理想的零拷贝，因为仍然需要通过 CPU 把内核缓冲区的数据拷贝到 socket 缓冲区里，而且**仍然需要 4 次上下文切换**，因为**系统调用还是 2 次**
+
+#### 2、sendfile
+
+在 Linux 内核版本 2.1 中，提供了一个专门发送文件的系统调用函数 `sendfile()`，函数形式如下：
+
+```c
+#include <sys/socket.h>
+ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);
+```
+
+它的前两个参数分别是目的端和源端的文件描述符，后面两个参数是源端的偏移量和复制数据的长度，返回值是实际复制数据的长度。
+
+首先，它可以**替代前面的 `read()` 和 `write()` 这两个系统调用**，这样就可以减少一次系统调用，也就减少了 2 次上下文切换的开销。
+
+其次，该系统调用，可以直接把内核缓冲区里的数据拷贝到 socket 缓冲区里，不再拷贝到用户态，这样就**只有 2 次上下文切换**，和 **3 次数据拷贝**。如下图：
+
+![img](javaNote.assets/senfile-3次拷贝.png)
+
+
+
+如果网卡支持 SG-DMA（*The Scatter-Gather Direct Memory Access*）技术（和普通的 DMA 有所不同），我们可以进一步减少通过 CPU 把内核缓冲区里的数据拷贝到 socket 缓冲区的过程。
+
+ `sendfile()` 系统调用的过程发生了点变化，具体过程如下：
+
+- 第一步，通过 DMA 将磁盘上的数据拷贝到内核缓冲区里；
+- 第二步，**缓冲区描述符和数据长度传到 socket 缓冲区**，这样网卡的 SG-DMA 控制器就可以**直接将内核缓存中的数据拷贝到网卡的缓冲区**里，此过程不需要将数据从操作系统内核缓冲区拷贝到 socket 缓冲区中，这样就减少了一次数据拷贝；
+
+所以，这个过程之中，只进行了 2 次数据拷贝，如下图：
+
+![img](javaNote.assets/senfile-零拷贝.png)
+
+这就是所谓的零拷贝（Zero-copy）技术，因为我们没有在内存层面去拷贝数据，也就是说全程没有通过 CPU 来搬运数据，所有的数据都是**通过 DMA 来进行传输**的。
+
+零拷贝技术的文件传输方式相比传统文件传输的方式，减少了 2 次上下文切换和数据拷贝次数，**只需要 2 次上下文切换和数据拷贝次数，就可以完成文件的传输，而且 2 次的数据拷贝过程，都不需要通过 CPU，2 次都是由 DMA 来搬运。**
+
+所以，总体来看，**零拷贝技术可以把文件传输的性能提高至少一倍以上**。
+
+
+
+Kafka 作为一个消息队列，涉及到磁盘 I/O 主要有两个操作：
+
+- Provider 向 Kakfa 发送消息，Kakfa 负责将消息以日志的方式持久化落盘；
+- Consumer 向 Kakfa 进行拉取消息，Kafka 负责从磁盘中读取一批日志消息，然后再通过网卡发送；
+
+Kakfa 服务端**接收 Provider 的消息**并持久化的场景下使用 **mmap** 机制，能够基于**顺序磁盘 I/O** 提供高效的持久化能力，使用的 Java 类为 java.nio.MappedByteBuffer。
+
+Kakfa 服务端**向 Consumer 发送消息**的场景下使用 **sendfile** 机制[7]，这种机制主要两个好处：
+
+- sendfile 避免了内核空间到用户空间的 CPU 全程负责的数据移动；
+- **sendfile 基于 Page Cache 实现，因此如果有多个 Consumer 在同时消费一个主题的消息，那么由于消息一直在 page cache 中进行了缓存，因此只需一次磁盘 I/O，就可以服务于多个 Consumer**；
+
+> 使用 **mmap 来对接收到的数据进行持久化**
+>
+> 使用 **sendfile 从持久化介质中读取数据然后对外发送**是一对常用的组合。
+>
+> 但是注意，你无法利用 sendfile 来持久化数据，利用 mmap 来实现 CPU 全程不参与数据搬运的数据拷贝。
+
+### PageCache
+
+#### 缓存和预读
+
+**1、PageCache 来缓存最近被访问的数据**，当空间不足时淘汰最久未被访问的缓存。
+
+**2、PageCache 使用了「预读功能」**
+
+假设 read 方法每次只会读 `32 KB` 的字节，虽然 read 刚开始只会读 0 ～ 32 KB 的字节，但内核会把其后面的 32～64 KB 也读取到 PageCache，这样后面读取 32～64 KB 的成本就很低
+
+
+
+由于零拷贝使用了 PageCache 技术，但不适合大文件传输
+
+- PageCache 由于**长时间被大文件占据**，其他「热点」的小文件可能就无法充分使用到 PageCache，于是这样磁盘读写的性能就会下降了；
+- PageCache 中的大文件数据，**由于没有享受到缓存带来的好处，但却耗费 DMA 多拷贝到 PageCache 一次**；
+
+
+
+### 直接 I/O
+
+异步 I/O 并没有涉及到 PageCache
+
+**大文件传输用什么方式实现**
+
+在**高并发**的场景下，针对大文件的传输的方式，应该使用「**异步 I/O + 直接 I/O**」来替代零拷贝技术。
+
+
+
+![img](javaNote.assets/异步 IO 的过程.png)
+
+- 传输大文件的时候，使用「异步 I/O + 直接 I/O」；
+- 传输小文件的时候，则使用「零拷贝技术」；
+
 ### 父子进程
 
-子进程是父进程的一个副本，得到父进程的资源副本和所有堆栈数据。
+子进程是父进程的一个副本，得到父进程的**资源**副本和**所有堆和栈数据**。
 
-但两者不共享虚拟地址空间，因为是两个独立的进程。
+但两者**不共享虚拟地址**空间，因为是两个独立的进程。
 
 ![image-20220727214451070](javaNote.assets/image-20220727214451070.png)
 
@@ -3346,7 +5136,7 @@ LOOK算法和C-LOOK算法分别是对扫描算法和循环扫描算法的优化�
 NIO+IO多路复用
 ```
 
-#### 1.3.2 IO复用
+#### IO复用
 
 对于accept、connect、read、write等系统调用，实际上都属于慢系统调用，他可能会永远阻塞直到套接字上发生 可读\可写 事件。事实上，通常不希望一直阻塞直到IO就绪，而应该等待IO就绪之后再通知我们过来处理。
 
@@ -3362,13 +5152,19 @@ epoll就是实现这个功能的，使用epoll只需要三步：
 
 具体的epoll用法这里不再细说。在这里把epoll看成一个黑匣子即可，暂时不关心原理。我们只需要将关心得套接字事件注册到epoll上，epoll就会在这些事件发生时通知我们。
 
-#### 1.4 Reactor模型
+#### Reactor模型
 
-讲了这么多，终于轮到Reactor模式登场了。
+Reactor 模式主要由 Reactor 和处理资源池这两个核心部分组成，它俩负责的事情如下：
 
-什么是Reactor模式? Reactor模式又叫反应堆模式，是一种常见的高性能的服务器开发模式，著名的Netty、Redis等软件都使用到了Reactor模式。
+- **Reactor 负责监听和分发**事件，事件类型包含连接事件、读写事件；
 
-Reacor模式是一种事件驱动机制，他逆转了事件处理的流程，不再是主动地等事件就绪，而是它提前注册好的回调函数，当有对应事件发生时就调用回调函数。 由陈硕所述，Reactor即为非阻塞IO + IO复用，单个Reactor的逻辑大致如下
+- **处理资源池负责处理事件**，如 read -> 业务逻辑 -> send；
+
+  
+
+Netty、Redis等软件都使用到了Reactor模式。
+
+Reacor模式是一种**事件驱动机制**，他逆转了事件处理的流程，不再是主动地等事件就绪，而是它提前注册好的回调函数，当有对应事件发生时就调用回调函数。 Reactor即为非阻塞IO + IO复用，单个Reactor的逻辑大致如下
 
 ```text
 while(!stop) {
@@ -3388,26 +5184,20 @@ while(!stop) {
 
 它的核心思想就是利用IO复用技术来监听套接字上的读写事件，一旦某个fd上发生相应事件，就反过来处理该套接字上的回调函数。
 
-#### 1.4.1 one loop per thread
 
-Reactor模式只是一个框架，它可以由单个线程简单实现，也可以通过线程池实现主从reactor模式。
 
-即一个线程有且只有一个reactor，执行以上loop循环。程序中通常有多个Reactor，例如一种常见的模式是mainReactor只监听connfd连接事件，当发生连接后就交给subReactor去监听IO事件。在这里由于要将新连接交给其他线程的reactor，那么reactor的实现就得是线程安全的。
-
-为什么不能多个线程一个loop？
-
-1. 多个线程进行同一个loop，会导致大量的竞争条件，影响性能，这种做法也没多大意义。
-2. 多个线程同时沉睡在同一个epoll_wait上，可能会发生惊群效应。
-
-为什么不能一个线程多个loop
-
-\1. reactor可以认为是一个死循环，一个线程只可能同时执行一个循环就可以了。
-
-#### 1.4.2 单Reactor服务器模型
+#### 1、 单Reactor单线程
 
 单Reactor服务器模型就是只有一个主线程运行Reactor。整个线程有一个epoll句柄，用于管理所有的套接字。服务器将listenfd的读事件注册到epoll上，当epoll_wait返回时说明listenfd可读，即有新的连接建立。此时再调用accept函数获取新连接clientfd，然后将clientfd的读写事件也注册到这个epoll上，等待clientfd发生读写事件从epoll_wait返回后，再处理clientfd的事件。
 
-![img](javaNote.assets/v2-c9345231485c1d33aaf62ce2ea20e59a_720w.jpg)
+- Reactor 对象通过 select （IO 多路复用接口） 监听事件，收到事件后通过 dispatch 进行分发，具体分发给 Acceptor 对象还是 Handler 对象，还要看收到的事件类型；
+- 如果是连接建立的事件，则交由 Acceptor 对象进行处理，Acceptor 对象会通过 accept 方法 获取连接，并创建一个 Handler 对象来处理后续的响应事件；
+- 如果不是连接建立事件， 则交由当前连接对应的 Handler 对象来进行响应；
+- Handler 对象通过 read -> 业务处理 -> send 的流程来完成完整的业务流程。
+
+![img](javaNote.assets/单Reactor单进程.png)
+
+ **Redis** 6.0 版本之前采用的正是「单 Reactor 单进程」的方案，因为 Redis 业务处理主要是在内存中完成，操作的速度是很快的，性能瓶颈不在 CPU 上，所以 Redis 对于命令的处理是单进程的方案
 
 ```cpp
 // 单Reactor模型
@@ -3435,6 +5225,8 @@ while(!stop) {
     }
 }
 ```
+
+#### 2、单Reactor多线程
 
 对于clienfd发生读写事件后，需要进行业务逻辑处理。业务逻辑处理通常是耗时的，这会影响主线程的执行，也就是说主线程会等到 dothing(fds[i])做完之后才进入下一次循环过程。
 
@@ -3472,25 +5264,51 @@ while(!stop) {
 
 将业务逻辑处理也可以交给线程池来做，主线程继续进行Reactor循环。从而很大程度上减小了主线程的负担，提高并发量。这就是单Reactor+线程池的模型。
 
-#### 1.4.3 主从Reactor服务器模型
+![img](javaNote.assets/单Reactor多线程.png)
 
-单Reactor模式+线程池能够很大程度上支持并发了，但还可以优化。注意到单Reactor模式只有一个Reactor线程，所有的关心套接字都需要注册到这个Reactor上。可以看到，这个主线程的Reactor既要负责客户端连接事件的处理(即关心listenfd的事件)，又要关心已连接套接字的事件（即关心clientfd的io事件）。
+#### 3、 多Reactor多线程
 
+要解决「单 Reactor」的问题，就是将「单 Reactor」实现成「多 Reactor」，这样就产生了第 **多 Reactor 多进程 / 线程**的方案。
 
+老规矩，闻其名不如看其图。多 Reactor 多进程 / 线程方案的示意图如下（以线程为例）：
 
-能不能用多个Reactor，其中一个Reactor只监听listenfd，获取到新连接后就把clientfd甩给其他Reactor来监听呢？
+![img](javaNote.assets/主从Reactor多线程.png)
 
-这就是主从Reactor模式：
+方案详细说明如下：
 
+- 主线程中的 MainReactor 对象通过 select 监控连接建立事件，收到事件后通过 Acceptor 对象中的 accept 获取连接，将新的连接分配给某个子线程；
+- 子线程中的 SubReactor 对象将 MainReactor 对象分配的连接加入 select 继续进行监听，并创建一个 Handler 用于处理连接的响应事件。
+- 如果有新的事件发生时，SubReactor 对象会调用当前连接对应的 Handler 对象来进行响应。
+- Handler 对象通过 read -> 业务处理 -> send 的流程来完成完整的业务流程。
 
+多 Reactor 多线程的方案虽然看起来复杂的，但是实际实现时比单 Reactor 多线程的方案要简单的多，原因如下：
 
-![img](javaNote.assets/v2-e53772b619f065fdb8937a0a39aa5573_720w.jpg)
+- 主线程和子线程分工明确，主线程只负责接收新连接，子线程负责完成后续的业务处理。
+- 主线程和子线程的交互很简单，主线程只需要把新连接传给子线程，子线程无须返回数据，直接就可以在子线程将处理结果发送给客户端。
 
-服务器有一个mainReactor和多个subReactor。
+大名鼎鼎的两个开源软件 Netty 和 Memcache 都采用了「多 Reactor 多线程」的方案。
 
-mainReactor由主线程运行，他作用如下：通过epoll监听listenfd的可读事件，当可读事件发生后，调用accept函数获取clientfd，然后随机取出一个subReactor，将cliednfd的读写事件注册到这个subReactor的epoll上即可。也就是说，mainReactor只负责建立连接事件，不进行业务处理，也不关心已连接套接字的IO事件。
+采用了「多 Reactor 多进程」方案的开源软件是 Nginx，不过方案与标准的多 Reactor 多进程有些差异。
 
-subReactor通常有多个，每个subReactor由一个线程来运行。subReactor的epoll中注册了clientfd的读写事件，当发生IO事件后，需要进行业务处理。
+具体差异表现在主进程中仅仅用来初始化 socket，并没有创建 mainReactor 来 accept 连接，而是由子进程的 Reactor 来 accept 连接，通过锁来控制一次只有一个子进程进行 accept（防止出现惊群现象），子进程 accept 新连接后就放到自己的 Reactor 进行处理，不会再分配给其他子进程。
+
+### 一致性哈希
+
+使用传统的hash%n，如果节点增加或减少会导致数据大部分迁移。
+
+哈希环，将节点映射到环上的每个位置
+
+key映射环后下一个就是要找的节点，如果某个节点没了或添加，只需要**部分数据进行迁移**。
+
+为了防止雪崩，使用**虚拟节点**。
+
+![img](javaNote.assets/30c2c70721c12f9c140358fbdc5f2282.png)
+
+部分数据迁移
+
+![img](javaNote.assets/f8909edef2f3949f8945bb99380baab3.png)
+
+![img](javaNote.assets/31485046f1303b57d8aaeaab103ea7ab.png)
 
 ### Ext3
 
@@ -3507,9 +5325,15 @@ Ext3有多种日志模式，一种工作模式是对所有的文件数据及meta
 
 ### 死锁
 
+![image-20220912113709934](javaNote.assets/image-20220912113709934.png)
+
+**银行家算法用于避免死锁**
+
+**资源有序分配**破坏环路等待条件
+
 死锁：在多道程序设计环境下，多个进程可能竞争一定数量的资源，。一个进程申请资源，如果资源不可用，那么进程进入等待状态。如果所申请的资源被其他等待进程占有，那么该等待的进程有可能无法改变状态，这种情况下称之为死锁。
 
-**死锁的四个条件：**
+#### **四个条件**
 
 - 互斥：**至少有一个资源**必须处在**非共享**模式，即一次只能有一个进程使用，如果另一进程申请该资源，那么申请进程必须延迟直到该资源释放为止。
 
@@ -3518,49 +5342,92 @@ Ext3有多种日志模式，一种工作模式是对所有的文件数据及meta
 - 非抢占：**资源不能被抢占**
 - 循环等待：有一组进程{P0,P1,...Pn},P0等待的资源被P1占有，P1等待的资源被P2占有，Pn-1等待的资源被Pn占有，Pn等待的资源被P0占有。
 
-形成死锁必须要满足这四个条件。那么违背这几个条件中的任何一个就不会形成死锁，这种方式成为 死锁预防，而死锁避免是动态的检测分配资源的状态是否安全
+#### 死锁避免
 
-**死锁解决方式**
+1、**银行家算法**可以避免死锁产生，防止系统进入不安全状态
 
-1. 死锁预防
+2、资源**有序分配**（避免环路等待）。
 
-2. 死锁避免
+3、**一次性申请所需所有资源**，若满足则全部分配，否则一个也不分配（破坏占用并等待）
 
-3. 死锁检测并恢复
+4、**请求未果释放已有资源**
 
-三者处理死锁的方式可以类比为：死锁预防，直接铲平坑；死锁避免，直接跳过坑；死锁检测并恢复，摔到坑里，修正一下继续前行。
+#### 死锁检测
+
+**jstack**线程堆栈分析工具
+
+#### 死锁解除
+
+剥夺进程的资源
+
+1. 死锁检测并恢复
 
 - 对于互斥而言：有的资源本身就是互斥的，所以通常无法破坏这一必要条件。
 
-- 对于占有并等待：破坏它，可以指定这样的规则（协议）：每一个进程执行前一次性申请完所有资源。或者 每个进程申请当前所需要的资源，当需要使用其他资源时，需要把之前申请的资源释放掉。前者可以理解为破坏**等待**，后者可以理解为破坏**占有**。这样做使得资源得利用率很低（最后阶段可能需要用一下打印机，而将其在整个运行期占有）；对于优先级低得进程来说，多次释放资源很容易造成它们饥饿。
+- 对于占有并等待：每一个进程执行前一次性申请完所有资源。或者 每个进程申请当前所需要的资源，当需要使用其他资源时，需要把之前申请的资源释放掉。前者可以理解为破坏**等待**，后者可以理解为破坏**占有**。
+
+  这样做使得资源得利用率很低（最后阶段可能需要用一下打印机，而将其在整个运行期占有）；对于优先级低得进程来说，多次释放资源很容易造成它们饥饿。
 
 - 对于非抢占：破坏它，即对于已经分配的资源可以进行抢占。当一个优先级比较低，那么它的资源往往会被优先级高得剥夺，导致它饥饿。
 
 - 对于循环等待：对所有资源类型进排序，要求每个进程按照资源编号递增顺序申请资源。可以用反证法证明。简要描述一下，在进程按照资源编号递增顺序申请资源的条件下，假设一个循环等待存在，即有一组进程{P0,P1,...Pn},P0等待的资源被P1占有，P1等待的资源被P2占有，Pn-1等待的资源被Pn占有，Pn等待的资源被P0占有。那么Pi+1占有了Ri资源，同时又申请Ri+1，所以资源Ri的编号必然小于Ri+1，那么R0的编号小于R1的....Rn资源的编号小于R0资源的编号（Pn进程）。根据传递性，R0的编号小于R0的编号，显然矛盾，因此，在上述条件下，不会产生循环等待。
 
+#### 不会发生死锁的条件
+
+假设有8个进程，每个需要k个资源，总共有n个资源，那么满足
+
+n-(k-1)*8>=1就不会发生死锁
+
+![image-20220904171451902](javaNote.assets/image-20220904171451902.png)
+
 ### 进程线程协程
 
-进程
+![image-20220804215734164](javaNote.assets/image-20220804215734164.png)
+
+#### 一、进程
 
 系统资源分配和独立运行的基本单位。
-进程控制块（PCB），用来描述进程的
 
+一个进程至少有一个线程，我们将它称为主线程（main线程）
 
+##### 1、进程如何创建
 
-线程
+（1）申请一个空白PCB
+（2）分配运行所需要的资源，如内存、文件、IO设备、CPU
+（3）初始化PCB,比如设置进程为就绪状态或静止就绪状态，优先级，程序计数器指向程序入口地址，栈指针指向栈顶
+
+##### 2、PCB（进程控制块）
+
+保存进程的控制和管理信息
+
+（1）外部标识符（用户提供），内部标识符（OS设置的序号）
+（2）进程调度信息：比如当前进程状态（以等待CPU多长时间，已执行多长时间）优先级等
+（3）进程控制信息：进程同步和通信机制存放在PCB，比如消息对列指针和信号量，下一个PCB的指针
+
+##### 3、进程的同步
+
+**信号量和管程**（Monitors）
+管程：定义公共的数据结构如消息队列，主要进行同步操作
+操作系统内核
+简介：常用设备的驱动程序，一些频率高的模块如时钟管理和进程调度，他们常驻内存。
+作用：比较保护他们防止被破坏，同时提高OS的运行效率。
+终止进程：正常结束，异常退出（越界，算术异常等）
+
+#### 二、线程
+
+是进程中的一条执行序列（执行流）
+
+共享进程的资源(地址空间和文件描述符)，所以不用进行页表切换
 
 轻型进程，CPU调度的基本单位。
 
-与自己独立的寄存器和栈，切换开销小
+有自己独立的寄存器和栈，切换开销小
 
-共享地址空间和文件等资源，所以不用进行页表切换
-
-线程之间传递数据不需要经过内核态
+线程之间**传递数据不需要经过内核态**
 
 减少并发执行的时间和空间开销
 
-
-线程的实现
+##### 1、线程的实现
 
 (1)用户级线程
 存在用户空间，被用户进程进行创建和调度，无需切换内核，切换速度快，只有当系统调用时，才会映射到内核控制线程LWP(Light Weight Process)
@@ -3570,34 +5437,20 @@ Ext3有多种日志模式，一种工作模式是对所有的文件数据及meta
 (2)内核级线程
 内核线程是由操作系统管理的，线程对应的 TCB 自然是放在操作系统里的，这样线程的创建、终止和管理都是由操作系统负责。
 
-进程的三种基本状态：
+##### 2、线程三种基本状态：
+
 （1）就绪（Ready）: 得到Cpu以外的所有资源，会存入就绪队列
 （2）运行（running）: 获得CPU正在执行
 （3）阻塞（Block）: 运行中的线程IO请求或申请资源失败，会进入阻塞队列
 
-引入挂起操作
+如何引入挂起操作
 （1）用户自己要停止进程查看问题
 （2）父进程要修改子进程
 （3）系统自己操作，进行负荷调节，系统繁忙，挂起一些不重要的进程
 
-进程如何创建
-（1）申请一个空白PCB
-（2）分配运行所需要的资源，如内存、文件、IO设备、CPU
-（3）初始化PCB,比如设置进程为就绪状态或静止就绪状态，优先级，程序计数器指向程序入口地址，栈指针指向栈顶
-
-PCB：保存进程的控制和管理信息
-（1）外部标识符（用户提供），内部标识符（OS设置的序号）
-（2）进程调度信息：比如当前进程状态（以等待CPU多长时间，已执行多长时间）优先级等
-（3）进程控制信息：进程同步和通信机制存放在PCB，比如消息对列指针和信号量，下一个PCB的指针
-
-**进程的同步**：信号量和管程（Monitors）
-管程：定义公共的数据结构如消息队列，主要进行同步操作
-操作系统内核
-简介：常用设备的驱动程序，一些频率高的模块如时钟管理和进程调度，他们常驻内存。
-作用：比较保护他们防止被破坏，同时提高OS的运行效率。
-终止进程：正常结束，异常退出（越界，算术异常等）
 
 
+#### 三、协程
 
 1、协程只是一个特殊的函数，是用户态，只是能在某个地方挂起，并且可以在挂起处外继续运行，所以不会太消耗资源
 2、进程是内核态，进程包括CPU，数据和PCB进程控制块
@@ -3617,13 +5470,17 @@ D正确  一个进程中可以有多个线程，而线程独有的资源有栈�
 
 匿名管道
 
-没有名称，本质是**内核的一段缓存**，只能单向通信，数据是**无格式的字节流**且大小受限，符合先进先出，生命周期跟进程一样
+没有名称，本质是**内核的一段缓存**，采用**半双工通信**,**只能单向通信**，数据是**无格式的字节流**且大小受限，符合先进先出，生命周期跟进程一样.
 
-通过调用pipe得到读写描述符进行，由于存在同一个进程中，所以匿名管道只用于父子进程通信，子进程会复制父进程的文件描述符。
+当管道满时，进程在 写管道会被阻塞，而当管道空时，进程读管道会被**阻塞**
+
+管道可以**同时进行读进程和写进程**
+
+通过调用pipe得到读写描述符进行，由于存在同一个进程中，所以匿名管道**只用于父子进程通信**，子进程会复制父进程的文件描述符。
 
 命名管道
 
-可进行不同进程的通信，提前建立了类型为管道的设备文件，访问这个设备文件就可以通信
+**可进行不同进程的通信**，提前建立了类型为管道的设备文件，访问这个设备文件就可以通信
 
 #### 2、消息队列
 
@@ -3635,6 +5492,8 @@ D正确  一个进程中可以有多个线程，而线程独有的资源有栈�
 
 #### 3、共享内存
 
+信号量初始值由用户确定
+
 **解决了数据拷贝的开销**，通过虚拟地址，映射到一块公共的物理内存空间，即共享内存
 
 一个进程读写，另外进程就能够快速看到，**通信速度快**
@@ -3645,9 +5504,9 @@ D正确  一个进程中可以有多个线程，而线程独有的资源有栈�
 
 一个**整形计数器**表示资源的数量，实现互斥操作，通过PV原子操作控制信号量
 
-- **P操作**需要减少信号量，如果<0表明资源已被占用，需要阻塞等待。相减后>=0，表明还有资源，进程可继续运行
+- **P操作**需要**减少**信号量，如果<0表明资源已被占用，需要阻塞等待。相减后>=0，表明还有资源，进程可继续运行
 
-- **V操作**增加信号量，相加后<=0表明有进程处于阻塞，需要唤醒操作。相加后>0表明当前没有阻塞的进程
+- V操作**增加**信号量，相加后<=0表明有进程处于阻塞，需要唤醒操作。相加后>0表明当前没有阻塞的进程
 
   ![PV 操作的算法描述](javaNote.assets/17-操作系统PV算法描述.jpg)
 
@@ -3785,6 +5644,64 @@ UDP 是没有连接的，所以不需要三次握手，也就不需要像 TCP �
 
 这个写者也不能立马开始写（因为此时读者队列不为空），会阻塞在信号量 `wDataMutex` 上，读者队列中的读者全部读取结束后，最后一个读者进程执行 `V(wDataMutex)`，唤醒刚才的写者，写者则继续开始进行写操作
 
+##### 3、过桥问题
+
+问题
+独木桥问题1：东西向汽车过独木桥，为了保证安全，只要桥上无车，车过桥，待一方的汽车全部过完后，另一方的汽车才允许过桥。请用信号量和PV操作来写出汽车过独木桥问题的同步算法。
+
+思路
+首先对于东西两侧的车辆而言，桥是一个互斥资源，而对东西两侧各自而言，每辆车上桥是同步关系，东西两侧的车辆在抢到这互斥资源后只有最后一辆车通过了独木桥才释放。
+
+```
+	semaphore wait,mutex1,mutex2;
+	mutex1=1;//东侧车辆的互斥信号量
+	mutex2=1;//西侧车辆的互斥信号量
+	wait=1;//互斥信号量，表示独木桥的数量
+	int count1,count2;
+	count1=0;//东侧车辆数
+	count2=0;//西侧车辆数
+cobegin
+	process P 东(){
+		P(mutex1);//封锁，防止多个进程同时改变count的值，导致修改被覆盖
+		count1++;
+		if(count1==1)//第一辆车上桥
+			P(wait);
+		V(mutex1);
+		/*过独木桥*/
+		P(mutex1);//与上面count++同理
+		count1--;
+		if(count1==0)//东侧车辆全部下桥
+			V(wait);
+		V(mutex1);
+	}
+	process P 西(){
+		P(mutex2);
+		count2++;
+		if(count2==1)//第一辆车上桥
+			P(wait);
+		V(mutex2);
+		/*过独木桥*/
+		P(mutex2);
+		count2--;
+		if(count2==0)//西侧车辆全部下桥
+			V(wait);
+		V(mutex2);
+	}
+coend
+```
+
+下面应该是选C
+
+![image-20220912145935598](javaNote.assets/image-20220912145935598.png)
+
+![image-20220912145950896](javaNote.assets/image-20220912145950896.png)
+
+![image-20220912150001115](javaNote.assets/image-20220912150001115.png)
+
+![image-20220912150008816](javaNote.assets/image-20220912150008816.png)
+
+![image-20220912150015511](javaNote.assets/image-20220912150015511.png)
+
 #### 互斥
 
 临界区同一时刻只允许一个线程进行访问
@@ -3792,6 +5709,17 @@ UDP 是没有连接的，所以不需要三次握手，也就不需要像 TCP �
 使用加锁或信号量实现
 
 ### 中断
+
+1、利用中断功能，处理器**可以在I/O操作的执行过程中执行其它指令**
+2、中断处理中，**需要保护被中断进程的所有状态信息**
+3、处理多个中断有两种方法：一种方法是正在处理一个中断时，**禁止再发生中断**；另一种方法是**允许高优先级的中断打断低优先级**的中断处理程序的执行
+4、如果是因为进程调度引起的中断，那么被中断的进程会被**放入就绪队列里面排队**，所以在中断处理程序执行完成之后被中断的进程**不一定立即获得CPU的控制权**、恢复执行
+
+中断是**多道程序得以实现的基础**
+
+中断的本质：发生中断就意味着需要**操作系统介入**，开展管理工作，CPU要从**用户态转换为核心态**
+
+https://www.jianshu.com/p/4fc0db2b749a
 
 ```
 异步的时间处理机制，提高CPU并发效率，系统调用的实现方式，比如IO中断
@@ -3801,8 +5729,12 @@ UDP 是没有连接的，所以不需要三次握手，也就不需要像 TCP �
 
 分类：
 一、IO中断，让CPU执行其它线程，不用干等，提高了CPU的使用效率
-二、程序中断（系统调用）：系统调用是通过中断实现，CPU响应中断，切换内核态进行中断处理程序运行
+
+二、程序中断（系统调用）：系统调用是通过中断实现，CPU响应中
+断，切换内核态进行中断处理程序运行
+
 三、时钟中断
+
 四、硬件失效中断（运算溢出、访问越界、被0除）
 ```
 
@@ -3817,6 +5749,8 @@ DMA直接内存读取，发一个命令（包含IP设备地址、是否一次读
 ```
 
 高速缓存：根据局部性原理，把一小部分的指令集合加载到告诉缓存中，匹配CPU的处理速度
+
+![image-20220904214541580](javaNote.assets/image-20220904214541580.png)
 
 ### 页面置换算法
 
@@ -3846,111 +5780,27 @@ LRU(Least Recently Used) 最近最少使用算法
 
 常规文件读将文件页拷贝到也缓存
 
-#### vim set nu显示行号
-
-#### 容器重启命令
+#### 》》和》》》
 
 ```
-docker restart ` docker ps -a | grep "health-" | awk '{print $1}'`
+>>   右移，高位符号位不变
+>>>  有符号右移，高位符号位补0
+比如负数无符号右移后，符号补0，变成了正数
 ```
 
-### 关机命令
+### 大小端
 
-重启：shutdown -r 、reboot、init 6 
+对于大端和小端来说，一字节内部的8位的顺序是一样的
 
-关机：shutdown -h 、 halt、init 0
+大端：高位存在低地址，低位存在高地址（符合人类习惯）
 
-#### 一、Linux 的五个关机重启命令
+![在这里插入图片描述](javaNote.assets/20210429171813889.png)
 
-　　1、shutdown
+小端：高位存在高地址，低位存在低地址
 
-　　2、poweroff
+![在这里插入图片描述](javaNote.assets/20210429172017425.png)
 
-　　3、init
-
-　　4、reboot
-
-　　5、halt
-
-#### 二、具体说明
-
-　　在linux下一些常用的关机/重启命令有shutdown、halt、reboot、及init，它们都可以达到重启系统的目的，但每个命令的内部工作过程是不同的。
-
-##### 　　1. shutdown
-
-　　shutdown命令安全地将系统关机。 有些用户会使用直接断掉电源的方式来关闭linux，这是十分危险的。因为linux与windows不同，其后台运行着许多进程，所以强制关机可能会导致进程的数据丢失﹐使系统处于不稳定的状态﹐甚至在有的系统中会损坏硬件设备。而在系统关机前使用shutdown命令﹐系统管理员会通知所有登录的用户系统将要关闭。并且login指令会被冻结﹐即新的用户不能再登录。直接关机或者延迟一定的时间才关机都是可能的﹐还可能重启。这是由所有进程〔process〕都会收到系统所送达的信号〔signal〕决定的。这让像vi之类的程序有时间储存目前正在编辑的文档﹐而像处理邮件〔mail〕和新闻〔news〕的程序则可以正常地离开等等。
-
-　　shutdown执行它的工作是送信号〔signal〕给init程序﹐要求它改变runlevel。
-
-　　Runlevel 0被用来停机〔halt〕﹐runlevel 6是用来重新激活〔reboot〕系统﹐而runlevel 1则是被用来让系统进入管理工作可以进行的状态﹔这是预设的﹐假定没有-h也没有-r参数给shutdown。要想了解在停机〔halt〕或者重新开机〔reboot〕过程中做了哪些动作﹐你可以在这个文件/etc/inittab里看到这些runlevels相关的资料。
-
-```
-shutdown 参数说明:
-
-　　[-t] 在改变到其它runlevel之前﹐告诉init多久以后关机。
-
-　　[-r] 重启计算器。
-
-　　[-k] 并不真正关机﹐只是送警告信号给每位登录者〔login〕。
-
-　　[-h] 关机后关闭电源〔halt〕。
-
-　　[-c] cancel current process取消目前正在执行的关机程序。所以这个选项当然没有时间参数﹐但是可以输入一个用来解释的讯息﹐而这信息将会送到每位使用者。
-
-　　[-f] 在重启计算器〔reboot〕时忽略fsck。
-
-　　[-F] 在重启计算器〔reboot〕时强迫fsck。
-
-　　[-time] 设定关机〔shutdown〕前的时间。
-
-```
-
-##### 　　2.halt----最简单的关机命令
-
-　　其实halt就是调用shutdown -h。halt执行时﹐杀死应用进程﹐执行sync系统调用﹐文件系统写操作完成后就会停止内核。
-
-　　参数说明:
-
-　　[-n] 防止sync系统调用﹐它用在用fsck修补根分区之后﹐以阻止内核用老版本的超级块〔superblock〕覆盖修补过的超级块。
-
-　　[-w] 并不是真正的重启或关机﹐只是写wtmp〔/var/log/wtmp〕纪录。
-
-　　[-d] 不写wtmp纪录〔已包含在选项[-n]中〕。
-
-　　[-f] 没有调用shutdown而强制关机或重启。
-
-　　[-i] 关机〔或重启〕前﹐关掉所有的网络接口。
-
-　　[-p] 该选项为缺省选项。就是关机时调用poweroff。
-
-##### 　　3.reboot
-
-　　reboot的工作过程差不多跟halt一样﹐不过它是引发主机重启﹐而halt是关机。它 的参数与halt相差不多。
-
-##### 　　4.init
-
-```
-语法：init(选项)(参数)
-
--b：不执行相关脚本而直接进入单用户模式；
--s：切换到单用户模式。
-
-0 停机（千万不能把initdefault 设置为0）
-1 单用户模式
-2 多用户，没有 NFS(和级别3相似，会停止部分服务)
-3 完全多用户模式
-4 没有用到
-5 x11(Xwindow)
-6 重新启动（千万不要把initdefault 设置为6）
-
-```
-
-### 后台运行命令
-
-```
-   1. command & ： 后台运行，你关掉终端会停止运行
-   2. nohup command & ： 后台运行，你关掉终端也会继续运行
-```
+x86是小端模式
 
 ### 分布式锁的实现
 
@@ -4187,23 +6037,6 @@ service network restart
 
 静态IP设置完毕
 
-### 用户
-
-```
-su - user #切换用户
-su -  # 切换管理员
-
-useradd -d /home/hf hf
-password hf
-userdel hf
-
-sudo 采用管理员身份执行
-
-# 查看所有用户（组）
-cat /etc/passwd
-cat /etc/group
-```
-
 ### 文件系统
 
 为一个文件分配inode节点和目录项
@@ -4243,6 +6076,172 @@ rxw rwx rwx  当前用户 用户组 其它用户
 ![image-20220722160834722](javaNote.assets/image-20220722160834722.png)
 
 ![image-20220722161433961](javaNote.assets/image-20220722161433961.png)
+
+### 段式存储管理
+
+https://www.cnblogs.com/wkfvawl/p/11733057.html
+
+页式是一维，段式是二维的
+
+页式和段式分配都是动态的，页式分配不是连续的，段式分配段内连续，段之间不连续
+
+段式存储管理更方便共享和安全
+
+![image-20220911104110942](javaNote.assets/image-20220911104110942.png)
+
+#### 1、分段
+
+**进程的地址空间**：按照程序**自身的逻辑**关系**划分为若干个段**，每个段都有一个段名（在低级语言中，程序员使用段名来编程），每段从0开始编址。
+
+**内存分配规则：**以段为单位进行分配，**每个段在内存中占连续空间**，但**各段之间可以不相邻**。
+
+#### 2、段表
+
+每一个程序设置一个段表，放在内存,属于进程的现场信息
+
+![img](javaNote.assets/1358881-20191024161318366-114906606.png)
+
+#### 3、地址变换
+
+逻辑地址是**二维**的，包括**段号+段内地址**
+
+根据段号从**段表**中找到**段基址**
+
+于是**段基址+段内地址**就能定位目标单元
+
+![img](javaNote.assets/1358881-20191024161812951-666406865.png)
+
+![img](javaNote.assets/1358881-20191024161833574-1537867468.png)
+
+
+
+#### 4、段的保护
+
+**越界中断处理**
+   进程在执行过程中，有时需要扩大分段，如数据段。由于要访问的地址超出原有的段长，所以发越界中断。操作系统处理中断时 ，首先判断该段的“扩充位”，如可扩充，则增加段的长度；否则按出错处理
+
+**缺段中断处理**
+
+检查内存中是否**有足够的空闲**空间
+  ①若有，则**装入该段**，修改有关数据结构，中断返回
+  ②若没有，检查内存中空闲区的总和是否满足要求，是则应采用**紧缩技术**，转 ① ；否则，淘汰一（些）段，转①
+
+#### 5、段的动态连接
+
+为何要进行段的**动态链接**？
+**大型程序由若干程序段，若干数据段组成**
+进程的某些程序段在进程运行期间可能根本不用
+互斥执行的程序段**没有必要同时驻留内存**
+有些程序段执行一次后不再用到
+静态链接花费时间，浪费空间
+
+在一个程序运行开始时，只将主程序段装配好并调入主存。其它各段的装配是在主程序段运行过程中逐步进行的。每当需要调用一个新段时，再将这个新段装配好，并与主程序段连接。
+**页式存储管理：难以完成动态链接，其逻辑地址是一维的**
+
+#### 6、信息的保护与共享
+
+这里主要与页式存储管理进行一下对比。
+
+**分段比分页更容易实现信息的共享和保护。**
+
+共享：直接指向要共享的段即可；
+
+保护：比如一个页面一部分可访问，一部分不可访问，页表很难进行保护。**段表直接划分为可访问的和不可访问的段区域。**
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024163246922-772131390.png)
+
+ 纯代码举例：比如，有一个代码段只是简单的输出“Hello World!”。
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024163539675-1568009948.png)
+
+#### 7、页式系统与段式系统的对比
+
+分页是信息的**物理单位**，实现了离散分配，不易产生内存碎片，是系统行为。
+
+分段是信息的**逻辑单元**，面向用户可见，一段代表一个逻辑模块。
+
+
+
+页大小是**固定**的，分页是**一维**的，只需一个记忆符即可表示一个地址
+
+段大小**不固定**，分段是**二维**的，需要段号和段内地址
+
+
+
+**分段更容易实现信息的共享和保护**，比如一些纯代码可以共享，直接指向该段即可。同理，可分为可访问和不可访问段
+
+
+
+分页**访存要两次**，第一次查页表，第二次访问目标单元。
+
+分段**访存要两次**，第一次查段表，第二次访问目标单元。
+
+两者都可以引入**快表**（直接保存实际的），那么都只需一次访存。
+
+快表：是页表的缓存，缓存了虚拟地址到物理地址的映射
+
+页表：页到物理地址的映射
+
+
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024164516533-869573781.png)
+
+补充：
+
+分段存储：段内地址W字段溢出将产生越界中断。
+
+分页存储：段内地址W字段溢出会自动加入到页号中。
+
+#### 8、总结
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024163733207-1074596879.png)
+
+### 段页式存储管理
+
+第一次查段表，第二次查对应的页表，第三次查目标单元
+
+#### 1、分页、分段的有缺点分析
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024164819264-302516041.png)
+
+#### 2、基本思想
+
+用户程序划分：按段式划分（对用户来讲，按段的逻辑关系进行划分；对系统讲，按页划分每一段）
+
+逻辑地址：
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024164940232-1333874973.png)
+
+ **内存划分：按页式存储管理方案**
+ **内存分配：以页为单位进行分配**
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024165048537-307146941.png)
+
+#### 3、逻辑地址结构
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024165237632-1280186867.png)
+
+#### 4、段表页表
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024165517051-1418927958.png)
+
+#### 5、地址转换
+
+![img](https://img2018.cnblogs.com/blog/1358881/201910/1358881-20191024165601134-342443140.png)
+
+#### 6、评价
+
+**优点：**
+保留了分段和请求分页存储管理的全部优点
+提供了虚存空间，能更有效利用主存
+
+**缺点：**
+增加了硬件成本
+系统复杂度较大
+
+#### 7、总结
+
+![img](javaNote.assets/1358881-20191024165652774-1987561570.png)
 
 ### 逻辑地址
 
@@ -4331,7 +6330,7 @@ swap是什么
 #vi /etc/sysctl.conf 
 vm.swappiness=15 表示15的时候使用虚拟内存
 
-查看swap
+查看所有交换分区
 #swapon -s
 
 删除swap
@@ -4346,6 +6345,171 @@ vm.swappiness=15 表示15的时候使用虚拟内存
 ```
 
 ## Linux命令
+
+### dmesg
+
+display message：用于显示开机信息。（开机信息亦保存在 /var/log 目录中，名称为 dmesg 的文件里。）
+
+###swapon -s
+
+查看所有交换分区
+
+### hdparm
+
+显示与设定**硬盘的参数**，可检测，显示与设定IDE或SCSI硬盘的参数。
+
+查看硬盘型号和硬盘序列号
+
+```
+hdparm -i /dev/sda
+```
+
+显示硬盘的相关设置：
+
+```
+# hdparm /dev/sda
+ /dev/sda:
+ IO_support = 0 (default 16-bit)
+ readonly = 0 (off)
+ readahead = 256 (on)
+ geometry = 19929［柱面数］/255［磁头数］/63［扇区数］, sectors = 320173056［总扇区数］, start = 0［起始扇区数］
+```
+
+显示硬盘的柱面、磁头、扇区数
+
+```
+# hdparm -g /dev/sda
+ /dev/sda:
+ geometry = 19929［柱面数］/255［磁头数］/63［扇区数］, sectors = 320173056［总扇区数］, start = 0［起始扇区数］
+```
+
+评估硬盘的读取效率
+
+```
+ hdparm -t /dev/sda
+ /dev/sda:
+ Timing buffered disk reads: 166 MB in 3.03 seconds = 54.85 MB/sec
+ [root@linuxso.com ~]# hdparm -t /dev/sda
+ /dev/sda:
+ Timing buffered disk reads: 160 MB in 3.01 seconds = 53.11 MB/sec
+ [root@linuxso.com ~]# hdparm -t /dev/sda
+ /dev/sda:
+ Timing buffered disk reads: 166 MB in 3.00 seconds = 55.31 MB/sec
+```
+
+### fdisk
+
+fdisk -l 查看所有分区
+
+### ls
+
+ls -al
+
+-a 显示所有文件及目录
+
+-l 除文件名称外，亦将文件型态、权限、拥有者、文件大小等资讯详细列出
+
+![image-20220918111157325](javaNote.assets/image-20220918111157325.png)
+
+
+
+从上面可以看到，每一行都有7列，分别是：
+
+1. **第一列**共10位，第1位表示文档类型，`d`表示目录，`-`表示文件，`l`表示链接文件，`d`表示可随机存取的设备，如U盘等，`c`表示一次性读取设备，如鼠标、键盘等。后9位，依次对应三种身份所拥有的权限，身份顺序为：owner、group、others，权限顺序为：readable、writable、excutable。如：`-r-xr-x---`的含义为**当前文档是一个文件，拥有者可读、可执行，同一个群组下的用户，可读、可执行，其他人没有任何权限**。
+2. **第二列**表示链接数，表示有多少个文件链接到inode号码。(硬链接才会增加，软链接是新增inode结点，只是数据文件执行同一个)
+3. **第三列**表示拥有者
+4. **第四列**表示所属群组
+5. **第五列**表示文档容量大小，单位字节
+6. **第六列**表示文档最后修改时间，注意不是文档的创建时间哦
+7. **第七列**表示文档名称。以点(.)开头的是隐藏文档
+
+### shell头
+
+![image-20220903170611120](javaNote.assets/image-20220903170611120.png)
+
+### 信号
+
+**ctrl-c**：发送 SIGINT 信号**强行中断**当前程序
+**ctrl-z**：发送SIGTSTP**转到后台挂起**
+
+ctrl-\：发送 SIGQUIT 信号**退出**
+
+
+
+**ctrl-d**：不是发送信号，而是表示一个特殊的二进制值，表示 EOF，**注销当前用户**，等价于**exit**和**logout**；
+
+
+
+ctrl-s：**中断控制台输出**；
+**ctrl-q**：恢复控制台输出；
+**ctrl-l**：清屏
+
+![image-20220903165721220](javaNote.assets/image-20220903165721220.png)
+
+### 虚拟机克隆
+
+```
+接下来修改一下ip，以防网络冲突；
+cd /etc/sysconfig/network-scripts/
+vi ifcfg-ens33
+service network restart 
+```
+
+### 用户
+
+```
+useradd ssh02
+passwd ssh02
+chown -R ssh02 /home/tomcat-9.0/logs
+
+1.想创建的用户目录
+mkdir /home
+2.新建用户到指定的目录
+useradd ssh02 -d /home/test
+3.设置新用户密码
+passwd ssh02
+4. 将访问目录权限全部赋予用户
+chown ssh02 /home
+5.将上层目录设置为root所有
+chown root /home/
+6.赋予权限给上层目录
+chmod 771 /home
+
+su - user #切换用户
+su -  # 切换管理员
+
+useradd -d /home/hf hf
+passwd hf #修改密码
+userdel hf
+
+# 查看所有用户（组）
+cat /etc/passwd
+cat /etc/group
+
+sudo 采用管理员身份执行
+-u username # 不加此参数代表以管理员身份运行，否则以username身份运行 
+
+# 新增组
+groupadd group-hf
+
+# 查看用户所属组
+groups username
+
+# 添加用户到某个组
+usermod -G group-hf hf
+```
+
+### unmask
+
+$umask 0000 #临时修改
+
+$vi /etc/profile #永久生效
+
+$ umask 查看自己当前unmask情况文件权限
+
+- 文件默认权限默认最大为`666`
+- 目录默认权限默认最大为`777`
+- 建立目录之后的权限为`777`减去`umask`的值。`777 - 022 = 755`
 
 ```
 ipconfig	检测和设置本机的网络接口 ipconfig/all：显示当前TCP/IP网络中的所有配置信息
@@ -4366,15 +6530,44 @@ iptables	根据IP制定策略，也可以根据端口制定策略
 
 ### vim
 
+https://blog.csdn.net/sunjinshengli/article/details/108558752
+
 ```
 ctrl+a 光标移到最前面
 ctrl_e 光标移到最后面
 
 ctrl+u 光标处快速往前删除
 ctrl+k 光标处快速往后删除
+
+yy 	复制游标所在行整行
+p    粘贴至游标后（下） 
+dd    剪切游标所在行整行 
 ```
 
-### CP
+### alias
+
+alias copy='cp'
+
+alias [别名]=[指令名称]   设置别名
+
+```
+临时设置：
+alias [别名]=[指令名称]   设置别名
+# alias grep='grep --color=auto'			//只针对当前终端和当前用户生效
+
+永久设置：
+1）全局（针对所有用户生效）
+vim /etc/bashrc
+alias grep='grep --color=auto'
+source /etc/bashrc
+
+2）局部（针对具体的某个用户）
+vim ~/.bashrc
+alias grep='grep --color=auto'
+source ~/.bashrc
+```
+
+### cp
 
 ```
 cp
@@ -4432,19 +6625,18 @@ TIME 使用掉的 CPU 时间。
 CMD 所下达的指令为何
 ```
 
-### lsof
-
-根据端口port查看进程
-
-```
-lsof -i:port
-```
-
 ### tar命令
 
 ```
-tar -cvf 打包
-tar -zxvf 对.gz解包 
+tar -cf 打包
+tar -zxf 对.gz解包 
+
+-f 使用文件
+-c create打包
+-x extract解压缩
+-z gzip
+-v 显示处理的文件
+-C dir 改变解压后存储的路径
 ```
 
 ### rpm
@@ -4488,11 +6680,11 @@ root@jacky zookeeper]# rpm -e --nodeps java-1.6.0-openjdk-1.6.0.0-1.66.1.13.0.el
 
 ### which locate find
 
-which和locate基于内建数据库，效率高
+which和locate基于**内建数据库**，效率高
 
-find 磁盘查找
+find **磁盘**查找,指定目录查找文件
 
-whereis 只能用于程序名的搜索，而且只搜索二进制文件（参数-b）、man说明文件（参数-m）和源代码文件（参数-s）
+whereis 只能用于**程序名**的搜索，而且只搜索**二进制**文件（参数-b）、man说明文件（参数-m）和源代码文件（参数-s）
 
 ```
 删除10天前的日志文件
@@ -4503,14 +6695,14 @@ find ./* -type f -mtime +10 -exec rm  {}  \;
 
 ```
 硬链接：多了一个文件名对inode结点的链接
-软连接：独立的inode结点，链接到同一个数据文件
+软连接：是新的文件，拥有独立的inode结点。指向同一个数据块。保存了文件的绝对路径。
 
 软连接可对不存在的目录或文件建立连接，软连接链接计数i_link不会增加
 ```
 
 软连接：有自己的inodes(索引结点),类似**快捷方式**，可跨文件系统，本质是用新inode链接名字，名字在链接到同一个文件
 
-硬连接：指向同一个inodes，移动或删除原文件不会被破坏（相当于一个**备份**，同一文件以不同文件名的形式存在），不同文件名指向**同一个inode结点**，当然数据也是一样的。
+硬连接：指向同一个inodes，移动或删除原文件不会被破坏（相当于一个**备份**，同一文件以不同文件名的形式存在），不同文件名指向**同一个inode结点**，当然数据也是一样的。（**会增加链接数**）
 
 可以看到软硬连接的inode都是393823，除了名字所有信息都是一样的。因为是同一个inodes本来就是同一个文件系统，所以**不能跨文件系统**，**不能链接目录**
 
@@ -4523,13 +6715,113 @@ cp -s sourceFile s_link_sf 软连接
 cp -l sourceFile h_link_sf 硬连接
 ```
 
-### df命令
+### LVM
 
 ```
-显示文件系统的磁盘使用情况,挂载信息（文件系统需要挂载到目录树才能被使用）
+磁盘sda分为两个分区sda1和sda2
+分区sda2是lvm
 ```
 
-![image-20220714215243513](javaNote.assets/image-20220714215243513.png)
+![image-20220828165255063](javaNote.assets/image-20220828165255063.png)
+
+http://blog.chinaunix.net/uid-23511971-id-320264.html
+
+一、LVM（Logical [Volume](https://so.csdn.net/so/search?q=Volume&spm=1001.2101.3001.7020) Manager逻辑卷管理）的概念：
+  LVM是Linux系统对磁盘分区进行管理的一种方式，使用它可以让你更为灵活的管理你的磁盘。在了解LVM的概念之前我们应该先了解PV（physical volume,物理卷）、VG（volume group,卷组）和LV（logical volume,逻辑卷）。因为LVM就是由这三种元素组成的。下面我们来了解一下它们各自的概念：
+\1. PV（physical volume,物理卷）：
+  PV是VG的组成部分，它是由分区构成的，通常我们在有多块硬盘的环境中把一块硬盘格式化成一个主分区后，然后把这块硬盘做成PV，在只有一块硬盘的情况下我们就是把这块硬盘上的某一个分区做成PV。比如，公司里的服务器可能有多块硬盘，这个时候你可以把一块硬盘划一个主分区，然后再把它做成PV，但是就像这次我重做系统时候机子上就一块硬盘，我还得考虑引导分区和“/”根分区，所以我就把硬盘划了四个主分区，一个“/boot”分区、一个“/”分区，还有一个“swap”分区，最后当然就把剩下的分了一个主分区，把系统装好后我把最后一个主分区做成了一个PV，然后加入到VG里，又从VG里划分的LV，也就组成了LVM。
+\2. VG（volume group,卷组）：
+  VG就是卷组，它是由若干个PV组成的。也就是我们把上面那些硬盘分区，然后做成的PV。它就是由那些PV组成的。它的作用就是把PV集中到一块再进行划分。
+\3. LV（logical volume,逻辑卷）：
+  LV就是从VG里划分出来的卷，它可以在你所用的卷不够用的情况下增加其容量。它其实就像是Windows里的逻辑磁盘，不过Windows里的逻辑磁盘不能随心所欲的增加或减少磁盘的容量，而LV就可以。
+
+### 目录结构
+
+**/proc** 是虚拟文件系统，是系统内存的映射
+
+### 磁盘分区
+
+#### df -Th
+
+查看磁盘**使用情况和挂载情况**。
+
+```
+-T 文件系统类型
+```
+
+![image-20220827221403889](javaNote.assets/image-20220827221403889.png)
+
+#### fdisk -l 
+
+**查看所有磁盘分区**（包括未格式化和未分区的）
+
+![image-20220827221320867](javaNote.assets/image-20220827221320867.png)
+
+#### lsblk 
+
+查看**磁盘分区结构**
+
+![image-20220827221301264](javaNote.assets/image-20220827221301264.png)
+
+#### du  -sh /mydata/* 
+
+查看具体**某个目录的占用空间**
+
+```
+-s 表示总的
+```
+
+![image-20220803215909810](javaNote.assets/image-20220803215909810.png)
+
+#### LVM扩容
+
+扩容成功链接：
+
+镜像的所以不能直接在原来的扩容，得在新加磁盘然后加入vg中
+
+https://www.cnblogs.com/hydd/p/12672797.html
+
+```
+fdisk /dev/sdb # 新建主分区
+pvcreate /dev/sdb # 把新增磁盘分区设为物理卷pv
+vgs # 查看已有的虚拟组vg
+vgextend centos /dev/sdb # 将上面物理卷pv加到vg中
+lventend -L +7G /dev/mapper/centos-root # 扩容逻辑卷lv
+xfs_grows /dev/mapper/centos-root # xfs类型让系统读取，ext4用resize2fs命令
+```
+
+https://zhuanlan.zhihu.com/p/416624687
+
+https://www.cnblogs.com/kevingrace/p/5825963.html
+
+https://blog.csdn.net/lkforce/article/details/80917306
+
+#### 格式与挂载
+
+磁盘格式化（变成指定的文件系统）后才能进行挂载，挂载到某个目录，这个目录称为挂载点，挂载点是访问文件系统的入口。
+
+一个目录最多只能挂载一个磁盘
+
+```
+mkfs.ext4 /dev/xvdc1
+或# mkfs -t xfs /dev/xvdc1
+
+mount /dev/xvdb1 /xfs #单独挂载到某个目录
+
+umount /dev/xvdc1 #卸载某个分区
+```
+
+添加分区开机自动挂载
+说明：/xfstest表示挂载位置，使用mount挂载后重启系统后会失效，需要添加开机自动挂载。
+
+```
+#echo '/dev/xvdb1 /xfstest xfs defaults 0 0' >> /etc/fstab
+或者编辑/etc/fstab，在下面增加/dev/xvdb1 /xfstest xfs defaults 0 0
+
+# mount -a		#挂载所有新分区
+
+# cat /etc/fstab#查看写入分区信息
+```
 
 ### vmstate
 
@@ -4543,18 +6835,26 @@ cp -l sourceFile h_link_sf 硬连接
 
 ![image-20220611124327971](javaNote.assets/image-20220611124327971.png)
 
-### netstat命令
+### lsof
+
+根据端口port查看进程
 
 ```
+lsof -i:port
+```
+
+### netstat命令
+
 netstat -anp # 查看网络连接状态
+
 -a或all 显示所有连接中的socket
 -n或numeric 直接使用IP地址，而不通过域名服务器
 -p或programs 显示程序名称
 -t或tcp 显示TCP传输协议的连线情况
 
-查看端口号被哪个进程占领
-netstat -nap | grep 端口号 
-```
+#### 查看端口号被哪个进程占领
+
+netstat -nap | grep 8080
 
 ### ifconfig命令
 
@@ -4580,7 +6880,11 @@ systemctl status serviceName 查看服务的详细信息
 实时查看日志
 ```
 
-### 系统链接的位置
+-f 循环读取
+
+-n<行数> 显示文件的尾部 n 行内容
+
+### 系统服务
 
 ```
 /usr/lib/systemd/system/docker.service
@@ -4588,11 +6892,150 @@ systemctl status serviceName 查看服务的详细信息
 
 ### awk
 
+awk用来**提取列的主要工具**；
+
+echo "aa bb cc" | awk -F '{print $1}' 
+
+ 输出aa，一行一行的读取指定的文件， 以空格作为分隔符，打印第一个字段
+
+
+
+awk '{print $2}' $fileName :
+
+一行一行的读取指定的文件， 以空格作为分隔符，打印第二个字段
+
+### 统计IP次数最多的
+
+netstat -ntu | tail -n +3|**awk** '{ print $5}' | **cut** -d : -f 1 | sort | uniq -c| **sort** -n -r | head -n 5
+8 127.0.0.1
+2 192.168.47.27
+
+
+
+
+tail -n +3 :去掉上面用红色标明的两行。
+
+awk '{ print $5}'：取数据的低5域（第5列），上面蓝色标明。
+
+cut -d : -f 1 ：取蓝色部分前面的IP部分。
+
+sort：对IP部分进行排序。
+
+uniq -c：打印每一重复行出现的次数。（并去掉重复行）
+
+sort -n -r：按照重复行出现的次序倒序排列。
+
+head -n 5：取排在前5位的IP 
+
 ```
-给你举个例子，echo "aa bb cc" | awk -F '{print $1}' 结果就是aa，意思是把字符串按空格分割，取第一个，自己做个测试就明白了！
-awk是用来提取列的主要工具；
-{print $1}就是将某一行（一条记录）中以空格为分割符的第一个字段打印出来
-awk '{print $2}' $fileName : 一行一行的读取指定的文件， 以空格作为分隔符，打印第二个字段
+$ netstat -ntu
+Active Internet connections (w/o servers)
+Proto Recv-Q Send-Q Local Address Foreign Address State
+tcp 0 0 127.0.0.1:8152 127.0.0.1:4193 TIME_WAIT
+tcp 0 0 127.0.0.1:8152 127.0.0.1:4192 TIME_WAIT
+tcp 0 0 127.0.0.1:8152 127.0.0.1:4196 TIME_WAIT
+tcp 0 0 127.0.0.1:8152 127.0.0.1:4199 TIME_WAIT
+tcp 0 0 127.0.0.1:8152 127.0.0.1:4201 TIME_WAIT
+tcp 0 0 127.0.0.1:8152 127.0.0.1:4204 TIME_WAIT
+tcp 0 0 127.0.0.1:8152 127.0.0.1:4207 TIME_WAIT
+```
+
+### 关机命令
+
+重启：shutdown -r 、reboot、init 6 
+
+关机：shutdown -h 、 halt、init 0
+
+#### 一、Linux 的五个关机重启命令
+
+　　1、shutdown
+
+　　2、poweroff
+
+　　3、init
+
+　　4、reboot
+
+　　5、halt
+
+#### 二、具体说明
+
+　　在linux下一些常用的关机/重启命令有shutdown、halt、reboot、及init，它们都可以达到重启系统的目的，但每个命令的内部工作过程是不同的。
+
+##### 　　1. shutdown
+
+　　shutdown命令安全地将系统关机。 有些用户会使用直接断掉电源的方式来关闭linux，这是十分危险的。因为linux与windows不同，其后台运行着许多进程，所以强制关机可能会导致进程的数据丢失﹐使系统处于不稳定的状态﹐甚至在有的系统中会损坏硬件设备。而在系统关机前使用shutdown命令﹐系统管理员会通知所有登录的用户系统将要关闭。并且login指令会被冻结﹐即新的用户不能再登录。直接关机或者延迟一定的时间才关机都是可能的﹐还可能重启。这是由所有进程〔process〕都会收到系统所送达的信号〔signal〕决定的。这让像vi之类的程序有时间储存目前正在编辑的文档﹐而像处理邮件〔mail〕和新闻〔news〕的程序则可以正常地离开等等。
+
+　　shutdown执行它的工作是送信号〔signal〕给init程序﹐要求它改变runlevel。
+
+　　Runlevel 0被用来停机〔halt〕﹐runlevel 6是用来重新激活〔reboot〕系统﹐而runlevel 1则是被用来让系统进入管理工作可以进行的状态﹔这是预设的﹐假定没有-h也没有-r参数给shutdown。要想了解在停机〔halt〕或者重新开机〔reboot〕过程中做了哪些动作﹐你可以在这个文件/etc/inittab里看到这些runlevels相关的资料。
+
+```
+shutdown 参数说明:
+
+　　[-t] 在改变到其它runlevel之前﹐告诉init多久以后关机。
+
+　　[-r] 重启计算器。
+
+　　[-k] 并不真正关机﹐只是送警告信号给每位登录者〔login〕。
+
+　　[-h] 关机后关闭电源〔halt〕。
+
+　　[-c] cancel current process取消目前正在执行的关机程序。所以这个选项当然没有时间参数﹐但是可以输入一个用来解释的讯息﹐而这信息将会送到每位使用者。
+
+　　[-f] 在重启计算器〔reboot〕时忽略fsck。
+
+　　[-F] 在重启计算器〔reboot〕时强迫fsck。
+
+　　[-time] 设定关机〔shutdown〕前的时间。
+
+```
+
+##### 　　2.halt----最简单的关机命令
+
+　　其实halt就是调用shutdown -h。halt执行时﹐杀死应用进程﹐执行sync系统调用﹐文件系统写操作完成后就会停止内核。
+
+　　参数说明:
+
+　　[-n] 防止sync系统调用﹐它用在用fsck修补根分区之后﹐以阻止内核用老版本的超级块〔superblock〕覆盖修补过的超级块。
+
+　　[-w] 并不是真正的重启或关机﹐只是写wtmp〔/var/log/wtmp〕纪录。
+
+　　[-d] 不写wtmp纪录〔已包含在选项[-n]中〕。
+
+　　[-f] 没有调用shutdown而强制关机或重启。
+
+　　[-i] 关机〔或重启〕前﹐关掉所有的网络接口。
+
+　　[-p] 该选项为缺省选项。就是关机时调用poweroff。
+
+##### 　　3.reboot
+
+　　reboot的工作过程差不多跟halt一样﹐不过它是引发主机重启﹐而halt是关机。它 的参数与halt相差不多。
+
+##### 　　4.init
+
+```
+语法：init(选项)(参数)
+
+-b：不执行相关脚本而直接进入单用户模式；
+-s：切换到单用户模式。
+
+0 停机（千万不能把initdefault 设置为0）
+1 单用户模式
+2 多用户，没有 NFS(和级别3相似，会停止部分服务)
+3 完全多用户模式
+4 没有用到
+5 x11(Xwindow)
+6 重新启动（千万不要把initdefault 设置为6）
+
+```
+
+### 后台运行命令
+
+```
+   1. command & ： 后台运行，你关掉终端会停止运行
+   2. nohup command & ： 后台运行，你关掉终端也会继续运行
 ```
 
 ### 批量杀进程
@@ -4661,13 +7104,24 @@ $ echo "hello world" | xargs echo
 hello world
 ```
 
-### $?
+### shell默认变量($0、$1..)
+
+$@
+
+![image-20220916221925325](javaNote.assets/image-20220916221925325.png)
 
 ```
-$?：显示上一条命令的返回码，如果为0则代表执行成功，其他表示失败。
-$#：脚本后面跟的参数个数
-$0：脚本文件名文件名
-$@：脚本后面的所有参数
+
+$#：脚本参数个数
+$0：脚本文件名
+
+$@：$1 $2 $3(推荐)
+$*："$1" "$2" "$3"
+	
+$?：显示上一条命令的返回码，如果为0则代表执行成功。	
+
+$$：脚本当前进程ID号
+$!：后台运行的最后一个进程号
 
 结合if-else语句实现判断上一个命令是否执行成功。
 -eq
@@ -4682,18 +7136,701 @@ le	小于等于
 
 ## MySQL
 
-### 索引下推
+### 数据源
 
-https://blog.csdn.net/qq_32979219/article/details/122791064
+原生态：JDBC
+封装：dbcp,c3p0,druid
+
+#### 一、hirake连接池
+
+spring默认使用，比druid快
+
+#### 二、druid连接池
+
+对SQL语句进行监控、拦截，可视化界面
 
 ```
-减少回表次数
-idx(name,age)
-比如select * from t where name='tt%' and age=10
-不会用到age索引，开启索引下推后，在二级索引查询到满足tt%的时候，不会直接去聚簇索引查找，而是先判断age是否满足，满足了再回表。
-
-总结：不会减少二级索引扫描的行，但能减少回表的次数，提前过滤不满足另一个索引的记录
+DataSource ds = DruidDataSourceFactory.createDataSource(pro);
 ```
+
+#### 三、C3P0连接池
+
+1. 导入 `c3p0-0.9.5.5.jar`和`mchange-commons-java-0.2.19.jar`两个包
+2. 定义配置文件，将`c3p0-config.xml`文件放在src目录下
+3. 创建数据库连接池对象`ComboPooledDataSource`
+
+mybaties默认使用pooled数据库连接池，可选的有unpool和jndi
+
+### 为什么推荐使用自增主键
+
+  InnoDB中，表中的数据是直接存储在**主键聚簇索引**的叶子节点上的，每插入一条记录，其实都是**增加一个叶子结点**，如果主键是顺序的，只需要把新增的一条记录存储在上一条记录的后面。当页达到最大填充因子的时候，下一条记录就会写入新的页中，这种情况下，主键页就会近似于被顺序的记录填满。
+  若表的主键不是顺序的id，而是无规律数据，比如字符串，InnoDB无法简单的把一行记录插入到索引的最后，而是**需要找一个合适的位置（已有数据的中间位置），甚至产生大量的页分裂并且移动大量数据**；在寻找合适位置进行插入时，目标页可能不在内存中，这就导致了**大量的随机IO操作**，影响插入效率；除此之外，大量的页分裂会导致大量的**内存碎片**。
+
+### 数据库约束
+
+非空约束（not null）
+
+唯一约束（unique）
+
+主键约束（primary key）
+
+外键约束（foreign key）、
+
+检查约束（check）<Oracle 数据库有 check 约束>
+
+### 存储过程
+
+存储过程**可以返回多个变量**，也可以没有返回值
+存储过程可封装并隐藏复杂的商业逻辑，可以包括程序流、逻辑以及对数据库的查询，
+存储过程主要是在服务器上执行，减少对客户机的压力
+
+存储过程可以在三种环境下被调用：
+
+1. command命令下，基本语法为：**exec** sp_name [参数名]；
+2. SQL环境下，基本语法为：**call** sp_name [参数名]；
+3. PL/SQL环境下，基本语法为：**begin** sp_name [参数名] end；
+
+### count(*)和count(1)
+
+#### 不同存储引擎的性能不一样
+
+我们不知道，Mysql常见的存储引擎有两种，MyISAM和Innodb，
+
+在这两种存储引擎下，MySQL对于使用count(*)返回结果的流程是不一样的。
+
+- 在MyISAM引擎中，每张表的**总行数是存储在磁盘上**，所以当执行count(*)时，是直接从磁盘**O(1)**拿到这个值返回，能够快速返回。但要是在后面加了where查询条件时，统计总数也不是像想象中那么快了。
+- 在Innodb引擎中，执行count(*)，需要**将数据一行一行地读，再统计总数。**
+
+
+
+看到这里，不知道你有没有这样的疑问：
+
+> 为什么Innodb引擎不像MyISAM引擎一样把表总记录存储起来呢？
+
+
+
+这个问题问得好，回答这个问题前，我们先了解下MVCC，
+
+#### **什么是MVCC**
+
+全称：Multi-Version Concurrency Control 即多版本并发控制，MVCC 是一种并发控制的方法，一般在数据库管理系统中，实现对数据库的并发访问；在编程语言中实现事务内存。
+
+
+
+MVCC 在 MySQL InnoDB 中的实现主要是为了提高数据库并发性能，用更好的方式去处理读-写冲突，做到即使有读写冲突时，也能做到不加锁，非阻塞并发读。
+
+就是因为要实现多版本并发控制，所以才导致Innodb不能直接存储表总记录数。
+
+因为每个事务获取到的一致性视图都是不一样的，所以返回的数据总记录也是不一致的。
+
+举个例子说明下：
+
+假如有一张用户表tb_user, 有三处正在查询用户的总数。
+
+```
+select count(*) from tb_user
+```
+
+![img](https://pic.rmb.bdstatic.com/bjh/news/327fc3cc24ab04d96159934ce31e0b79.jpeg?x-bce-process=image/watermark,bucket_baidu-rmb-video-cover-1,image_YmpoL25ld3MvNjUzZjZkMjRlMDJiNjdjZWU1NzEzODg0MDNhYTQ0YzQucG5n,type_RlpMYW5UaW5nSGVpU01HQg==,w_19,text_QOa0queUn-m5jw==,size_19,x_15,y_15,interval_2,color_FFFFFF,effect_softoutline,shc_000000,blr_2,align_1)
+
+
+
+
+
+这时候每次查到的用户数总数可能不太一样。
+
+这是因为每个用户**会根据read view存储的数据来判断哪些数据是自己可见的，哪些是不可见**的。
+
+#### read view
+
+当执行SQL语句查询时会产生一致性视图，即read-view，它是由查询的那一刻所有未提交事务ID组成的数组，和已经创建的最大事务ID组成的。
+
+
+
+在这个数组中最小的事务ID被称之为min_id，
+
+最大事务ID被称之为max_id，
+
+而查询的数据结果就是根据read-view做对比从而得到快照。
+
+
+
+于是就产生了以下的对比规则，这个规则就是使用当前的记录的trx_id跟read-view进行对比，规则如下：
+
+
+
+- 如果落在trx_id<min_id，表示该版本是已经提交的事务生成的，由于事务已经提交所以数据是可见的
+- 如果落在trx_id>max_id，表示该版本是由将来启动的事务生成的，是不可见的
+- 如果落在trx_id 在min_id 和max_id 中间（min_id<=trx_id<=max_id）时
+
+要是row的trx_id在数组中，表示该版本是由还没提交的事务生成的，不可见，但是当前自己的事务是可见的；
+
+要是row的trx_id不在数组中，表明是提交的事务生成了该版本，是可见的。
+
+
+
+读到这，相信你已经知道Innodb引擎为什么不像MyISAM引擎一样把表总记录存储起来了吧。因为 InnoDB 支持事务，MyISAM不支持事务。
+
+
+
+在执行count(*)操作的时候还是做了优化的。
+
+#### mysql对count(*)做了优化
+
+自动找到最小的那一颗树进行比较。
+
+InnoDB是索引组织表，主键索引树的叶子节点是数据，而普通索引树的叶子节点是主键值。所以，**普通索引树比主键索引树小很多**。对于count(*)这样的操作，遍历哪个索引树得到的结果逻辑上都是一样的。因此，MySQL优化器**会找到最小的那棵树来遍历**。
+
+
+
+如果你使用过show table status 命令的话，就会发现这个命令的输出结果里面也有一个rows值用于显示这个表当前有多少行。
+
+
+
+那么是不是这个rows值就能代替count(*)了吗？
+
+其实不能，rows这个是从从采样估算得来的，因此它也是不是准确。不准确到什么程度，官方文档说是在40%到50%。所以show table status命令显示的行数rows是不能直接使用。
+
+
+
+基于MySQL的Innodb存储引擎，统计表的总记录数下面这4种做法，哪种效率最高？
+
+实践案例，准备了一张有 500W多条数据的表，表结构如下：
+
+
+
+```
+CREATE TABLE `tb_user` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT,`user_id` int(11) DEFAULT NULL ,`user_name` varchar(100) DEFAULT NULL ,PRIMARY KEY (`id`) USING BTREE,UNIQUE KEY `userId` (`user_id`) USING BTREE) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4
+```
+
+可以看到，这张表有一个主键索引，用不同方式来查询该表用户记录总数
+
+- count(主键id)
+
+用select count(*) from tb_user 耗时0.739s
+
+InnoDB引擎会遍历整张表，**把每一行的id值都取出来**，返回给server层。server层拿到id后，判断是不可能为空的，就按行累加。
+
+- count(1)
+
+用select count(1) from tb_user 耗时0.753s
+
+同样遍历整张表，但**不取值**，server层对返回的每一行，放一个数字1进去，判断是不可能为空的，按行累加。
+
+- count(字段)
+
+用select count(user_name) from tb_user 耗时1.436s
+
+分为两种情况，字段定义为not null和null
+
+1. 为not null时：逐行从记录里面读出这个字段，判断不能为null，累加
+2. 为 null时：执行时，判断到有可能是null，**还要把值取出来再判断一下，不是null才累加**
+
+
+
+- count(*)
+
+
+
+用select count(*) from tb_user 耗时0.739s
+
+需要注意的是，并不是带了*就把所有值取出来，而是mysql做了专门的优化，count(*)肯定不是null，按行累加。
+
+从上面的执行结果，得知count(字段)<count(主键id)<count(1)≈count(*)
+
+#### 总结
+
+基于MySQL的Innodb存储引擎，统计表的总记录数按照效率排序的话count(字段)<count(主键id)<count(1)≈count(*)
+
+效率最高是count(*),并不是count(1)
+
+所以建议**尽量使用count(*)**.
+
+### mysql内部代码的优缺点
+
+mysql内部代码有四种：存储过程，存储函数，事件，触发器。 
+
+#### 一、存储过程&存储函数
+
+##### 1、优点：
+
+内部执行，离数据最近，另外在服务器上执行还可以**节省宽带和网络延迟**
+
+**代码重用**，可以方便地统一业务规则，保证某些行为总是一致，也可以为应用提供一定的安全性。
+
+简化代码的维护和版本更新。
+
+帮助提升安全，提供更细颗粒度的权限控制。
+
+缓存执行计划，如果反复调用可以降低消耗。
+
+维护简单，没外部依赖更好在开发和数据库维护人员间分工。 
+
+##### 2、缺点：
+
+**有安全隐患**
+
+mysql没有提供好的开发和调试工具，编写调试困难。
+
+效率差，存储过程使用的函数有限，难以编写复杂的字符串维护功能，也难以实现太复杂的逻辑。
+
+部署带来额外的复杂性。
+
+带来额外的内部存储代码。
+
+给服务器带来额外压力
+
+mysql没有资源消耗控制进程，如果存储过程发生错误，可能直接把服务器拖死。
+
+调试困难。  
+
+#### 二、触发器
+
+##### 1、优点：
+
+减少客户端和服务端之间的通信
+
+简化应用逻辑
+
+提高性能
+
+可用于自动更新反范式化数据或者汇总汇总表数据。 
+
+##### 2、缺点：
+
+功能有限。
+
+对于每一个表的每一个时间，最多只能定义一个触发器。
+
+Mysql只支持“基于行的触发”——所以说，触发器是针对一条记录的。而不是针对整个sql语句的，如果更变的数据集非常大的话，效率会很低。而且触发器会掩盖服务器背后的工种，影响潜在效率，对性能排查造成阻碍。
+
+触发器问题难以排查，尤其是性能问题
+
+触发器可能导致死锁和锁等待，如果触发器失败，sql执行也会失败。
+
+触发器并不能保证更新原子性。
+
+#### 三、事件
+
+在Mysql内部实现通常把复杂代码封装成存储过程再通过call来调用事件在一个独立事件调度进程中被初始化，这个线程和处理链接的线程没有任何关系。不接受常熟也没有返回值。
+
+用于定期维护任务。
+
+### 日期加减
+
+**1. addtime()**　　
+
+为日期加上指定秒数
+
+```
+select addtime(now(),1); -- 加1秒
+```
+
+**2. adddate()**　　
+
+有两种用法，第二个参数直接填数字的话是为日期加上指定天数，填interval的话是为日期加上指定的interval时间
+
+```
+select adddate(now(),1); -- 加1天``select adddate(now(), interval 1 day); -- 加1天``select adddate(now(), interval 1 hour); --加1小时``select adddate(now(), interval 1 minute); -- 加1分钟``select adddate(now(), interval 1 second); -- 加1秒``select adddate(now(), interval 1 microsecond); -- 加1毫秒``select adddate(now(), interval 1 week); -- 加1周``select adddate(now(), interval 1 month); -- 加1月``select adddate(now(), interval 1 quarter); -- 加1季``select adddate(now(), interval 1 year); -- 加1年
+```
+
+**4. subtime()**　　
+
+为日期减去指定秒数
+
+```
+select subtime(now(), 1); -- 减1秒
+```
+
+**5. subdate()**　　
+
+与adddate()函数用法一致，有两种用法，第二个参数直接填数字的话是为日期减去指定天数，填interval的话是为日期减去指定的interval时间
+
+```
+select subdate(now(),1); -- 减1天``select subdate(now(), interval 1 day); -- 减1天``select subdate(now(), interval 1 hour); --减1小时``select subdate(now(), interval 1 minute); -- 减1分钟``select subdate(now(), interval 1 second); -- 减1秒``select subdate(now(), interval 1 microsecond); -- 减1毫秒``select subdate(now(), interval 1 week); -- 减1周``select subdate(now(), interval 1 month); -- 减1月``select subdate(now(), interval 1 quarter); -- 减1季``select subdate(now(), interval 1 year); -- 减1年
+```
+
+### SQL子类
+
+1. DDL（数据定义语言）
+    DDL 主要是指如下的四种SQL 语句，以 CREATE、DROP、ALRET开头和 TRUNCATE TABLE 语句。这里主要说一下 TRUNCATE TABLE ，截断表的数据，也就是删除表中的数据，删除这些数据的时候，系统不做日志，因此无法恢复，删除的速度比较快；而DELETE 语句也是删除表中的记录，但它要写日志，删除的数据可以恢复，数据量大的时候删除比较慢。
+
+2. DML（数据操纵语言）
+    它们是SELECT、UPDATE、INSERT、DELETE，就象它的名字一样，这4条命令是用来对数据库里的数据进行操作的语言。
+
+3. DQL（数据查询语言）
+    例如：SELECT语句
+
+4. TCL（事务处理语言）
+    事物处理语言是指提交、回滚和保留点3句SQL，既是commit、rollback和savepoint。事务是指一系列的连续的不可分割的数据库操作，这些操作要么同时成功，要么同时失败。oracle 的默认事务模型是显式事务模型，即执行完DML后必须手动提交或回滚。
+
+5. DCL（数据控制语言）
+    是指授予权限和回收权限语句，既是grant、revoke、deny 等语句。
+
+### MyCat
+
+#### server.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mycat:server SYSTEM "server.dtd">
+<mycat:server xmlns:mycat="http://io.mycat/">
+	<system>
+	<property name="nonePasswordLogin">0</property> <!-- 0为需要密码登陆、1为不需要密码登陆 ,默认为0，设置为1则需要指定默认账户-->
+	<property name="useHandshakeV10">1</property>
+	<property name="useSqlStat">0</property>  <!-- 1为开启实时统计、0为关闭 -->
+	<property name="useGlobleTableCheck">0</property>  <!-- 1为开启全加班一致性检测、0为关闭 -->
+
+		<property name="sequnceHandlerType">2</property>
+	<property name="subqueryRelationshipCheck">false</property> <!-- 子查询中存在关联查询的情况下,检查关联字段中是否有分片字段 .默认 false -->
+      <!--  <property name="useCompression">1</property>--> <!--1为开启mysql压缩协议-->
+        <!--  <property name="fakeMySQLVersion">5.6.20</property>--> <!--设置模拟的MySQL版本号-->
+	<!-- <property name="processorBufferChunk">40960</property> -->
+	<!-- 
+	<property name="processors">1</property> 
+	<property name="processorExecutor">32</property> 
+	 -->
+        <!--默认为type 0: DirectByteBufferPool | type 1 ByteBufferArena | type 2 NettyBufferPool -->
+		<property name="processorBufferPoolType">0</property>
+		<!--默认是65535 64K 用于sql解析时最大文本长度 -->
+		<!--<property name="maxStringLiteralLength">65535</property>-->
+		<!--<property name="sequnceHandlerType">0</property>-->
+		<!--<property name="backSocketNoDelay">1</property>-->
+		<!--<property name="frontSocketNoDelay">1</property>-->
+		<!--<property name="processorExecutor">16</property>-->
+		<!--
+			<property name="serverPort">8066</property> <property name="managerPort">9066</property> 
+			<property name="idleTimeout">300000</property> <property name="bindIp">0.0.0.0</property> 
+			<property name="frontWriteQueueSize">4096</property> <property name="processors">32</property> -->
+		<!--分布式事务开关，0为不过滤分布式事务，1为过滤分布式事务（如果分布式事务内只涉及全局表，则不过滤），2为不过滤分布式事务,但是记录分布式事务日志-->
+		<property name="handleDistributedTransactions">0</property>
+		
+			<!--
+			off heap for merge/order/group/limit      1开启   0关闭
+		-->
+		<property name="useOffHeapForMerge">1</property>
+
+		<!--
+			单位为m
+		-->
+        <property name="memoryPageSize">64k</property>
+
+		<!--
+			单位为k
+		-->
+		<property name="spillsFileBufferSize">1k</property>
+
+		<property name="useStreamOutput">0</property>
+
+		<!--
+			单位为m
+		-->
+		<property name="systemReserveMemorySize">384m</property>
+
+
+		<!--是否采用zookeeper协调切换  -->
+		<property name="useZKSwitch">false</property>
+
+		<!-- XA Recovery Log日志路径 -->
+		<!--<property name="XARecoveryLogBaseDir">./</property>-->
+
+		<!-- XA Recovery Log日志名称 -->
+		<!--<property name="XARecoveryLogBaseName">tmlog</property>-->
+		<!--如果为 true的话 严格遵守隔离级别,不会在仅仅只有select语句的时候在事务中切换连接-->
+		<property name="strictTxIsolation">false</property>
+		
+		<property name="useZKSwitch">true</property>
+		
+	</system>
+	
+	<!-- 全局SQL防火墙设置 -->
+	<!--白名单可以使用通配符%或着*-->
+	<!--例如<host host="127.0.0.*" user="root"/>-->
+	<!--例如<host host="127.0.*" user="root"/>-->
+	<!--例如<host host="127.*" user="root"/>-->
+	<!--例如<host host="1*7.*" user="root"/>-->
+	<!--这些配置情况下对于127.0.0.1都能以root账户登录-->
+	<!--
+	<firewall>
+	   <whitehost>
+	      <host host="1*7.0.0.*" user="root"/>
+	   </whitehost>
+       <blacklist check="false">
+       </blacklist>
+	</firewall>
+	-->
+
+	<user name="root" defaultAccount="true">
+		<property name="password">123456</property>
+		<property name="schemas">TESTDB</property>
+		
+		<!-- 表级 DML 权限设置 -->
+		<!-- 		
+		<privileges check="false">
+			<schema name="TESTDB" dml="0110" >
+				<table name="tb01" dml="0000"></table>
+				<table name="tb02" dml="1111"></table>
+			</schema>
+		</privileges>		
+		 -->
+	</user>
+
+	<user name="user">
+		<property name="password">user</property>
+		<property name="schemas">TESTDB</property>
+		<property name="readOnly">true</property>
+	</user>
+
+</mycat:server>
+
+```
+
+#### schema.xml
+
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+
+	<schema name="TESTDB" checkSQLschema="false" sqlMaxLimit="100">
+		<!-- auto sharding by id (long) -->
+		<table name="travelrecord" dataNode="dn1,dn2,dn3" rule="auto-sharding-long" />
+
+		<!-- global table is auto cloned to all defined data nodes ,so can join
+			with any table whose sharding node is in the same data node -->
+		<table name="company" primaryKey="ID" type="global" dataNode="dn1,dn2,dn3" />
+		<table name="goods" primaryKey="ID" type="global" dataNode="dn1,dn2" />
+		<!-- random sharding using mod sharind rule -->
+		<table name="hotnews" primaryKey="ID" autoIncrement="true" dataNode="dn1,dn2,dn3"
+			   rule="mod-long" />
+		<!-- <table name="dual" primaryKey="ID" dataNode="dnx,dnoracle2" type="global"
+			needAddLimit="false"/> <table name="worker" primaryKey="ID" dataNode="jdbc_dn1,jdbc_dn2,jdbc_dn3"
+			rule="mod-long" /> -->
+		<table name="employee" primaryKey="ID" dataNode="dn1,dn2"
+			   rule="sharding-by-intfile" />
+		<table name="customer" primaryKey="ID" dataNode="dn1,dn2"
+			   rule="sharding-by-intfile">
+			<childTable name="orders" primaryKey="ID" joinKey="customer_id"
+						parentKey="id">
+				<childTable name="order_items" joinKey="order_id"
+							parentKey="id" />
+			</childTable>
+			<childTable name="customer_addr" primaryKey="ID" joinKey="customer_id"
+						parentKey="id" />
+		</table>
+		<!-- <table name="oc_call" primaryKey="ID" dataNode="dn1$0-743" rule="latest-month-calldate"
+			/> -->
+	</schema>
+	<!-- <dataNode name="dn1$0-743" dataHost="localhost1" database="db$0-743"
+		/> -->
+	<dataNode name="dn1" dataHost="localhost1" database="db1" />
+	<dataNode name="dn2" dataHost="localhost1" database="db2" />
+	<dataNode name="dn3" dataHost="localhost1" database="db3" />
+	<!--<dataNode name="dn4" dataHost="sequoiadb1" database="SAMPLE" />
+	 <dataNode name="jdbc_dn1" dataHost="jdbchost" database="db1" />
+	<dataNode	name="jdbc_dn2" dataHost="jdbchost" database="db2" />
+	<dataNode name="jdbc_dn3" 	dataHost="jdbchost" database="db3" /> -->
+	<dataHost name="localhost1" maxCon="1000" minCon="10" balance="0"
+			  writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+		<heartbeat>select user()</heartbeat>
+		<!-- can have multi write hosts -->
+		<writeHost host="hostM1" url="localhost:3306" user="root"
+				   password="123456">
+			<!-- can have multi read hosts -->
+			<readHost host="hostS2" url="192.168.1.200:3306" user="root" password="xxx" />
+		</writeHost>
+		<writeHost host="hostS1" url="localhost:3316" user="root"
+				   password="123456" />
+		<!-- <writeHost host="hostM2" url="localhost:3316" user="root" password="123456"/> -->
+	</dataHost>
+	<!--
+		<dataHost name="sequoiadb1" maxCon="1000" minCon="1" balance="0" dbType="sequoiadb" dbDriver="jdbc">
+		<heartbeat> 		</heartbeat>
+		 <writeHost host="hostM1" url="sequoiadb://1426587161.dbaas.sequoialab.net:11920/SAMPLE" user="jifeng" 	password="jifeng"></writeHost>
+		 </dataHost>
+
+	  <dataHost name="oracle1" maxCon="1000" minCon="1" balance="0" writeType="0" 	dbType="oracle" dbDriver="jdbc"> <heartbeat>select 1 from dual</heartbeat>
+		<connectionInitSql>alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'</connectionInitSql>
+		<writeHost host="hostM1" url="jdbc:oracle:thin:@127.0.0.1:1521:nange" user="base" 	password="123456" > </writeHost> </dataHost>
+
+		<dataHost name="jdbchost" maxCon="1000" 	minCon="1" balance="0" writeType="0" dbType="mongodb" dbDriver="jdbc">
+		<heartbeat>select 	user()</heartbeat>
+		<writeHost host="hostM" url="mongodb://192.168.0.99/test" user="admin" password="123456" ></writeHost> </dataHost>
+
+		<dataHost name="sparksql" maxCon="1000" minCon="1" balance="0" dbType="spark" dbDriver="jdbc">
+		<heartbeat> </heartbeat>
+		 <writeHost host="hostM1" url="jdbc:hive2://feng01:10000" user="jifeng" 	password="jifeng"></writeHost> </dataHost> -->
+
+	<!-- <dataHost name="jdbchost" maxCon="1000" minCon="10" balance="0" dbType="mysql"
+		dbDriver="jdbc"> <heartbeat>select user()</heartbeat> <writeHost host="hostM1"
+		url="jdbc:mysql://localhost:3306" user="root" password="123456"> </writeHost>
+		</dataHost> -->
+</mycat:schema>
+```
+
+#### rule.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mycat:rule SYSTEM "rule.dtd">
+<mycat:rule xmlns:mycat="http://io.mycat/">
+	<tableRule name="rule1">
+		<rule>
+			<columns>id</columns>
+			<algorithm>func1</algorithm>
+		</rule>
+	</tableRule>
+
+	<tableRule name="rule2">
+		<rule>
+			<columns>user_id</columns>
+			<algorithm>func1</algorithm>
+		</rule>
+	</tableRule>
+
+	<tableRule name="sharding-by-intfile">
+		<rule>
+			<columns>sharding_id</columns>
+			<algorithm>hash-int</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="auto-sharding-long">
+		<rule>
+			<columns>id</columns>
+			<algorithm>rang-long</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="mod-long">
+		<rule>
+			<columns>id</columns>
+			<algorithm>mod-long</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="sharding-by-murmur">
+		<rule>
+			<columns>id</columns>
+			<algorithm>murmur</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="crc32slot">
+		<rule>
+			<columns>id</columns>
+			<algorithm>crc32slot</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="sharding-by-month">
+		<rule>
+			<columns>create_time</columns>
+			<algorithm>partbymonth</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="latest-month-calldate">
+		<rule>
+			<columns>calldate</columns>
+			<algorithm>latestMonth</algorithm>
+		</rule>
+	</tableRule>
+	
+	<tableRule name="auto-sharding-rang-mod">
+		<rule>
+			<columns>id</columns>
+			<algorithm>rang-mod</algorithm>
+		</rule>
+	</tableRule>
+	
+	<tableRule name="jch">
+		<rule>
+			<columns>id</columns>
+			<algorithm>jump-consistent-hash</algorithm>
+		</rule>
+	</tableRule>
+
+	<function name="murmur"
+		class="io.mycat.route.function.PartitionByMurmurHash">
+		<property name="seed">0</property><!-- 默认是0 -->
+		<property name="count">2</property><!-- 要分片的数据库节点数量，必须指定，否则没法分片 -->
+		<property name="virtualBucketTimes">160</property><!-- 一个实际的数据库节点被映射为这么多虚拟节点，默认是160倍，也就是虚拟节点数是物理节点数的160倍 -->
+		<!-- <property name="weightMapFile">weightMapFile</property> 节点的权重，没有指定权重的节点默认是1。以properties文件的格式填写，以从0开始到count-1的整数值也就是节点索引为key，以节点权重值为值。所有权重值必须是正整数，否则以1代替 -->
+		<!-- <property name="bucketMapPath">/etc/mycat/bucketMapPath</property> 
+			用于测试时观察各物理节点与虚拟节点的分布情况，如果指定了这个属性，会把虚拟节点的murmur hash值与物理节点的映射按行输出到这个文件，没有默认值，如果不指定，就不会输出任何东西 -->
+	</function>
+
+	<function name="crc32slot"
+			  class="io.mycat.route.function.PartitionByCRC32PreSlot">
+	</function>
+	<function name="hash-int"
+		class="io.mycat.route.function.PartitionByFileMap">
+		<property name="mapFile">partition-hash-int.txt</property>
+	</function>
+	<function name="rang-long"
+		class="io.mycat.route.function.AutoPartitionByLong">
+		<property name="mapFile">autopartition-long.txt</property>
+	</function>
+	<function name="mod-long" class="io.mycat.route.function.PartitionByMod">
+		<!-- how many data nodes -->
+		<property name="count">3</property>
+	</function>
+
+	<function name="func1" class="io.mycat.route.function.PartitionByLong">
+		<property name="partitionCount">8</property>
+		<property name="partitionLength">128</property>
+	</function>
+	<function name="latestMonth"
+		class="io.mycat.route.function.LatestMonthPartion">
+		<property name="splitOneDay">24</property>
+	</function>
+	<function name="partbymonth"
+		class="io.mycat.route.function.PartitionByMonth">
+		<property name="dateFormat">yyyy-MM-dd</property>
+		<property name="sBeginDate">2015-01-01</property>
+	</function>
+	
+	<function name="rang-mod" class="io.mycat.route.function.PartitionByRangeMod">
+        	<property name="mapFile">partition-range-mod.txt</property>
+	</function>
+	
+	<function name="jump-consistent-hash" class="io.mycat.route.function.PartitionByJumpConsistentHash">
+		<property name="totalBuckets">3</property>
+	</function>
+</mycat:rule>
+
+```
+
+
+
+### 排序函数
+
+SQL中有三种排序函数
+1、row_number() over(order by 列名)
+2、rank() over(order by 列名)
+3、dense_rank() over(order by 列名)
+
+row_number():**不考虑数据的重复性**，按照顺序一次打上标号
+如：1 2 3 4
+
+rank():是**跳跃排序**
+如：1 2 2 4,会跳过3
+
+dense_rank():是**连续排序**，考虑数据的重复性
+如：1 2 2 3 序号连续
+
+
+
+```
+#  1 2 3 4 不在乎相等的情况一直排
+select  row_number() over (order by decimal_test) ,t1.* from t1;
+
+# 1 2 2 4 跳跃
+select  rank() over (order by decimal_test),t1.* from t1;
+
+# 1 2 2 3 不跳跃
+select  dense_rank() over (order by decimal_test),t1.* from t1;
+
+# 现要查询排名在20之后的学生信息并加入排名s_rank（不包括第20名，分数相同则并列排名，排名不间断）
+select * from (select *,dense_rank()  over (order by decimal_test) r from t1) d_rank where d_rank.r>2;
+```
+
+
 
 ### SQL执行顺序 
 
@@ -4709,26 +7846,319 @@ FROM子句->WHERE子句->GROUP BY子句->HAVING子句->SELECT子句->ORDER BY子
 
 ### in&exist
 
+or可以使用union代替。
+
+in 一般可以用**exists**去优化或者使用**连接**去优化
+
+in子查询一般是使用memory引擎（hash索引）建立了一个临时表，但结果集不要太多，否则会变成基于磁盘的存储引擎（B+）。
+
 ```
 in子查询里面一定得是小表，效率比exist高，因为使用in外表是大表可以用到索引，in()里面只执行一次，先执行子查询放到临时表中，再去查询外表和内表进行匹配。
 
-假设A表是大表，B表是小表
-select * from A where cc in (select cc from B) 效率高，用到了A表上cc列的索引；
+假设子查询B表是小表，效率高
+select * from A where cc in (select cc from B) 用到了A表上cc列的索引；
+
 select * from A where exists(select cc from B where cc=A.cc) 效率低，大表A是全表扫描，只用到了小表B表上cc列的索引。 
 
-not in和not exists比较，not exists效率一定比not in高，因为not in都是全表扫描，not exists可能用到s
+not in和not exists比较，not exists效率一定比not in高，因为not in都是全表扫描，not exists可能用到索引
 ```
 
 ### 数据类型
 
+> mysql数据类型有：BOOL、TINY INT、INT、BIG INT、FLOAT、DOUBLE、DECIMAL、CHAR、VARCHAR、TINY TEXT、TEXT、Date、DateTime、TimeStamp、Year等等。
+
+![img](javaNote.assets/5f70549b1d24a291.jpg)
+
+#### 一、MySQL的数据类型
+
+主要包括以下五大类：
+
+整数类型：BIT、BOOL、TINY INT、SMALL INT、MEDIUM INT、 INT、 BIG INT
+
+浮点数类型：FLOAT、DOUBLE、DECIMAL
+
+字符串类型：CHAR、VARCHAR、TINY TEXT、TEXT、MEDIUM TEXT、LONGTEXT、TINY BLOB、BLOB、MEDIUM BLOB、LONG BLOB
+
+日期类型：Date、DateTime、TimeStamp、Time、Year
+
+其他数据类型：BINARY、VARBINARY、ENUM、SET、Geometry、Point、MultiPoint、LineString、MultiLineString、Polygon、GeometryCollection等
+
+**1、整型**
+
+| MySQL数据类型 | 含义（有符号）                       |
+| ------------- | ------------------------------------ |
+| tinyint(m)    | 1个字节 范围(-128~127)               |
+| smallint(m)   | 2个字节 范围(-32768~32767)           |
+| mediumint(m)  | 3个字节 范围(-8388608~8388607)       |
+| int(m)        | 4个字节 范围(-2147483648~2147483647) |
+| bigint(m)     | 8个字节 范围(+-9.22*10的18次方)      |
+
+取值范围如果加了unsigned，则最大值翻倍，如tinyint unsigned的取值范围为(0~256)。
+
+int(m)里的m是表示SELECT查询结果集中的显示宽度，并不影响实际的取值范围，没有影响到显示的宽度，不知道这个m有什么用。
+
+**2、浮点型(float和double)**
+
+| MySQL数据类型 | 含义                                          |
+| ------------- | --------------------------------------------- |
+| float(m,d)    | 单精度浮点型 8位精度(4字节) m总个数，d小数位  |
+| double(m,d)   | 双精度浮点型 16位精度(8字节) m总个数，d小数位 |
+
+设一个字段定义为float(6,3)，如果插入一个数123.45678,实际数据库里存的是123.457，但总个数还以实际为准，即6位。整数部分最大是3位，如果插入数12.123456，存储的是12.1234，如果插入12.12，存储的是12.1200.
+
+**3、定点数**
+
+浮点型在数据库中存放的是近似值，而定点类型在数据库中存放的是精确值。
+
+decimal(m,d) 参数m<65 是总个数，d<30且 d<m 是小数位。
+
+**4、字符串(char,varchar,_text)**
+
+| MySQL数据类型 | 含义                            |
+| ------------- | ------------------------------- |
+| char(n)       | 固定长度，最多255个字符         |
+| varchar(n)    | 固定长度，最多65535个字符       |
+| tinytext      | 可变长度，最多255个字符         |
+| text          | 可变长度，最多65535个字符       |
+| mediumtext    | 可变长度，最多2的24次方-1个字符 |
+| longtext      | 可变长度，最多2的32次方-1个字符 |
+
+char和varchar：
+
+1.char(n) 若存入字符数小于n，则以**空格补于其后**，查询之时再将空格去掉。所以**char类型存储的字符串末尾不能有空格**，varchar不限于此。
+
+2.char(n) 固定长度，char(4)不管是存入几个字符，都将占用4个字节，varchar是存入的实际字符数+1个字节（n<=255）或2个字节(n>255)，
+
+所以char(4),存入3个字符将占用4个字节。
+
+3.char类型的**字符串检索速度要比varchar类型的快**。
+
+
+
+varchar和text：
+
+1.varchar可指定n，text不能指定，内部存储varchar是存入的实际字符数+1个字节（n<=255）或2个字节(n>255)，text是实际字符数+2个字
+
+节。
+
+2.text类型不能有默认值。
+
+3.varchar可直接创建索引，text创建索引要指定前多少个字符。varchar查询速度快于text,在都创建索引的情况下，text的索引似乎不起作用。
+
+**5.二进制数据(_Blob)**
+
+1._BLOB和_text存储方式不同，_TEXT以文本方式存储，英文存储区分大小写，而_Blob是以二进制方式存储，不分大小写。
+
+2._BLOB存储的数据只能整体读出。
+
+3._TEXT可以指定字符集，_BLO不用指定字符集。
+
+**6.日期时间类型**
+
+| MySQL数据类型 | 含义                          |
+| ------------- | ----------------------------- |
+| date          | 日期 '2008-12-2'              |
+| time          | 时间 '12:25:36'               |
+| datetime      | 日期时间 '2008-12-2 22:06:44' |
+| timestamp     | 自动存储记录修改时间          |
+
+若定义一个字段为timestamp，这个字段里的时间数据会随其他字段修改的时候自动刷新，所以这个数据类型的字段可以存放这条记录最后被修改的时间。
+
+数据类型的属性
+
+| MySQL关键字        | 含义                     |
+| ------------------ | ------------------------ |
+| NULL               | 数据列可包含NULL值       |
+| NOT NULL           | 数据列不允许包含NULL值   |
+| DEFAULT            | 默认值                   |
+| PRIMARY KEY        | 主键                     |
+| AUTO_INCREMENT     | 自动递增，适用于整数类型 |
+| UNSIGNED           | 无符号                   |
+| CHARACTER SET name | 指定一个字符集           |
+
+#### 二、MYSQL数据类型的长度和范围
+
+各数据类型及字节长度一览表：
+
+| 数据类型           | 字节长度 | 范围或用法                                                   |
+| ------------------ | -------- | ------------------------------------------------------------ |
+| Bit                | 1        | 无符号[0,255]，有符号[-128,127]，天缘博客备注：BIT和BOOL布尔型都占用1字节 |
+| TinyInt            | 1        | 整数[0,255]                                                  |
+| SmallInt           | 2        | 无符号[0,65535]，有符号[-32768,32767]                        |
+| MediumInt          | 3        | 无符号[0,2^24-1]，有符号[-2^23,2^23-1]]                      |
+| Int                | 4        | 无符号[0,2^32-1]，有符号[-2^31,2^31-1]                       |
+| BigInt             | 8        | 无符号[0,2^64-1]，有符号[-2^63 ,2^63 -1]                     |
+| Float(M,D)         | 4        | 单精度浮点数。天缘博客提醒这里的D是精度，如果D<=24则为默认的FLOAT，如果D>24则会自动被转换为DOUBLE型。 |
+| Double(M,D)        | 8        | 双精度浮点。                                                 |
+| Decimal(M,D)       | M+1或M+2 | 未打包的浮点数，用法类似于FLOAT和DOUBLE，天缘博客提醒您如果在ASP中使用到Decimal数据类型，直接从数据库读出来的Decimal可能需要先转换成Float或Double类型后再进行运算。 |
+| Date               | 3        | 以YYYY-MM-DD的格式显示，比如：2009-07-19                     |
+| Date Time          | 8        | 以YYYY-MM-DD HH:MM:SS的格式显示，比如：2009-07-19 11：22：30 |
+| TimeStamp          | 4        | 以YYYY-MM-DD的格式显示，比如：2009-07-19                     |
+| Time               | 3        | 以HH:MM:SS的格式显示。比如：11：22：30                       |
+| Year               | 1        | 以YYYY的格式显示。比如：2009                                 |
+| Char(M)            | M        | 定长字符串。                                                 |
+| VarChar(M)         | M        | 变长字符串，要求M<=255                                       |
+| Binary(M)          | M        | 类似Char的二进制存储，特点是插入定长不足补0                  |
+| VarBinary(M)       | M        | 类似VarChar的变长二进制存储，特点是定长不补0                 |
+| Tiny Text          | Max:255  | 大小写不敏感                                                 |
+| Text               | Max:64K  | 大小写不敏感                                                 |
+| Medium Text        | Max:16M  | 大小写不敏感                                                 |
+| Long Text          | Max:4G   | 大小写不敏感                                                 |
+| TinyBlob           | Max:255  | 大小写敏感                                                   |
+| Blob               | Max:64K  | 大小写敏感                                                   |
+| MediumBlob         | Max:16M  | 大小写敏感                                                   |
+| LongBlob           | Max:4G   | 大小写敏感                                                   |
+| Enum               | 1或2     | 最大可达65535个不同的枚举值                                  |
+| Set                | 可达8    | 最大可达64个不同的值                                         |
+| Geometry           |          |                                                              |
+| Point              |          |                                                              |
+| LineString         |          |                                                              |
+| Polygon            |          |                                                              |
+| MultiPoint         |          |                                                              |
+| MultiLineString    |          |                                                              |
+| MultiPolygon       |          |                                                              |
+| GeometryCollection |          |                                                              |
+
+#### 三、使用建议
+
+1、在指定数据类型的时候一般是**采用从小原则**，比如能用TINY INT的最好就不用INT，能用FLOAT类型的就不用DOUBLE类型，这样会对MYSQL在运行效率上提高很大，尤其是大数据量测试条件下。
+
+2、不需要把数据表设计的太过复杂，功能模块上区分或许对于后期的维护更为方便，慎重出现大杂烩数据表
+
+3、数据表和字段的起名字也是一门学问
+
+4、设计数据表结构之前请先想象一下是你的房间，或许结果会更加合理、高效
+
+5、数据库的最后设计结果一定是效率和可扩展性的折中，偏向任何一方都是欠妥的
+
+#### 选择数据类型的基本原则
+
+前提：使用适合存储引擎。
+
+选择原则：根据选定的存储引擎，确定如何选择合适的数据类型。
+
+下面的选择方法按存储引擎分类：
+
+- MyISAM 数据存储引擎和数据列：MyISAM数据表，最好使用固定长度(CHAR)的数据列代替可变长度(VARCHAR)的数据列。
+- MEMORY存储引擎和数据列：MEMORY数据表目前都使用固定长度的数据行存储，因此无论使用CHAR或VARCHAR列都没有关系。两者都是作为CHAR类型处理的。
+- InnoDB 存储引擎和数据列：建议使用 VARCHAR类型。
+
+对于**InnoDB数据表，内部的行存储格式没有区分固定长度和可变长度列**（所有数据行都使用指向数据列值的头指针），因此在本质上，使用固定长度的CHAR列不一定比使用可变长度VARCHAR列简单。因而，**主要的性能因素是数据行使用的存储总量**。由于CHAR平均占用的空间多于VARCHAR，因 此**使用VARCHAR来最小化需要处理的数据行的存储总量和磁盘I/O是比较好的**。
+
+下面说一下固定长度数据列与可变长度的数据列。
+
+#### text和blob
+
+在使用text和blob字段类型时要注意以下几点，以便更好的发挥数据库的性能。
+
+①BLOB和TEXT值也会引起自己的一些问题，特别是执行了大量的删除或更新操作的时候。删除这种值会在数据表中留下很大的"空洞"，以后填入这些"空洞"的记录可能长度不同,为了提高性能,建议定期使用 OPTIMIZE TABLE 功能对这类表进行碎片整理.
+
+②使用合成的（synthetic）索引。合成的索引列在某些时候是有用的。一种办法是根据其它的列的内容建立一个散列值，并把这个值存储在单独的数据列中。接下来你就可以通过检索散列值找到数据行了。但是，我们要注意这种技术只能用于精确匹配的查询（散列值对于类似<或>=等范围搜索操作符 是没有用处的）。我们可以使用MD5()函数生成散列值，也可以使用SHA1()或CRC32()，或者使用自己的应用程序逻辑来计算散列值。请记住数值型散列值可以很高效率地存储。同样，如果散列算法生成的字符串带有尾部空格，就不要把它们存储在CHAR或VARCHAR列中，它们会受到尾部空格去除的影响。
+
+合成的散列索引对于那些BLOB或TEXT数据列特别有用。用散列标识符值查找的速度比搜索BLOB列本身的速度快很多。
+
+③在不必要的时候避免检索大型的BLOB或TEXT值。例如，SELECT *查询就不是很好的想法，除非你能够确定作为约束条件的WHERE子句只会找到所需要的数据行。否则，你可能毫无目的地在网络上传输大量的值。这也是 BLOB或TEXT标识符信息存储在合成的索引列中对我们有所帮助的例子。你可以搜索索引列，决定那些需要的数据行，然后从合格的数据行中检索BLOB或 TEXT值。
+
+④把BLOB或TEXT列分离到单独的表中。在某些环境中，如果把这些数据列移动到第二张数据表中，可以让你把原数据表中 的数据列转换为固定长度的数据行格式，那么它就是有意义的。这会减少主表中的碎片，使你得到固定长度数据行的性能优势。它还使你在主数据表上运行 SELECT *查询的时候不会通过网络传输大量的BLOB或TEXT值。
+
+#### 浮点数与定点数
+
+为了能够引起大家的重视，在介绍浮点数与定点数以前先让大家看一个例子：
+
+mysql> CREATE TABLE test (c1 float(10,2),c2 decimal(10,2));
+
+``Query OK, 0 rows affected (0.29 sec)``
+
+mysql> insert into test values(**131072.32,131072.32**);
+
+``Query OK, 1 row affected (0.07 sec)``
+
+mysql> select * from test;
+
+``+-----------+-----------+``| c1    | c2    |``+-----------+-----------+``| **131072.31 | 131072.32** |``+-----------+-----------+``1 row in set (0.00 sec)
+
+从上面的例子中我们看到c1列的值由131072.32变成了131072.31，这就是**浮点数的不精确性造成**的。
+
+在mysql中float、double（或real）是浮点数，**decimal（或numberic）是定点数**。
+
+浮点数相对于定点数的优点是在长度一定的情况下，浮点数能够表示更大的数据范围；它的缺点是会引起精度问题。在今后关于浮点数和定点数的应用中，大家要记住以下几点：
+
+1. 浮点数存在误差问题；
+2. 对货币等对精度敏感的数据，应该用定点数表示或存储；
+3. 编程中，如果用到浮点数，要特别注意误差问题，并尽量避免做浮点数比较；
+4. 要注意浮点数中一些特殊值的处理。
+
+
+
+- 
+
 ```
 int(11) 不影响实际存储的范围，实际还是用4个字节去存储
 只有一个字段设置了无符号和填充0属性，长度不够才会填充0，长度超过11也是失效的
+
+decimal(10,3)表示共有7位整数3位小数，此例的精确度为10位
 ```
 
 ![image-20220707170611313](javaNote.assets/image-20220707170611313.png)
 
-### 语法
+### char与varchar
+
+#### 区别
+
+varchar是变长字段，需要使用**一个或两个字节存储长度**（当允许存储的最大字节数MW（字符长度*每个字符需要的字节）大于255字节且真实字节数超过127字节时使用2字节，否则使用1字节），所以varchar也要按需分配
+
+varchar会有**内存碎片**问题（比如把200长度**更新**为50），如果一个行占用的空间增长，并且在页内没有更多的空间可以存储，在这种情况下InnoDB需要分裂页来使行可以放进页内，这样会增加碎片。内存碎片容易造成**空间浪费**和**磁盘IO读写性能下降**，因为数据更加随机分散。
+
+char的检索效率会更高
+
+char尾部空格不会存储，不足长度会空格填充，检索的时候会调用trim删除尾部的空格
+
+varchar尾部会存储空格，不足不会补空格
+
+
+
+下面的表显示了将各种字符串值保存到CHAR(4)和VARCHAR(4)列后的结果，说明了CHAR和VARCHAR之间的差别：
+
+| 值         | CHAR(4) | 存储需求 | VARCHAR(4) | 存储需求 |
+| ---------- | ------- | -------- | ---------- | -------- |
+| ''         | ' '     | 4个字节  | ''         | 1个字节  |
+| 'ab'       | 'ab '   | 4个字节  | 'ab '      | 3个字节  |
+| 'abcd'     | 'abcd'  | 4个字节  | 'abcd'     | 5个字节  |
+| 'abcdefgh' | 'abcd'  | 4个字节  | 'abcd'     | 5个字节  |
+
+请注意上表中最后一行的值只适用*不使用严格模式*时；如果MySQL运行在严格模式，超过列长度不的值不保存，并且会出现错误。
+
+从CHAR(4)和VARCHAR(4)列检索的值并不总是相同，因为**检索时从CHAR列删除了尾部的空格**。通过下面的例子说明该差别：
+
+mysql> CREATE TABLE vc (v VARCHAR(4), c CHAR(4));
+
+mysql> INSERT INTO vc VALUES (``'ab '``, ``'ab '``);
+
+mysql> SELECT CONCAT(v, ``'+'``), CONCAT(c, ``'+'``) FROM vc;
+
+![image-20220917103420225](javaNote.assets/image-20220917103420225.png)
+
+
+
+#### 适用场景
+
+**CHAR适合存储很短的字符串，或者所有值都接近同一个长度**。例如，CHAR非常适合存储密码的MD5值，因为这是一个定长的值。对于**经常变更的数据**，CHAR也比VARCHAR更好，因为**定长的CHAR类型不容易产生碎片**。对于非常短的列，CHAR比VARCHAR在存储空间上也更有效率。例如用CHAR(1)来存储只有Y和N的值，如果采用单字节字符集只需要一个字节，但是VARCHAR(1)却需要两个字节，因为还有一个记录长度的额外字节。
+
+
+
+VARCHAR适合**字符串很长或者所要存储的字符串长短不一，差别很大**；字符串列的**最大长度比平均长度大得多**；**列的更新很少，所以碎片不是问题。**
+
+### Innodb行格式
+
+**默认使用Dynamic**，类似于Compact，只不过**溢出列**有点不同：Compact会只前768字节和指向其他页的地址，
+
+而Dynamic把所有的数据都存到移除页中；
+
+Compact会把变长字段如varchar类型会加入到**变长字段列表**，并且有**null值列表**（使用位标识null值）
+
+Compact、Redundant、Dynamic和Compressed
+
+### 常见sql
 
 ```
 # 表复制，MySQL仅支持:
@@ -4754,6 +8184,49 @@ create table if not exists test.user
 	foreign key(username) references sys_user(username)
 )engine InnoDb,auto_increment=1,charset=utf8;
 
+
+# 查询选修了所有课程的学生学号和所属部门
+# 等价于查询不存在一门课这个学生没选
+select s.stu_name,s.stu_department from tb_student s
+where not exists (
+    select 1 from tb_course c # true表示有一门课该学生没有选
+    where not exists(
+        select 1 from tb_score where course_id=c.course_id and stu_id=s.stu_id
+        )
+    )
+    
+    
+# 查询“001”课程比“002”课程成绩高的所有学生的学号;
+select * from tb_student s
+where exists(
+    select 1 from tb_score sc1 where s.stu_id=sc1.stu_id and sc1.course_id=1 and exists(
+        select 1 from tb_score sc2 where s.stu_id=sc2.stu_id and sc2.course_id=2 and sc1.score<sc2.score
+        )
+          );
+
+select a.stu_id from (select * from tb_score s1 where s1.course_id=1) a ,(select * from tb_score s2 where s2.course_id=2) b
+where a.stu_id=b.stu_id and a.score<b.score;
+
+# 查询没学过“叶平”老师课的同学的学号、姓名
+select * from tb_student s where exists(
+    select 1 from tb_course c where c.course_id=1 and not exists( # 选择课程2并且该学生没有选
+        select 1 from tb_score sc where sc.course_id=c.course_id and sc.stu_id=s.stu_id
+        )
+    );
+select * from tb_student s where s.stu_id not in (
+    select distinct sc.stu_id from tb_course c,tb_score sc where c.course_id=1 and c.course_id=sc.course_id
+    );
+    
+# 查询学过“叶平”老师所教的所有课的同学的学号、姓名;=》不存在一门叶老师的课该学生没有学过
+select * from tb_student s where not exists(
+    select 1 from tb_course c where c.tea_id=1 and not exists( # 找出叶老师的课并且不存在改选手没选过
+        select 1 from tb_score sc where c.course_id=sc.course_id and sc.stu_id=s.stu_id
+        ));
+
+select * from tb_student s where s.stu_id in (
+    select sc.stu_id from tb_score sc ,tb_course c where sc.course_id=c.course_id and c.tea_id=1 group by sc.stu_id
+    having count(*) =(select count(*) from tb_course where tea_id=1)
+    );
 ```
 
 ### 复制原理
@@ -4863,9 +8336,31 @@ public class DataSourceAspect {
 
 视图不能检索，因为没有主键和索引，也没有关联的触发器、默认值等，本质只是一张查看和存放的表，另外只保存视图的定义规则
 
-### sql优化步骤
+### 索引下推
+
+https://blog.csdn.net/qq_32979219/article/details/122791064
 
 ```
+减少回表次数
+idx(name,age)
+比如select * from t where name='tt%' and age=10
+不会用到age索引，开启索引下推后，在二级索引查询到满足tt%的时候，不会直接去聚簇索引查找，而是先判断age是否满足，满足了再回表。
+
+总结：不会减少二级索引扫描的行，但能减少回表的次数，提前过滤不满足另一个索引的记录
+```
+
+### 适合建立索引？
+
+答：1.为经常出现order by 、group by、distinct后的字段添加索引
+
+2、在union等集合操作的结果集字段上建立索引
+
+3、经常做查询的字段建立索引
+
+4、经常用在表连接上的字段建立索引
+
+### sql优化步骤
+
 show status like '%%'; # 查看各种统计信息，慢查询，连接数，增删改查次数
 show processlist; # 查看当前执行sql的锁等待状态等
 
@@ -4875,7 +8370,8 @@ show profiles ; # 查看执行耗时
 show profile cpu for query 29; # 查看cpu损耗
 
 trace; # 分析优化器执行计划
-```
+
+
 
 ![image-20220616094435687](javaNote.assets/image-20220616094435687.png)
 
@@ -4923,7 +8419,9 @@ isam 没区别
 
 **Join****替代子查询**
 
-### 事务的实现原理
+### 事务实现原理
+
+#### 一、ACID如何实现
 
 ·    事务的原子性是通过 undo log 来实现的 回滚日志
 
@@ -4932,6 +8430,100 @@ isam 没区别
 ·    事务的隔离性是通过 (读写锁+MVCC)来实现的
 
 ·    而事务的终极大 boss 一致性是通过原子性，持久性，隔离性来实现的！！！
+
+#### 二、隔离级别
+
+##### 1、读未提交
+
+可以读取到未提交的数据，会出现脏读问题
+
+##### 2、读已提交
+
+只能读取到已提交的数据，但是由于是当前读（每次**生成新的ReadView**）,所以产生不可重复读
+
+##### 3、可重复读
+
+**只生成一次ReadView**，所有可重复读。但是会有幻读问题，可通过next-key锁解决
+
+##### 4、串行化
+
+#### 三、MVCC（实现隔离级别）
+
+##### 1、readView一致性视图
+
+当前活跃事务列表（m_ids），最小事务id（max_tx_id），最大事务id（min_tx_id）
+
+##### 2、版本链roll_pointer
+
+聚簇索引两个隐藏列：最新的事务id（tx_id）和回滚日志版本指针（roll_pointer）
+
+##### 3、MVCC如何工作（如何判断是否可读？）
+
+如果tx_id小于min_tx_id，那么说明已提交了，那么可读
+
+如果tx_id大于等于max_tx_id，说明事务是创建当前ReadView之后才生成的，那么对当前事务不可见
+
+如果tx_id在min_tx_id和max_tx_id之间，需要判断是否在ReadView中活跃事务列表m_ids中，如果是，说明依然活跃，那么对当前不可见，否则，对当前事务可见。
+
+
+
+如果当前版本不可读，那么会沿着回滚指针往前找旧的版本，知道对当前可读。
+
+
+
+对于读已提交来说，由于每次都是生成新的一致性视图，所以事务提交后从活跃事务列表m_ids中移除了事务，对当前可读，导致出现了不可重读问题。
+
+对于可重复读来说，只生成一次一致性视图，所以活跃事务列表m_ids不会改变，所以可以重复读
+
+#### undo_log(回滚日志)
+
+原子性，回滚到原来的样子
+
+增删改记录对应的undo_log，undo log 会写入 Buffer Pool 中的 Undo 页面
+
+#### redo_log(重做日志)
+
+崩溃恢复，保证事务做的修改和undo_log做的修改不丢失
+
+循环写（到检查点的时候就要阻塞刷盘了）
+
+在内存修改该 Undo 页面后，需要记录对应的 redo log。
+
+buffer pool修改的时候也要记录redo_log
+
+刷盘策略，为减少IO操作，不会立即刷盘，有后台线程在合适的时间写入磁盘
+
+
+
+> 事务没提交的时候，redo log 会被持久化到磁盘吗？
+
+**会的。**
+
+事务执行中间过程的 redo log 也是直接写在 redo log buffer 中的，这些缓存在 redo log buffer 里的 redo log 也会被「后台线程」每隔一秒一起持久化到磁盘。
+
+也就是说，事务没提交的时候，redo log 也是可能被持久化到磁盘的。
+
+有的同学可能会问，如果 mysql 崩溃了，还没提交事务的 redo log 已经被持久化磁盘了，mysql 重启后，数据不就不一致了？
+
+放心，这种情况 mysql 重启会进行回滚操作，因为事务没提交的时候，binlog 是还没持久化到磁盘的。
+
+所以， redo log 可以在事务没提交之前持久化到磁盘，但是 binlog 必须在事务提交之后，才可以持久化到磁盘。
+
+保存在`ib_logfile`中
+
+[博客](https://www.cnblogs.com/qianyuliang/p/9916372.html)
+
+#### bin_log
+
+追加写
+
+记录更新完后，记录bin_log
+
+statement
+
+row
+
+mix
 
 ### 常用命令
 
@@ -4945,9 +8537,13 @@ show table status like 'table_name' \G
 
 ### InnoDB和MyISAM区别
 
-innodb支持事务，外键，表锁。
+innodb支持事务，外键，行锁。
 
-MyISAM插入查询比较快。为什么插入快，因为索引和数据是分开的，因此只需要维护B树索引，数据直接按顺序插入即可；为什么查询快，同样是因为索引和数据是分开的，因此索引存放的就是数据的地址，而InnoDB还得从聚簇索引找。
+**MyISAM插入查询比较快**。
+
+为什么插入快，因为索引和数据是分开的，因此只需要维护B树索引，数据直接按顺序插入即可；
+
+为什么查询快，同样是因为索引和数据是分开的，因此索引存放的就是数据的地址，而InnoDB还得从聚簇索引找。
 
 ### B+树
 
@@ -4983,11 +8579,159 @@ B树非叶子结点存放数据，平均查找速度快，但是返回数据有�
 
 红黑树的特性：根节点为黑色，红色节点的叶子结点一定是黑色，每一条路径黑色结点数目一样，叶子结点（nil）一定是黑色
 
+### 三种锁级别
+
+**表级锁**：开销小，加锁快；**不会出现死锁**；锁定粒度大，发生锁冲突的概率最高,并发度最低。
+
+行级锁：开销大，加锁慢；会出现死锁；锁定粒度最小，发生锁冲突的概率最低,并发度也最高。
+
+页面锁：开销和加锁时间界于表锁和行锁之间；会出现死锁；锁定粒度界于表锁和行锁之间，并发度一般。
+
+### 一、行级锁
+
+**InnoDB的行级锁定的两种类型**：共享锁和排他锁，而在锁定机制的实现过程当中为了让行级锁定和表级锁定共存，InnoDB也一样使用了意向锁（表级锁定）的概念，也就有了意向共享锁和意向排他锁这两种。
+
+#### **1、行级锁的加锁：**
+
+**隐式加锁：**
+
+- InnoDB自动加意向锁。
+- 对于UPDATE、DELETE和INSERT语句，InnoDB会自动给涉及数据集加排他锁（X)；
+- 对于普通SELECT语句，InnoDB不会加任何锁；
+
+**显示加锁：**
+
+- 共享锁（S）：SELECT * FROM table_name WHERE ... **LOCK IN SHARE MODE**
+- 排他锁（X) ：SELECT * FROM table_name WHERE ... **FOR UPDATE**
+
+#### 2、三种行级锁
+
+- Next-Key Lock：Record Lock + Gap Lock 的组合，锁定一个范围，并且锁定记录本身。
+- Gap Lock，间隙锁，锁定一个范围，但是不包含记录本身；
+
+- Record Lock，记录锁，也就是仅仅把一条记录锁上；
+
+#### **间隙锁（Next-Key锁）**
+
+**间隙锁定义：**
+
+nnodb的锁定规则是经过在指向数据记录的第一个索引键以前和最后一个索引键以后的空域空间上标记锁定信息而实现的。 Innodb的这种锁定实现方式被称为“ NEXT-KEY locking” （间隙锁），由于Query执行过程当中经过范围查找的话，它会锁定整个范围内全部的索引键值，即便这个键值并不存在。
+
+例：假如emp表中只有101条记录，其empid的值分别是 1,2,…,100,101，下面的SQL：
+
+```
+mysql> select * from emp where empid > 100 for update;
+```
+
+
+是一个范围条件的检索，InnoDB不只会对符合条件的empid值为101的记录加锁，也会对empid大于101（这些记录并不存在）的“间隙”加锁。
+
+**间隙锁的缺点：**
+
+- 间隙锁有一个比较致命的弱点，就是当锁定一个范围键值以后，即便某些不存在的键值也会被无辜的锁定，而形成在**锁定的时候没法插入锁定键值范围内的任何数据**。在某些场景下这可能会对性能形成很大的危害
+- 当Query**没法利用索引**的时候， Innodb会放弃使用行级别锁定而**改用表级别的锁定**，形成并发性能的下降；
+- 当Quuery使用的索引并不包含全部过滤条件的时候，数据检索使用到的索引键所指向的数据可能有部分并不属于该Query的结果集的行列，可是也会被锁定，由于间隙锁锁定的是一个范围，而不是具体的索引键；
+- 当Query在使用索引定位数据的时候，若是使用的索引键同样但访问的数据行不一样的时候（索引只是过滤条件的一部分），同样会被锁定
+
+**间隙锁的做用：**
+
+- **防止幻读**，以知足相关隔离级别的要求。
+- 为了数据恢复和复制的需要。
+
+**注意**
+
+- 在实际应用开发中，尤为是并发插入比较多的应用，咱们要尽可能优化业务逻辑，**尽可能使用相等条件来访问更新数据，避免使用范围条件**。
+- InnoDB除了经过范围条件加锁时使用间隙锁外，若是**使用相等条件请求给一个不存在的记录加锁，InnoDB也会使用间隙锁**。
+
+#### 3、加锁规则
+
+唯一索引等值查询：
+
+- 当查询的记录是存在的，next-key lock 会退化成「**记录锁**」。
+- 当查询的记录是不存在的，next-key lock 会退化成「**间隙锁**」。
+
+非唯一索引等值查询：
+
+- 当查询的记录存在时，会加 **next-key lock** 。
+- 当查询的记录不存在时，next-key lock会退化为**间隙锁**
+
+非唯一索引和主键索引的范围查询的加锁规则不同之处在于：
+
+- 唯一索引在满足一些条件的时候，next-key lock 退化为**间隙锁和记录锁**。
+- 非唯一索引范围查询，next-key lock **不会退化为**间隙锁和记录锁。
+
+#### 4、兼容性及注意事项
+
+![img](javaNote.assets/7bd6a597317e402d90578559456486a8.png)
+
+InnoDB行锁是经过给索引上的索引项加锁来实现的。因此，只有经过索引条件检索数据，InnoDB才使用行级锁，不然，InnoDB将使用表锁。其余注意事项：
+
+- 在**不经过索引**条件查询的时候，InnoDB使用的是**表锁**，而不是行锁。 
+- 因为MySQL的行锁是针对索引加的锁，不是针对记录加的锁，因此即便是访问不一样行的记录，若是使用了相同的索引键，也是会出现锁冲突的。
+- 当表有多个索引的时候，不一样的事务可使用不一样的索引锁定不一样的行，另外，不管是使用主键索引、惟一索引或普通索引，InnoDB都会使用行锁来对数据加锁。
+- 即使在条件中使用了索引字段，但具体是否使用索引来检索数据是由MySQL经过判断不一样执行计划的代价来决定的，若是MySQL认为全表扫描效率更高，好比对一些很小的表，它就不会使用索引，这种状况下InnoDB将使用表锁，而不是行锁。所以，在分析锁冲突时，别忘了检查SQL的执行计划，以确认是否真正使用了索引。
+
+https://blog.csdn.net/zy103118/article/details/124823532
+
+https://xiaolincoding.com/mysql/lock/how_to_lock.html#%E5%94%AF%E4%B8%80%E7%B4%A2%E5%BC%95%E8%8C%83%E5%9B%B4%E6%9F%A5%E8%AF%A2
+
+### 二、表级锁
+
+#### **1、InnoDB如何加表锁：**
+
+在用 **LOCK TABLES**对InnoDB表加锁时要注意，要将AUTOCOMMIT设为0，不然MySQL不会给表加锁；事务结束前，不要用UNLOCK TABLES释放表锁，由于UNLOCK TABLES会隐含地提交事务；COMMIT或ROLLBACK并不能释放用LOCK TABLES加的表级锁，必须用UNLOCK TABLES释放表锁。
+
+```
+SET AUTOCOMMIT=0;
+LOCK TABLES t1 WRITE, t2 READ, ...;
+[do something with tables t1 and t2 here];
+COMMIT;
+UNLOCK TABLES;
+```
+
+#### 2、四种表级锁
+
+- 表锁；
+
+```sql
+//表级别的共享锁，也就是读锁；
+lock tables t_student read;
+
+//表级别的独占锁，也就是写锁；
+lock tables t_stuent write;
+```
+
+- 意向锁；
+- 元数据锁（MDL）;
+- AUTO-INC 锁；
+
+![img](javaNote.assets/f6dae7c2ecd24c0e9074d18d44913e10.png)
+
+### 三、页面锁
+
 ### 数据库死锁
 
-超时机制，进行小事务回滚
+超时、事务回滚、死锁检测
 
-我们定位到问题sql后考虑优化加锁顺序避免死锁
+#### 1、死锁解决
+
+1、设置**锁超时**时间（innodb_lock_wait_timeout）
+
+2、**回滚小事务**（通过show processlist或show engine innodb status;进行查看）
+
+3、默认有有**死锁检测**（innodb_deadlock_detect)
+
+#### 2、死锁避免
+
+1、按**相同顺序加锁**
+
+2、使用**表级锁**避免死锁
+
+3、一次**申请所有资源**
+
+4、采用读已提交
+
+![image-20220911214158999](javaNote.assets/image-20220911214158999.png)
 
 ![image-20220717150243241](javaNote.assets/image-20220717150243241.png)
 
@@ -5188,8 +8932,6 @@ Record lock, heap no 3 PHYSICAL RECORD: n_fields 18; compact format; info bits 0
 
 ```
 
-等待视图，主动去检测
-
 ### key和index
 
 ```
@@ -5331,8 +9073,6 @@ The slave coordinator and worker threads are stopped, possibly leaving data in i
 
 ```
 
-### 主从复制
-
 #### 主从不一致解决方案
 
 [博客](https://baijiahao.baidu.com/s?id=1711660568537406582&wfr=spider&for=pc)
@@ -5374,7 +9114,7 @@ mysql> showslavestatus\G Slave_IO_Running: YesSlave_SQL_Running: Yes10.回到主
 UNLOCKTABLES
 ```
 
-### 读写分离
+#### 读写分离
 
 1. 中间件：amoeba，MySQL-Proxy
 
@@ -5384,17 +9124,13 @@ UNLOCKTABLES
 
 ![img](javaNote.assets/15299539-cefd7cd3f750b59c.jpg)
 
-### redo_log(重做日志)
-
-实际保存在`ib_logfile`中
-
-[博客](https://www.cnblogs.com/qianyuliang/p/9916372.html)
-
 #### 授权命令
 
 ```
 select * from user;
+
 update user set host = '%' where user = 'root' and host='localhost';
+
 GRANT ALL ON *.* TO 'root'@'%' 
 flush privileges;    
 ```
@@ -5422,7 +9158,32 @@ data/ib_logfile1
 
 ![image-20220401184757175](javaNote.assets/image-20220401184757175.png)
 
-### dockercompose.yml
+### 命令
+
+```
+docker run -itd --name  mysql5.7-master -p 3307:3306 \
+ -v /opt/module/mysql/master/conf:/etc/mysql/conf.d \
+ -v /opt/module/mysql/master/data:/var/lib/mysql \
+ -v /opt/module/mysql/master/logs:/var/log/mysql \
+ -e MYSQL_ROOT_PASSWORD=root \
+ mysql:5.7
+ 
+ docker run -itd --name  mysql5.7-slave -p 3308:3306 \
+ -v /opt/module/mysql/slave/conf:/etc/mysql/conf.d \
+ -v /opt/module/mysql/slave/data:/var/lib/mysql \
+ -v /opt/module/mysql/slave/logs:/var/log/mysql \
+ -e MYSQL_ROOT_PASSWORD=root \
+ mysql:5.7
+ 
+  docker run -itd --name  mysql5.7-3309 -p 3309:3306 \
+ -v /opt/module/mysql/slave2/conf:/etc/mysql/conf.d \
+ -v /opt/module/mysql/slave2/data:/var/lib/mysql \
+ -v /opt/module/mysql/slave2/logs:/var/log/mysql \
+ -e MYSQL_ROOT_PASSWORD=root \
+ mysql:5.7
+```
+
+
 
 ```
 version: '2.2'
@@ -5479,8 +9240,6 @@ max_user_connections=700
 wait_timeout=400
 ```
 
-
-
 #### 开机自启动
 
 ```
@@ -5488,8 +9247,6 @@ wait_timeout=400
 
 关闭MySQL的开机自启动：chkconfig mysqld off
 ```
-
-
 
 #### 安装
 
@@ -5680,6 +9437,15 @@ truncate:删除表的数据不会在事务日志中记录，是释放数据页�
 
 ## Redis
 
+### [SCAN](http://www.redis.cn/commands/scan.html) 
+
+[SCAN](http://www.redis.cn/commands/scan.html) 命令及其相关的 [SSCAN](http://www.redis.cn/commands/sscan.html), [HSCAN](http://www.redis.cn/commands/hscan.html) 和 [ZSCAN](http://www.redis.cn/commands/zscan.html) 命令都用于增量迭代一个集合元素。
+
+- [SCAN](http://www.redis.cn/commands/scan.html) 命令用于迭代当前数据库中的key集合。
+- [SSCAN](http://www.redis.cn/commands/sscan.html) 命令用于迭代SET集合中的元素。
+- [HSCAN](http://www.redis.cn/commands/hscan.html) 命令用于迭代Hash类型中的键值对。
+- [ZSCAN](http://www.redis.cn/commands/zscan.html) 命令用于迭代SortSet集合中的元素和元素对应的分值
+
 ### 高可用
 
 #### 主从复制
@@ -5782,11 +9548,11 @@ JedisCluster客户端
 
 ### 缓存异常
 
-缓存雪崩：缓存数据同时过期。设置不同的过期时间或加锁排队
+缓存雪崩：缓存数据同时过期。设置不同的过期时间或加锁排队；预热；发送消息队列给后台进行续命
 
-缓存穿透：查询不存在的数据：采用布隆过滤器（bitMap映射所有的数据，过滤掉不存在的请求），存储null值
+缓存击穿：单点key失效导致大量请求同时进来：加锁；定时任务续命
 
-缓存击穿：单点key失效导致大量请求同时进来：加锁
+缓存穿透：查询不存在的数据：采用布隆过滤器（bitMap映射所有的数据，过滤掉不存在的请求）；存储null值
 
 ###  数据结构
 
@@ -5816,7 +9582,7 @@ Redis事务 multi discard exec
 
 组队过程中有error则会组队失败，若没有问题，最终执行的会有失败也有成功
 
-#### 集群脚本
+### 集群脚本
 
 ```
 #!/bin/bash
@@ -5833,7 +9599,7 @@ redis-cli --cluster create --cluster-replicas 1 192.168.42.100:6379 192.168.42.1
 
 ![image-20220514145004953](javaNote.assets/image-20220514145004953.png)
 
-#### 双写不一致
+### 双写不一致
 
 分布式锁
 
@@ -5990,6 +9756,102 @@ services:
 
 ## 网络
 
+### 六种基本的网络拓扑结构
+
+![img](javaNote.assets/v2-7815013b9b6381e1ee119bc948db75a8_720w.jpg)
+
+由n个节点构成的星型拓扑结构的网络中，共有 n 个直接连接。
+由n个节点构成的环状拓扑结构的网络中，共有 1 个直接的连接，
+由n个节点构成的完全型网状结构的网络中，共有 n*(n-1) 个直接的连接。
+
+#### 1、星型拓扑 n-1
+
+n-1 个直接连接
+
+![img](javaNote.assets/v2-c70b1fb3af666e40bf729b4999d1f64d_720w.png)
+
+星型拓扑结构是一个中心，多个分节点。多节点与中央节点通过点到点的方式连接。中央节点执行集中式控制策略，因此中央节点相当复杂，负担比其他各节点重的多。
+
+优点：结构简单，连接方便，管理和维护都相对容易，而且扩展性强。网络延迟时间较小，传输误差低。中心无故障，一般网络没问题。
+
+缺点：中心故障，网络就出问题，同时共享能力差，通信线路利用率不高。
+
+#### 2、环形拓扑 n
+
+n 个直接连接
+
+![img](javaNote.assets/v2-11d24184b0e3dfa6ed1b99146b4c00d6_720w.png)
+
+环形拓扑结构是节点形成一个闭合环。环形网中各节点通过环路接口连在一条首尾相连的闭合环形通信线路中，环上任何节点均可请求发送信息。传输媒体从一个端用户到另一个端用户，直到将所有的端用户连成环型。数据在环路中沿着一个方向在各个节点间传输，信息从一个节点传到另一个节点。
+
+这种结构显而易见消除了端用户通信时对中心系统的依赖性。每个端用户都与两个相临的端用户相连，因而存在着点到点链路，但总是以单向[方式](https://link.zhihu.com/?target=https%3A//baike.baidu.com/item/%E6%96%B9%E5%BC%8F)操作，于是便有上游端用户和下游端用户之称。
+
+优点：信息流在网中是沿着固定方向流动的，两个节点仅有一条道路，简化了路径选择的控制；环路上各节点都是自举控制，控制软件简单。
+
+缺点：信息源在环路中是串行地穿过各个节点，当环中节点过多时，势必影响信息传输速率，使网络的响应时间延长；环路是封闭的，不便于扩充；可靠性低，一个节点故障，将会造成全网瘫痪；维护难，对分支节点故障定位较难。
+
+#### 3、总线型拓扑
+
+![img](javaNote.assets/v2-c04742a365d294fdf8c094f0d8b0596d_720w.png)
+
+总线拓扑结构所有设备连接到一条连接介质上。由一条高速公用总线连接若干个节点所形成的网络即为总线形网络，每个节点上的网络接口板硬件均具有收、发功能，接收器负责接收总线上的串行信息并转换成并行信息送到PC工作站；发送器是将并行信息转换成串行信息后广播发送到总线上，总线上发送信息的目的地址与某节点的接口地址相符合时，该节点的接收器便接收信息。由于各个节点之间通过电缆直接连接，所以总线型拓扑结构中所需要的电缆长度是最小的，但总线只有一定的负载能力，因此总线长度又有一定限制，一条总线只能连接一定数量的节点。
+
+优点：总线结构所需要的电缆数量少，线缆长度短，易于布线和维护。多个节点共用一条传输信道，信道利用率高。
+
+缺点：总线形网常因**一个节点出现故障**（如结头接触不良等）而导致整个网络不通，因此**可靠性不高**。
+
+#### 4、树形拓扑
+
+![img](javaNote.assets/v2-f06f1d8a7898fed878535366c9a3e68b_720w.png)
+
+树形拓扑从总线拓扑演变而来,形状像一棵倒置的树,顶端是树根,树根以下带分支,每个分支还可再带子分支，树根接收各站点发送的数据,然后再广播发送到全网。我国**电话网络即采用树形结构**。
+
+优点：结构比较简单，成本低。在网络中，任意两个节点之间不产生回路，每个链路都支持双向传输。网络中节点扩充方便灵活，寻找链路路经比较方便。
+
+缺点：在这种网络系统中，除叶节点及其相连的链路外，任何一个节点或链路产生的故障都会影响整个网络。
+
+#### 5、网状拓扑 n(n-1)
+
+![img](javaNote.assets/v2-afeeef3ae7ed99ed354b6d16a913235d_720w.png)
+
+主要指各节点通过传输线互联连接起来，并且每一个节点至少与其他两个节点相连。网状拓扑结构具有较高的可靠性，但其结构复杂，实现起来费用较高，不易管理和维护，不常用于局域网。
+
+优点：网络可靠性高，一般通信子网任意两个节点交换机之间，存在着两条或两条以上的通信路径。可扩充性好，网络可建成各种形状，采用多种通信信道，多种传输速率。
+
+缺点：网络结构复杂，成本高，不易维护。
+
+#### 6、混合型拓扑
+
+![img](javaNote.assets/v2-fb9e6442d8e24577eeac8a826c1bf7dd_720w.jpg)
+
+将两种或几种网络拓扑结构混合起来构成的一种网络拓扑结构称为混合型拓扑结构（也有的称之为杂合型结构）。
+
+### 协商缓存和强制缓存
+
+#### 强制缓存
+
+Cache-controller(优先级更高)，相对时间
+
+Expires，绝对时间
+
+强缓存指的是**只要浏览器判断缓存没有过期**，则直接使用浏览器的本地缓存，决定是否使用缓存的主动性在于浏览器这边。
+
+如下图中，返回的是 200 状态码，但在 size 项中标识的是 from disk cache，就是使用了强制缓存。
+
+![img](javaNote.assets/1cb6bc37597e4af8adfef412bfc57a42.png)
+
+#### 协商缓存
+
+Last-Modify 最新修改时间
+
+Etag 资源唯一标识
+
+某些请求的响应码是 `304`，这个是告诉浏览器可以使用本地缓存的资源
+
+第一种：请求头部中的 `If-Modified-Since` 字段与响应头部中的 `Last-Modified` 字段实现
+
+第二种：请求头部中的 `If-None-Match` 字段与响应头部中的 `ETag` 字段
+
 ### HTTP2
 
 1、头部压缩
@@ -6042,16 +9904,18 @@ TCP和UDP是**可以同时绑定一个端口**的，只要四元组不同就可�
 
 ### DDOS
 
-```
-解决：限制半连接的打开数
+- **限制半连接队列大小**。多的会丢弃
+
+- SYN-ACK的**重试次数减少**。减少服务端的超时重传
+
+
 
 当大量syn请求包发送给服务端的时候，需要设置合理的最大并发半开连接数。一旦超过相应的最大限制，系统就会认为自己收到了syn flood攻击，进入防范模式中。SYN Timeout时间被减短，SYN-ACK的重试次数减少，系统也会自动对缓冲区中的报文进行延时，避免对TCP/IP堆栈造成过大的冲击，力图将攻击危害减到最低。
-在三次握手过程中，服务器发送SYN-ACK之后，收到客户端的ACK之前的TCP连接称为半连接(half-open connect)。此时服务器处于SYN_RECV状态。当收到ACK后，服务器转入ESTABLISHED状态。
+
 
 攻击客户端通过发包器，在短时间内伪造大量不存在的IP地址，向服务器不断地发送SYN包，服务器回复确认包SYN/ACK，并等待客户的确认，由于源地址是不存在的，服务器需要不断的重发SYN/ACK直至超时，这些伪造的SYN包将长时间占用未连接队列，正常的SYN请求被丢弃，目标系统运行缓慢，严重者引起网络堵塞甚至系统瘫痪。
 
 SYN攻击是一个典型的DDOS攻击。检测SYN攻击非常的方便，当你在服务器上看到大量的半连接状态时，特别是源IP地址是随机的，基本上可以断定这是一次SYN攻击。
-```
 
 
 
@@ -6175,7 +10039,7 @@ vip的概念：也可以保护后端真正的服务器
 
 网关：协议转换器，充当转换翻译的重任，如果两个网络的通信协议、数据格式或语言不同时，网关会对信息重新打包，以适应目标系统的需求。默认在网络层以上实现网络互联（可用于局域网或广域网）
 
-传输网关：在两个网络之间建立传输连接，不同网络的主机之间可跨越多个网络的、级联的、**点对点**的传输连接
+传输网关：在**两个网络之间建立传输连接**，不同网络的主机之间可跨越多个网络的、级联的、**点对点**的传输连接
 
 #### 网络层
 
@@ -6225,6 +10089,13 @@ BGP协议：边界网关协议，域间路由协议，互联网的规模很大�
 
 ### DNS域名解析
 
+主要是使用UDP协议,默认端口53
+
+主DNS服务器和辅助DNS服务器之间使用TCP协议，
+
+1. 辅域名服务器会定时（一般时3小时）向主域名服务器进行查询以便了解数据是否有变动。如有变动，则会执行一次区域传送，进行数据同步。区域传送将使用TCP而不是UDP，因为数据同步传送的数据量比一个请求和应答的数据量要多得多。 
+2. TCP是一种可靠的连接，保证了数据的准确性。 
+
 浏览器首先看一下自己的缓存里有没有，如果没有就向操作系统的缓存要，还没有就检查本机域名解析文件 `hosts`，如果还是没有，就会 DNS 服务器进行查询，查询的过程如下：
 
 1. 客户端首先会发出一个 DNS 请求，问 www.server.com 的 IP 是啥，并发给本地 DNS 服务器（也就是客户端的 TCP/IP 设置中填写的 DNS 服务器地址）。
@@ -6261,6 +10132,8 @@ DNAT:当内部需要对外提供服务时，外部发起主动连接，路由器
 运行局域网的物理机器从网关服务器的ARP表或缓存上请求其IP地址
 
 ### 滑动窗口协议
+
+![image-20220911104809067](javaNote.assets/image-20220911104809067.png)
 
 停止等待、退后N帧，选择重传
 
@@ -6368,11 +10241,37 @@ https://blog.csdn.net/qq_35361244/article/details/109251983
 
 [select,poll,epoll](https://blog.csdn.net/wteruiycbqqvwt/article/details/90299610)
 
-```
-select：O(n) 遍历
-poll：O(n) 遍历，无连接数限制，因为采用链表
-epoll：O(1) 事件IO
-```
+##### select/poll
+
+需要进行 **2 次「遍历」文件描述符集合**，一次是在内核态里，一个次是在用户态里 ，而且还会发生 **2 次「拷贝」文件描述符集合**，先从用户空间传入内核空间，由内核修改后，再传出到用户空间中
+
+O(n) 遍历,BitsMap存储,
+poll采用链表，因此无连接数限制
+
+##### epoll
+
+维护了红黑树，时间驱动机制，通过回调加入到就绪列表中，返回就绪的socket列表
+
+*第一点*，epoll 在内核里使用**红黑树来跟踪进程所有待检测的文件描述字**，把需要监控的 socket 通过 `epoll_ctl()` 函数加入内核中的红黑树里，红黑树是个高效的数据结构，增删改一般时间复杂度是 `O(logn)`。而 select/poll 内核里没有类似 epoll 红黑树这种保存所有待检测的 socket 的数据结构，所以 select/poll 每次操作时都传入整个 socket 集合给内核，而 epoll 因为在内核维护了红黑树，可以保存所有待检测的 socket ，所以只需要传入一个待检测的 socket，减少了内核和用户空间大量的数据拷贝和内存分配。
+
+*第二点*， epoll 使用**事件驱动**的机制，内核里**维护了一个链表来记录就绪事件**，当某个 socket 有事件发生时，通过**回调函数**内核会将其加入到这个就绪事件列表中，当用户调用 `epoll_wait()` 函数时，只会返回有事件发生的文件描述符的个数，不需要像 select/poll 那样轮询扫描整个 socket 集合，大大提高了检测的效率。
+
+O(1) 事件驱动IO
+
+![img](javaNote.assets/epoll.png)
+
+epoll 的方式即使监听的 Socket 数量越多的时候，效率不会大幅度降低，能够同时监听的 Socket 的数目也非常的多了，上限就为系统定义的进程打开的最大文件描述符个数。
+
+
+
+**边缘触发和水平触发**
+
+边缘触发（效率更高）：只触发一次，一般配合nio使用
+
+水平触发：不断从epoll_wait 中苏醒，直到内核缓冲区数据读完
+
+- 使用边缘触发模式时，当被监控的 Socket 描述符上有可读事件发生时，**服务器端只会从 epoll_wait 中苏醒一次**，即使进程没有调用 read 函数从内核读取数据，也依然只苏醒一次，因此我们程序要保证一次性将内核缓冲区的数据读取完；
+- 使用水平触发模式时，当被监控的 Socket 上有可读事件发生时，**服务器端不断地从 epoll_wait 中苏醒，直到内核缓冲区数据被 read 函数读完才结束**，目的是告诉我们有数据需要读取；
 
 **select**阻塞调用线程，直到一个或多个数据包准备就绪，然后系统调用（**recvfrom**）拷贝数据
 
@@ -6639,7 +10538,19 @@ public class WebSocketStompConfig implements WebSocketMessageBrokerConfigurer {
 
 
 
-### HTTP常见状态码
+### HTTP常见方法和状态码
+
+#### 5个常用Method
+
+get 从服务器端获取资源
+
+put 提交资源
+
+post 更新资源
+
+delete 删除资源
+
+connect 建立tunnel隧道
 
 #### **状态码分类表**
 
@@ -6705,7 +10616,23 @@ public class WebSocketStompConfig implements WebSocketMessageBrokerConfigurer {
 
 用非对称加密的方式协商对称密匙
 
+![img](javaNote.assets/458D639F0DE2FDB51585834A999C051C.png)
+
+#### http&https区别
+
+https是http加上ssl的应用层协议。在http的基础上增加了安全性和可靠性。
+
+端口的不同：http默认是80端口， https默认是443端口
+
+安全性：http是明文传输，https是密文传输。
+
+认证：http没有认证，https是先进行TCP连接，再进行SSL层的握手，在这个过程中需要认证。
+
+成本上：https的证书需要成本，同时加密和解密时对CPU和内存开销增加。
+
 #### 一、四次握手过程
+
+https通信时，首先建立ssl层的连接，客户端将ssl版本号和加密组件发到客户端，客户端收到后对ssl版本号和加密组件进行匹配，同时将CA证书及密钥发送到客户端。客户端对证书进行验证，验证通过后使用非对称加密对数据通信时的密钥进行协商。协商后得到一致的获得一致的对称加密密钥。然后使用对称加密算法进行
 
 1、客户端发送TLS版本，client随机数和支持的密码套件列表（密匙交换算法--签名算法--对称加密算法--摘要算法）
 
@@ -6917,15 +10844,26 @@ MSL 是Maximum Segment Lifetime英文的缩写“报文最大生存时间”，�
 
 消息发出来谁知道别人收没收到，所以还需要一个确认
 
-### TIME_WAIT等待2MSL
+### TIME_WAIT
+
+#### 为什么等待2MSL
 
 msl:（报文最大存活时间）
 
-1. 确保服务器收到自己的ACK报文，让服务器释放资源
+1. 服务器等待ACK时间+超时重传时间就是2MSL，确保服务器接收ACK报文并正常关闭，**释放资源**。
 
-   自己传过去的ACK传输的最大时间，这段时间服务器还没收到触发超时重传，**重传所需要的时间**。
+2. 避免历史连接中的数据**被客户端**相同的四元组接收。服务端以相同的四元组重新打开了新连接，前面被延迟的 `SEQ = 301` 这时抵达了客户端，而且该数据报文的序列号刚好在客户端接收窗口内，因此客户端会正常接收这个数据报文，但是这个数据报文是上一个连接残留下来的，这样就产生数据错乱等严重的问题
 
-2. 让网路中遗留老连接都死亡，避免影响被动方新的连接。如果没有TIME_WAIT，如果被动方延迟的FIN包到了主动方，主动方会发送RST包，那么会**影响被动方新的连接**
+#### TIME_WAIT 危害
+
+- 第一是占用**系统资源，比如文件描述符**、内存资源、CPU 资源、线程资源等；
+- 第二是**占用端口资源**，端口资源也是有限的，一般可以开启的端口为 `32768～61000`，也可以通过 `net.ipv4.ip_local_port_range`参数指定范围。
+
+#### 优化
+
+- 打开 net.ipv4.tcp_tw_reuse 和 net.ipv4.tcp_timestamps 选项；**重用tw状态的socket**
+- net.ipv4.tcp_max_tw_buckets.过这个值时，系统就会将后面的 TIME_WAIT 连接状态**重置**
+- 程序中使用 SO_LINGER ，应用强制使用 RST 关闭。**直接关闭**
 
 ### ip地址划分
 
@@ -6950,11 +10888,43 @@ msl:（报文最大存活时间）
 我们平时说的局域网地址一般都是在留用的私有地址的范围内，这些地址为非注册IP。局域网和外网交互是通过互联网运营商分配给我们的动态IP（该IP为公有IP地址）。一般一个局域网分配一个公有IP，局域网内的所有主机通过路由器（或其他设备）上的一种映射机制访问外网。
 ```
 
+#### 子网划分
+
+子网号**不能是另一个子网的前缀**，不然路由器转发的时候就不能区分去哪个子网了。
+
+可以采用**哈夫曼编码**，划分5个子网号的哈夫曼树如下：
+
+```
+0
+10
+110
+1110
+1111
+```
+
+所以至少需要4位存储保留子网号，所以主机数为2^8-2=254，即IP地址数为254
+
+![image-20220910154143478](javaNote.assets/image-20220910154143478.png)
+
+![image-20220916195347877](javaNote.assets/image-20220916195347877.png)
+
 ### 网卡（网络设配器）
 
 ```
-电脑与局域网相连的设备
+链路层电脑接入局域网的设备
 ```
+
+网卡**属于OSI的物理层与链路层**，它工作在物理层和数据链路层的MAC子层。
+
+网卡，即网络接口控制器，又称网络接口控制器，**网络适配器**，网卡，或局域网接收器，是一块被设计用来允许**计算机在计算机网络上进行通讯的计算机硬件**；**计算机与外界局域网的连接是通过网卡进行的**。由于其拥有MAC地址，因此属于OSI模型的第1层（物理层）；它使得用户可以通过电缆或无线相互连接。
+
+**网卡主要功能：**
+
+1、实现与主机总线的通讯连接，解释并执行主机的控制命令。
+
+2、实现数据链路层的功能。
+
+3、实现物理层的功能 网卡简称网络接口卡 ，是计算机局域网中重要的连接设备之一，**计算机通过网卡接入网络**。
 
 ### 粘包
 
@@ -6974,21 +10944,226 @@ D:添加长度信息。
 - IPv6 包头包首部长度采用固定的值 `40` 字节，去掉了包头校验和，简化了首部结构，减轻了路由器负荷，大大**提高了传输的性能**。
 - IPv6 有应对伪造 IP 地址的网络安全功能以及防止线路窃听的功能，大大**提升了安全性**。
 
-### 网卡
-
-网卡**属于OSI的物理层与链路层**，它工作在物理层和数据链路层的MAC子层。
-
-网卡，即网络接口控制器，又称网络接口控制器，网络适配器，网卡，或局域网接收器，是一块被设计用来允许**计算机在计算机网络上进行通讯的计算机硬件**；**计算机与外界局域网的连接是通过网卡进行的**。由于其拥有MAC地址，因此属于OSI模型的第1层（物理层）；它使得用户可以通过电缆或无线相互连接。
-
-**网卡主要功能：**
-
-1、实现与主机总线的通讯连接，解释并执行主机的控制命令。
-
-2、实现数据链路层的功能。
-
-3、实现物理层的功能 网卡简称网络接口卡 ，是计算机局域网中重要的连接设备之一，**计算机通过网卡接入网络**。
-
 ## 算法和数据结构
+
+### 分布式唯一ID
+
+#### 一、分布式唯一ID的需求产生的背景
+
+在分布式集群环境环境中，大量的业务场景需要使用到唯一ID的情况，如用户需要唯一身份标识、商品需要唯一标识、消息需要唯一标识、事件需要唯一标识等，都需要全局唯一ID，尤其是复杂的分布式业务场景中全局唯一ID更为重要那么，分布式唯一ID有哪些特性或要求呢？
+
+① 唯一性：生成的ID全局唯一，在特定范围内冲突概率极小。
+② 有序性：生成的ID按某种规则有序，便于数据库插入及排序。
+③ 可用性：可保证高并发下的可用性, 确保任何时候都能正确的生成ID。
+④ 自主性：分布式环境下不依赖中心认证即可自行生成ID。
+⑤ 安全性：不暴露系统和业务的信息, 如：订单数,用户数等。
+
+#### 二、常见的分布式唯一ID解决方案
+
+总的来说，大概有三大类方法，分别是：
+数据库自增ID、
+UUID生成、
+redis生成、
+snowflake雪花算法。
+
+#### 1、【数据库自增长ID】
+
+【优缺点】
+优点： 非常简单，有序递增，方便分页和排序；
+缺点： 分库分表后，同一数据表的自增ID容易重复，无法直接使用(可以设置步长，但局限性很明显)；性能吞吐量整个较低；ID号码不够随机，能够泄露发号数量的信息，不太安全。
+
+【使用场景】
+单数据库实例的表ID(包含主从同步场景)，部分按天计数的流水号等；分库分表场景、全系统唯一性ID场景不适用
+
+#### 2、UUID生成
+
+【生成原理】
+UUID生成id需要用到**以太网卡地址**、**纳秒级时间**、芯片ID码和许多可能的数字。其生成的id由当前日期和时间(UUID的第一个部分与时间有关，如果你在生成一个UUID之后，过几秒又生成一个UUID，则第一个部分不同，其余相同)，时钟序列，全局唯一的IEEE机器识别号。
+
+【优缺点】
+优点： 不依赖任何数据源，自行计算，没有网络ID，速度超快，并且全球唯一；
+缺点： 没有顺序性，并且比较长(128bit)，作为数据库主键、索引会导致索引效率下降，空间占用较多。
+
+【使用场景】
+只要对存储空间没有苛刻要求的都能够适用，比如各种链路追踪、日志存储等。
+
+#### 3、redis生成id
+
+【生成原理】
+依赖redis的数据源，通过**redis的incr/incrby自增原子操作**命令，能保证生成id肯定是唯一有序的，本质生成方式与数据库一致。
+
+【优缺点】
+优点： 整体吞吐量比数据库要高；
+缺点：Redis是基于内存的数据库，其实例或集群宕机后，找回最新的ID值有点困难。由于使用自增，对外容易暴露业务数据总量
+
+【应用场景】
+比较适合计数场景，如用户访问量，订单流水号(日期+流水号)等。
+
+#### 4、雪花算法snowflake
+
+【实现原理】
+属于半依赖数据源方式，原理是使用**Long类型**(64位)，按照一定的规则进行填充：**时间(毫秒级)+集群ID+机器ID+序列号**，每部分占用的位数可以根据实际需要分配，其中集群ID和机器ID这两部分，在实际应用场景中要依赖外部参数配置或数据库记录。
+
+【优缺点】
+优点： 高性能、低延迟、去中心化、按时间有序；
+缺点： 要求机器时钟同步(到秒级即可)，即时间回拨 会导致id重复。
+
+【使用场景】
+分布式应用环境的数据主键，大多数使用雪花算法来实现分布式id。
+
+【如何解决时间回拨问题】
+时间回拨是指，当机器出现问题,时间可能回到之前,此时雪花算法生成的id可能与之前的id值相同，从而导致id重复
+【解决方式】
+1、系统抛出异常，运维来手动调整时间；
+2、延迟等待，对于偶然性的时间回拨，也许是机器出现了一次小故障，频繁出现的概率并不大，所以对于这种情况没必要中断业务，可以采用阻塞线程5ms，再获取时间，对比看时间是否比上一次请求的时间大，如果大了,说明恢复正常了,则不用管；如果还小,说明真出问题了,则抛出异常,呼唤程序员处理
+3、备用机方式来解决，当前机器出现问题，迅速换一台机器，通过高可用解决
+
+### 加密算法
+
+![image-20220911110949448](javaNote.assets/image-20220911110949448.png)
+
+1.RSA：是一个支持变长密钥的公共密钥算法，需要加密的文件块的长度也是可变的，**非对称**算法； 
+
+  2.RC2和RC4：**对称**算法，用变长密钥对大量数据进行加密，比 DES 快； 
+
+  3.DES（Data Encryption Standard）：**对称**算法，数据加密标准，速度较快，适用于加密大量数据的场合； 
+
+  
+
+MD5 由于是**单向不可逆的**，所以**不可以解密**，不能用来对文本进行加密，可以用来签名，校验数据的完整性
+
+### 顺序表插入删除移动次数
+
+插入移动次数：n / 2
+
+![\sum_{i=0}^{n+1} \frac{1}{n+1}(n-i)=\frac{1}{n+1} \sum_{i=0}^{n+1}(n-i)=\frac{1}{n+1} \frac{n(n+1)}{2}=\frac{n}{2}](javaNote.assets/frac{n}{2}.gif)
+
+删除：(n-1) / 2
+
+![\sum_{i=0}^{n} p_{0}(n-i)=\sum_{i=0}^{n} \frac{1}{n}(n-i)=\frac{1}{n} \sum_{i=0}^{n}(n-i)=\frac{1}{n} \frac{n(n-1)}{2}=\frac{n-1}{2}](javaNote.assets/frac{n-1}{2}.gif)
+
+![image-20220904173720513](javaNote.assets/image-20220904173720513.png)
+
+### 广义表
+
+#### 广义表的长度
+
+指广义表中所包含的数据元素的个数
+
+例如，在广义表 {a,{b,c,d}} 中，它包含一个原子和一个子表，因此该广义表的长度为 2，深度为2。
+再比如，广义表 {{a,b,c}} 中只有一个子表 {a,b,c}，因此它的长度为 1，深度为2。
+
+#### 广义表的深度
+
+可以通过观察该表中所包含括号的层数间接得到。这里需要注意，数左括号（或右括号）时同一层次的多个括号只计算一次
+
+比如：广义表 {{1,2},{3,{4,5}}} 中，子表 {1,2} 和 {3,{4,5}} 位于同层，此广义表中包含 3 层括号，因此长度为，2深度为 3。
+
+E((a,(a,b),((a,b),c)))长度为1，深度为4
+
+![image-20220903172328335](javaNote.assets/image-20220903172328335.png)
+
+### 算法的基本要素
+
+一是**对数据对象的运算和操作**
+
+二是算法的**控制结构**
+
+![image-20220903171857564](javaNote.assets/image-20220903171857564.png)
+
+### 活结点
+
+活结点：能够扩展子节点的节点
+
+![image-20220903171806688](javaNote.assets/image-20220903171806688.png)
+
+### hash冲突
+
+常用处理冲突的思路：
+
+- 换个位置: `开放地址法`
+- 同一位置的冲突对象组织在一起:`链地址法`
+
+一旦产生了冲突（该地址已有其它元素），就按某种规则去寻找另一空地址
+
+若发生了第 i 次冲突，试探的下一个地址将增加di，基本公式是：
+hi(key) = (h(key)+di) mod TableSize ( 1≤ i < TableSize )
+di 决定了不同的解决冲突方案：线性探测、平方探测、双散列。
+线性探测：di = i
+平方探测：di = ± i2( +12, -12, +22, -22……)
+双散列：di = i * h2(key)
+
+### 算法设计的四个要求
+
+1、可读性
+
+2、正确性
+
+3、健壮性
+
+4、时间和空间效率
+
+### 进制转换
+
+#### 1.十进制转换为其他进制：短除法
+
+520=0X208 (2×16×16+8=520)
+
+![img](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6L-95qKm5LmL,size_20,color_FFFFFF,t_70,g_se,x_16.png)
+
+#### 2.其他进制转换为十进制：位权计算
+
+![img](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6L-95qKm5LmL,size_20,color_FFFFFF,t_70,g_se,x_16-16621894680792.png)
+
+ 如：
+
+​	二进制  1001 0011      其十进制为：1×2^7+1×2^4+1×2^1+1×2^0=147
+
+​    八进制  1010               其十进制为：1×8^3+1×8^1=520
+
+#### 3.二进制、八进制、十六进制的相互转换：拆位
+
+![img](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6L-95qKm5LmL,size_20,color_FFFFFF,t_70,g_se,x_16-16621894842934.png)
+
+#### 5、十进制小数转二进制
+
+同样按权展开，得B=a(2^-1)+b(2^-2)。因为小数部分的**位权是负次幂，所以我们只能乘2**，得2B=a+b（2^-1)。注意a变成了整数部分，我们取整数正好是取到了a，剩下的小数部分也如此。
+
+![img](javaNote.assets/472309f7905298221d54ce53daca7bcb0a46d43f.png)
+
+### 循环队列
+
+#### 1、初始化
+
+![img](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5LiD5LujMzY1,size_20,color_FFFFFF,t_70,g_se,x_16.png)
+
+#### 2、判空
+
+Q.front == Q.rear
+
+#### 3、获取元素个数
+
+(Q.rear - Q.front + MaxSize) % MaxSize
+
+#### 4、入队
+
+Q.base[Q.rear]=e; 将元素e放入Q.rear指向的空间
+
+Q.rear=(Q.rear+1)%Maxsize rear指针向后移动一个单位
+
+#### 5、出队
+
+e=Q.base[Q.front];
+
+Q.front=[Q.front+1]%Maxsize
+
+#### 6、获取队头元素
+
+Q.**base**[Q.front]
+
+#### 7、获取队尾元素
+
+Q.**base**[Q.rear - 1] 注意rear指向空，前一位才是队尾元素
 
 ### 二次散列
 
@@ -7067,11 +11242,15 @@ f(6)=        f(5)         +           f(4)
 
 ### 八大排序
 
-```
+**直接插入排序和冒泡排序的最好情况都是O(n)**
+
 稳定性：跳跃的一定是不稳定的
 希尔排序就是插入排序的升级版，不稳定的，复杂度最差最坏都是O(nlog2n)
 归并排序：O(nlog2n),稳定
-```
+
+归并需要的O(n)的空间，快排需要O(nlogn)的空间
+
+
 
 **直接插入排序**（稳定）：从第二位开始遍历，如果小于前一位，就找到往前找插入到最合适的位置。O(n^2)。稳定
 
@@ -7108,7 +11287,49 @@ n个顶点的有向强连通图：至少有n条边（形成环），最多有n(n
 
 n个顶点的无向强连通图：至少有n-1条边（一条直线），最多有n(n-1)/2条边
 
+### 点积
+
+![image-20220911112833002](javaNote.assets/image-20220911112833002.png)
+
+大于0，说明是锐角
+
+小于0，说明是钝角
+
+等于0，说明是直角
+
+### 向量
+
+AB+BC=AC
+
+AB-AC=CB
+
 ### 排列组合
+
+【1】、10个相同的糖果，分给3个孩子A、B、C，每个孩子至少一个，有多少种不同的分法？C（9，2）=36
+
+【2】、10个相同的糖果，分给3个孩子A、B、C，有多少种不同的分法？C（12，2）=66
+
+【3】、10个相同的糖果，分给3个孩子A、B、C，每个孩子至少2个，有多少种不同的分法？C（6，2）=15
+
+【4】、10个相同的糖果，分给3个孩子A、B、C，A至少一个，B至少2个，C可以没有，有多少种不同的分法？C（9，2）=36
+
+【答案】
+
+【1】第一题是最为典型的插板法的题目。10个糖果排成一排，共形成9个空，我从这9个空里选两个，插入隔板，便把这10个糖果分成了三份，每份起码有一个，这样的话，方法数就是**C（9，2）=36**。
+
+【2】、与第一题不同，这里没有限制孩子获得的数量，意味着有些孩子可以分到0个。那么这时候就不能直接用插板法了，必须转化成每个孩子至少得到1个。怎么转化呢？
+
+很简单，分这10个糖果之前就**给每个小朋友1个糖果**，这样就保证分的时候每个小朋友至少分一个了，就可以用插板法了，只不过这时的题就变成了“10+3=13个相同的糖果，分给3个孩子A、B、C，每个孩子至少一个，有多少种不同的分法？”.
+
+13个糖果12个空，分成三组插两块板，方法数就是**C（12，2）=66**。
+
+【3】.不能直接插板，需要先将至少2个转化成至少1个，咋转化？**先给每人1个**，剩下的至少每人一个就搞定啦！题目变为“10-1×3=7个相同的糖果，分给3个孩子A、B、C，每个孩子至少一个，有多少种不同的分法？”
+
+7个糖果6个空，分成三组插两块板，方法数就是C（6，2）=15。
+
+【4】此题综合了这几类题型，还是转化：A满足不用管；**B至少2个，需要先分掉1个**；**C可以不分，那就借一个给他**。 10-1+1=10，题目变成第一小题了，答案还是36.
+
+![image-20220911111609106](javaNote.assets/image-20220911111609106.png)
 
 [文章](https://zhuanlan.zhihu.com/p/41855459)
 
@@ -7136,21 +11357,96 @@ n个顶点的无向强连通图：至少有n-1条边（一条直线），最多�
 
 中序的前驱后继结点
 
-### 最小生成树：
+### 最小生成树
+
+最小生成树的**代价唯一**的，但**生成树不唯一**，比如每一条边都一样的生成树。
+
+所有权值最小的边**不一定**会出现在所有的最小生成树中。
+
+使用普里姆(Prim)算法从不同顶点开始得到的最小生成树不一定相同，比如每一条边都一样的生成树。
+
+使用普里姆算法和克鲁斯卡尔(Kruskal)算法得到的最小生成树**可能相同**
+
+![image-20220910151336530](javaNote.assets/image-20220910151336530.png)
 
 #### prim（普里姆）算法
 
+O(n^2) 
+
 每次维护一个联通集（已形成的生成树），不断**加入距生成树最近的顶点**。
 
-顶点多比较适合。
+针对顶点进行，所以**边多**比较适合。
+
+```
+    int buildMinSpan_tree(int[][] dist, int n) {
+        // 开始构造最小生成树
+        int ans=0;
+        int[] lowCost=new int[n], // 距联通集中的最短距离
+                vertex=new int[n]; // 距联通集的最短距离对应的顶点
+
+        // 首先把0加入联通集中（最小生成树从哪一个顶点开始结果是一样的）
+        lowCost[0]=0;
+        vertex[0]=0;
+        for (int i = 1; i < n; i++) {
+            lowCost[i]=dist[0][i]; // 初始化结点到联通集的距离为到顶点0的距离（lowCost=0表示已加入联通集）
+            vertex[i]=0; // 相关顶点左边也为0
+        }
+
+        for (int i = 1; i < n; i++) {
+            // 找到距离联通集最近的结点
+            int k=-1,minValue=Integer.MAX_VALUE;
+            // 遍历distance,找到最近的结点
+            for (int j = 1; j < n; j++) {
+                if(lowCost[j]!=0&&lowCost[j]<minValue){ // 未加入联通集，得到距离当前联通集最近的顶点
+                    k=j; // 记录新加入的下标
+                    minValue=lowCost[j]; // 更新最小值
+                }
+            }
+
+            ans+=lowCost[k]; // 累计生成树的花费
+            lowCost[k]=0; // 加入联通集
+
+            // 更新distance数组，即到联通集的最短距离
+            for (int j = 1; j < n; j++) {
+                if(dist[k][j]<lowCost[j]){
+                    // 新加入的顶点更近
+                    vertex[j]=k;
+                    lowCost[j]=dist[k][j];
+                }
+            }
+        }
+        return ans;
+    }
+```
+
+[leetcode 1584. 连接所有点的最小费用](https://leetcode.cn/problems/min-cost-to-connect-all-points/)
+
+[个人题解地址](https://leetcode.cn/problems/min-cost-to-connect-all-points/solution/primsuan-fa-by-moon-iw-dyi7/)
+
+算法思想：
+先找一个结点，之后不断加入距离联通集最近的顶点，同时更新顶点到联通集的最短距离。
+Prim算法是针对顶点进行，所以边多的情况比较适合。
+
+
+/**
+ * 最小生成树之Prim算法
+ * 使用数组lowCost表示距联通集中的最短距离，初始为到顶点0的距离；之后每加入一个顶点，更新数组
+ * 使用数组vertex距联通集的最短距离对应的顶点存储距离已有生成树中距离
+ * 时间：O（n^2）
+ * 空间：O(n) 存储 距联通集中的最短距离 和 距联通集的最短距离对应的顶点
+ */
+
+参考：大话数据结构
 
 #### Kruskal（克鲁斯卡尔）算法
 
+O(eloge) 根据边决定
+
 **贪心算法**：每次把最短的边连起来
 
-eloge边先排好序，每次把边连起来，同时**保证不形成环**就连起来。
+eloge边先**排好序**，每次把边连起来，同时**保证不形成环**就连起来。
 
-边少比较适合。
+针对边排序，所以**边少比较适合**。
 
 ### 单源最短路径
 
@@ -7166,6 +11462,8 @@ eloge边先排好序，每次把边连起来，同时**保证不形成环**就�
 
 ### 哈夫曼树
 
+可用于**子网划分**
+
 带权最短路径WPL最小的二叉树，**权重越大的让他路径越短**
 
 ![image-20220512123555113](javaNote.assets/image-20220512123555113.png)
@@ -7176,22 +11474,53 @@ eloge边先排好序，每次把边连起来，同时**保证不形成环**就�
 
 ### 红黑树
 
+**B+树**插入操作的平均时间复杂度为O(logn)，最坏时间复杂度为**O(n)**
+**Hash表**插入操作的平均时间复杂度为O(1)，最坏时间复杂度为O(n)
+**排序链表**插入操作的平均和最坏时间复杂度为O(n)
+**红黑树**插入操作的平均和最坏时间复杂度为**O(logn)**
+
+![image-20220904221704838](javaNote.assets/image-20220904221704838.png)
+
+解决**BST**倾斜问题，会退化成链表。二叉查找树增删查改的时间复杂度为O(logN)（其中N为节点数），最坏的情况下为O(N)
+
+于是平衡二叉查找树(**Balanced BST**)产生了，平衡树在插入和删除的时候，会通过旋转操作将高度保持在logN。
+
+其中两款具有代表性的平衡树分别为**AVL树和红黑树**。AVL树由于实现比较复杂，而且**插入和删除性能差**，在实际环境下的应用不如红黑树。
+
+红黑树（Red-Black Tree，以下简称RBTree）的实际应用非常广泛，比如Linux内核中的完全公平调度器、高精度计时器、ext3文件系统等等，各种语言的函数库如Java的TreeMap和TreeSet，C++ STL的map、multimap、multiset等。
+
+#### 时间复杂度
+
+整个红黑树的查找，插入和删除都是O(logN)，因为**高度就是logn**,查找从根到叶，走过的路径是树的高度，删除和插入操作是从叶到根的，所以经过的路径都是logN。
+
 https://blog.csdn.net/u014454538/article/details/120120216
 
 ```
 1、头尾（nil）都是黑结点
 2、从叶子结点到根节点黑色结点数目是一样的
-3、红色结点两个子节点都是黑色
+3、不能有两个连续的红节点
 ```
 
 ![在这里插入图片描述](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTQ0NTQ1Mzg=,size_16,color_FFFFFF,t_70.png)
 
+通过这些规则，保证红黑树的自平衡
+
+#### 查询效率这么高，mysql为什么不用？
+
+主要是**红黑树的高度会比较高**，磁盘io太大
+
+#### HashMap为什么用红黑树而不用B树？
+
+**数据都会“挤在”一个结点里面**，这个时候遍历效率就退化成了链表。
+
+B/B+树多用于外存上时，B/B+也被成为一个磁盘友好的数据结构。
+
+HashMap本来是数组+链表的形式，链表由于其查找慢的特点，所以需要被查找效率更高的树结构来替换。如果用B/B+树的话，在数据量不是很多的情况下，**数据都会“挤在”一个结点里面**，这个时候遍历效率就退化成了链表。
+
 ### B&B+树
 
-```
-B树不支持不支持顺序查找，
-b树和B+树都支持随机查找，都可做文件的索引结构，平衡多叉树
-```
+B树不支持顺序查找，**B+树支持顺序查找**
+B树和B+树**都支持随机查找**，都可做文件的索引结构，平衡多叉树
 
 #### 二叉排序树
 
@@ -7383,6 +11712,14 @@ public class HeapSort {
     
     
 ```
+
+## MongoDB
+
+支持副本集部署
+
+数据记录的格式是json，数据存放格式是BSON
+
+![img](javaNote.assets/Center.png)
 
 ## 分布式算法
 
@@ -7736,6 +12073,54 @@ AuthoritySlot
 
 ## 设计模式
 
+### 高内聚低耦合
+
+耦合： 模块与模块之间的联系。
+
+内聚：一般指（东西聚集在一起）形成一个模块，例如方法，变量，对象，或者是功能模块。
+
+高内聚：尽可能的让一个**模块内部的代码相关程度高，相互联系的紧密**。模块内部的代码，**相互之间的联系越强，内聚就越高， 模块的独立性就越好**。 一个模块应该尽量去独立的完成一个功能！如果必须写另外的功能，建议拆分成多个模块，低内聚的代码，不好维护，代码也不够健壮。
+
+低耦合：尽可能的**将每一个功能通过模块单独写出去 ，然后通过指定的接口来相互联系**，模块与模块之间的关系越是紧密，独立性就越不好，改变一个模块可能会影响其他的模块。
+
+### 七大原则
+
+https://zhuanlan.zhihu.com/p/58092071
+
+理解面向对象六大原则，并运用设计模式进行系统设计实现
+
+#### 1、 迪米特法则
+
+**最少知道法则**，类的内部如何实现、如何复杂都与调用者或者依赖，只需要我知道调用的方法就行。例如**外观模式**，对外暴露统一的接口。
+
+#### 2、 单一职责原则
+
+一个类只负责一个功能领域中的相应职责。
+
+功能简单，提高可读性和维护性，降低修改带来的风险
+
+#### 3、 接口隔离原则
+
+使用多个专门地接口，而不是使用单一的总接口导致依赖他不需要的接口
+
+#### 4、 开闭原则
+
+对扩展开发，对修改关闭，通过继承来增加新的类
+
+#### 5、 里氏替换原则
+
+所有引用基类（父类）的地方都能**透明地使用子类对象**。
+
+替换子类系统正常工作。
+
+#### 6、 依赖倒置原则
+
+面向接口编程，细节依赖抽象，高层模块不依赖底层模块
+
+#### 7、合成复用原则
+
+尽量使用合成聚合的方式，而不是使用继承
+
 ### 三种类型
 
 #### 1、创建型5
@@ -7770,14 +12155,10 @@ AuthoritySlot
 
 外观模式中，客户对各个具体的子系统是不了解的，所以对这些子系统进行了封装，对外只提供了用户所明白的单一而简单的接口，用户直接使用这个接口就可以完成操作，而不用去理睬具体的过程，而且子系统的变化不会影响到用户，这样就做到了信息隐蔽。
 
-
-
 6.享元模式 Flyweight
  享元模式为运用共享技术有效的支持大量细粒度的对象。因为它可以通过共享大幅度地减少单个实例的数目，避免了大量非常相似类的开销。大量应用于**各种池化技术**。
 
   享元模式是一个类别的多个对象共享这个类别的一个对象，而不是各自再实例化各自的对象。这样就达到了节省内存的目的。
-
-
 
 7.代理模式 proxy
 
@@ -7922,8 +12303,6 @@ rebase
 特别注意，只能在自己使用的 feature 分支上进行 rebase 操作，不允许在集成分支上进行 rebase，因为这种操作会修改集成分支的历史记录。
 ```
 
-
-
 ### 添加两个远程仓库
 
 ```
@@ -7952,6 +12331,9 @@ git push gitee master
 ### 标签管理和分支管理
 
 ```
+git branch -r # 查看远程分支
+
+
 1、打标签
 $ git tag v1.0 (默认最新commit上)
 3、创建带有说明的标签，其中-a指定标签名，-m指定说明的文字
@@ -8014,6 +12396,26 @@ git push --set-upstream origin master(重点)
 #查看我的公匙
 cd ~/.ssh
 cat id_rsa.pub
+
+#清除缓存（更新gitignore）
+git rm -r --cached .
+
+#查看本地分支
+git branch
+
+#查看远程分支
+git branch -r
+
+#切换分支
+git checkout 分支名称
+
+#创建新分支
+git branch 新分支名称
+
+
+#指定远程分支，和本地分支
+git pull origin 远程分支名称:本地分支名称
+
 ```
 
 **工作原理**
@@ -8033,11 +12435,53 @@ alias git-log='git log --pretty=oneline --all --graph --abbrev-commit'
 
 ## HU
 
+### 项目深挖
+
 ![image-20220414224059381](javaNote.assets/image-20220414224059381.png)
 
-### node版本
+一、基于**Redis**实现社区模块的点赞评论功能，使用**Quartz**定时任务将缓存数据更新到MySQl 
 
-![image-20220624195541901](javaNote.assets/image-20220624195541901.png)
+
+
+贴子和评论都是下面这个套路：
+
+1、list:area:id 最新的帖子，使用阻塞队列判断是否需要移除老的评论
+
+2、zset:areaId 时间戳作为初始分值，点赞评论浏览增加权值
+
+同时数据库持久化点赞和评论记录，评论会额外插入list中
+
+
+
+点赞评论如何记录是谁，如何实时显示帖子的点赞和评论？
+
+set保存点赞的人，防止重复点赞，后面拼接时间戳；点赞评论计数采用hash字段进行增加
+
+评论数据使用list存起来
+
+
+
+3、hash:area id:entity
+
+使用list存最新的帖子，使用zset去维护帖子的热度，hash存实体。
+
+
+
+如何保证热点数据？
+
+使用阻塞队列异步删除数据，如果超过容量，删除后面的
+
+同时每次访问会将**过期时间续命**
+
+
+
+使用**Quartz**更新哪些数据到MySQl中 ？
+
+帖子实体、点赞数据
+
+评论是直接落库的，同时会存进list中
+
+
 
 ### 读写分离
 
@@ -8068,9 +12512,293 @@ Worker代码编写简单不需要考虑增删改查。
 
 对数据库有一定的轮询压力，一种改进方法是将轮询放到压力不大的从库上。
 
-### HU中Canal的用法
+### elk
 
-### 项目介绍
+日志整合es
+
+https://www.cnblogs.com/kebibuluan/p/15933706.html
+
+```
+
+```
+
+启动命令
+
+```
+D:/my-log/logstash-7.3.0/bin/logstash.bat -f ./config/my-log.conf
+
+D:/app/logstash-7.3.0/bin/logstash.bat -f D:\app\logstash-7.3.0\config\kafka.conf
+```
+
+
+
+收集kafka中的日志
+
+```
+# Sample Logstash configuration for creating a simple
+# Beats -> Logstash -> Elasticsearch pipeline.
+
+input {
+	kafka{
+		bootstrap_servers =>["192.168.42.100:9092"]	
+		group_id => "logstash_group"
+		auto_offset_reset => "latest"
+		consumer_threads => 5
+		decorate_events => true # 记录kafka主题分区偏移量元信息
+		topics => ["first"]
+		type => "default"
+		codec => json
+	}
+}
+
+filter {
+	   
+}
+
+# 输出信息到 es
+output {
+	elasticsearch {
+		hosts => "192.168.42.100:9200"
+		index => "job_kafka_%{+YYYY-MM-dd}"
+		retry_on_conflict => 5
+		document_id => "%{[@metadata][kafka][topic]}-%{[@metadata][kafka][partition]}-%{[@metadata][kafka][offset]}" #指定document_id，去重目的
+		codec => plain { charset => "UTF-8" }
+	}
+}
+
+```
+
+
+
+收集文件my-log日志
+
+```
+# Sample Logstash configuration for creating a simple
+# Beats -> Logstash -> Elasticsearch pipeline.
+
+input {
+  file {
+    path => ["D:/my-log/*"]
+  }
+}
+
+filter {
+  grok {
+    match => { "message" => "%{TIMESTAMP_ISO8601:datetime} (?<thread>(\[.*\])) %{DATA:level} %{DATA:class} - %{GREEDYDATA:message}" }
+  }
+mutate{
+	gsub => ["thread","["",""],
+	gsub => ["thread","]"",""]
+}
+}
+
+# 输出信息到 es
+output {
+    if "_grokparsefailure" not in [tags]{ # grok匹配成功存es的info-表
+        elasticsearch { 
+            hosts => ["192.168.42.100:9200"] #配置Es地址
+           index => "logstash-%{+YYYY.MM.dd}"        #配置es索引(表名)
+        }
+    } else { # grok匹配失败存es的error-表
+        elasticsearch { 
+            # host（同message配置）：string or array
+            hosts => ["192.168.42.100:9200"] #配置Es地址
+            index => "error-%{+YYYY.MM.dd}" #配置es索引(表名)
+        }
+    }
+}
+
+```
+
+
+
+### es
+
+1.综合社区帖子的热度和用户历史浏览搜索数据
+
+1.1帖子的热度
+
+点赞量和浏览量脚本算分
+
+1.2用户历史浏览搜索数据：
+
+存储帖子的tag字段和对应的区areaname
+
+作为算分函数functions的过滤条件
+
+```json
+GET /question/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "bool": {
+          "should": [
+            {
+              "match": {
+                "all": "区"
+              }
+            }
+          ]
+        }
+      },
+      "functions": [
+        {
+          "script_score": {
+            "script": "_score + doc['likeCount'].value*10+doc['viewCount'].value"
+          }
+        },
+        {
+          "filter": {
+            "term": {
+              "areaName": "钓鱼区"
+            }
+          },
+          "weight": 10
+        },
+        {
+          "filter": {
+            "terms": {
+              "tag": [
+                "c++;c"
+              ]
+            }
+          },
+          "weight": 10
+        }
+      ],
+      "boost_mode": "avg"
+    }
+  },
+  "from": 0,
+  "size": 20, 
+  "highlight": {
+    "fields": [
+      {
+        "areaName": {
+          "require_field_match": "false"
+        }
+      },
+      {
+        "title": {
+          "require_field_match": "false"
+        }
+      },
+      {
+        "tag": {
+          "require_field_match": "false"
+        }
+      },
+      {
+        "areaName": {
+          "require_field_match": "false"
+        }
+      }
+    ]
+  }
+}
+```
+
+
+
+```json
+PUT /question
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "text_analyzer":{
+          "tokenizer":"ik_max_word",
+          "filter":"py"
+        },
+        "completion_anylyzer":{
+          "tokenizer":"keyword",
+          "filter":"py"
+        }
+      },
+      "filter": {
+        "py":{
+          "type":"pinyin",
+          "keep_full_pinyin": false,
+          "keep_joined_full_pinyin": true,
+          "keep_original": true,
+          "limit_first_letter_length": 16,
+          "remove_duplicated_term": true,
+          "none_chinese_pinyin_tokenize": false
+        }
+      }
+    }
+  }, 
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "long"
+      },
+      "title": {
+        "type": "text",
+        "analyzer": "text_analyzer",
+        "search_analyzer": "ik_smart", 
+        "copy_to": "all"
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "ik_smart",
+        "copy_to": "all"
+      },
+      "createTime": {
+        "type": "date"
+      },
+      "modifiedTime": {
+        "type": "date"
+      },
+      "creatorId": {
+        "type": "keyword"
+      },
+      "creatorName": {
+        "type": "text",
+        "analyzer": "text_analyzer"
+      },
+      "commentCount": {
+        "type": "long"
+      },
+      "viewCount": {
+        "type": "long"
+      },
+      "likeCount": {
+        "type": "long"
+      },
+      "tag": {
+        "type": "keyword",
+        "copy_to": "all"
+      },
+      "sticky": {
+        "type": "long"
+      },
+      "areaId": {
+        "type": "long"
+      },
+      "areaName": {
+        "type": "keyword",
+        "copy_to": "all"
+      },
+      "img": {
+        "type": "keyword"
+      },
+      "all":{
+        "type": "text",
+        "analyzer": "text_analyzer",
+        "search_analyzer": "ik_smart"
+      },
+      "suggestion":{
+        "type": "completion",
+        "analyzer": "completion_anylyzer"
+      }
+    }
+  }
+}
+```
+
+
 
 由于项目的功能模块众多，我们采用了微服务架构，有效的拆分了应用，实现敏捷开发和部署，各模块架构如下图。同时，采用Docker容器化部署个微服务应用，并使用Jenkins工具进行持续集成。
 
@@ -8203,6 +12931,10 @@ public class JwtRsaUtil {
 }
 ```
 
+### node版本
+
+![image-20220624195541901](javaNote.assets/image-20220624195541901.png)
+
 ### 使用到的设计模式
 
 ### 哪里用到redis
@@ -8266,6 +12998,61 @@ public static final String SPORT_TYPE="health:sport:type";
 ```
 
 ## 大就业
+
+### swagger
+
+springboot 2.6.5 ✚ swagger 3.0.0配置属下
+
+```
+<parent>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-parent</artifactId>
+	<version>2.6.5</version>
+</parent>
+<dependency>
+	<groupId>io.springfox</groupId>
+	<artifactId>springfox-boot-starter</artifactId>
+	<version>3.0.0</version>
+</dependency>
+
+```
+
+application.yml 或applicaiton.properties 中添 必须 加如下配置
+
+```
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+```
+
+只需要在启动类上加 `@EnableSwagger2` 注解即可
+访问地址：http://127.0.0.1:88/swagger-ui/index.html
+
+注解说明
+
+```
+@Api : 用在类上，说明该类的主要作用。
+
+@ApiOperation：用在方法上，给API增加方法说明。
+
+@ApiImplicitParams : 用在方法上，包含一组参数说明。
+
+@ApiImplicitParam：用来注解来给方法入参增加说明。
+
+@ApiResponses：用于表示一组响应。
+
+@ApiResponse：用在@ApiResponses中，一般用于表达一个错误的响应信息
+
+@ApiModel：用在返回对象类上，描述一个Model的信息（一般用在请求参数无法使用@ApiImplicitParam注解进行描述的时候）
+
+@ApiModelProperty：描述一个model的属性
+————————————————
+版权声明：本文为CSDN博主「被子里」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/jjs15259655776/article/details/107753312
+```
+
+
 
 ### 项目介绍
 
@@ -8943,21 +13730,21 @@ str1.localeCompare(str2)
 
 ## 面试笔试
 
+输入n,x求1，2，3..n中x出现的次数
+
 ### 自我介绍
 
-面试官你好，我叫林涣锋，请问可以听得到嘛，我来自东莞理工学院软件工程卓越计划班，今天我应聘的是多益的游戏开发岗位
+面试官你好，我叫林涣锋，我来自东莞理工学院软件工程卓越计划班，我应聘的是贵公司的Java开发岗位
 
-大学期间，我参与**开发了许多项目**，在其中主要担任技术负责人的角色，负责项目的核心开发和技术难点解决，负责系统架构设计和相关技术选型，对分布式和为微服务架构有一定的了解，积累一定的项目实战开发能力和团队分工协作经验。
+大学期间，我**参与开发了许多java相关的项目**，在其中主要负责项目的核心技术开发和系统架构，积累一定的项目实战开发能力，对项目的使用到的技术框架的有一定了解。
 
-另外，我多次担任负责人成功申报了学校的创新创业项目，也积极参加挑战杯，互联网+，蓝桥杯算法竞赛等专业竞赛，积累了竞赛方面的相关经验。
+另外，我也多次参加计算机设计大赛，蓝桥杯算法竞赛等专业竞赛，积累了竞赛方面的相关经验。
 
-在课内方面，我的计算机专业成绩优异，多次获得奖学金
+在课内方面，我的计算机专业成绩优异，有获得奖学金
 
 大学实践方面，我担任了校审计处学生助理，社会实践分队负责人，班级团支书等。
 
-最后，作为一名游戏爱好者，我渴望能够进入游戏开发行业。
-
-这就是我的自我介绍，感谢贵公司的面试机会。
+这就是我的自我介绍，感谢面试官。
 
 
 
@@ -9072,7 +13859,455 @@ Time_wait：客户端等待，以确保服务器收到ACK真正关闭连接
 
 \11. 掩码为255.255.255.0有多少台主机
 
+\1. 挖实习和项目
+2.Java垃圾回收啥时候失败
+3.Arrays.sort针对快排做了哪些优化
+4.MySQL怎么看性能，怎么优化
+5.ArrayList扩容机制
+6.垃圾回收算法
+7.项目代码里用的哪种垃圾回收算法
+8.项目有没有用加密，怎么避免外网入侵
+9.玩没玩过游戏
+10.业务介绍和反问
+
 ## 错题集
+
+### 磁盘启动
+
+磁盘虽然是共享设备，但是对它进行**读写**操作的话必须先根据信息在磁盘上的指定位置，即**把磁盘移动到指定的柱面**，再等待指定的扇区旋转到磁头位置下。当**磁头在进行读写操作时不能随意地改变磁头的位置，否则会造成错误**。所以，磁盘虽是共享型设备，但任何时刻最多只能允许一个作业进行读写操作
+
+![image-20220917145614166](javaNote.assets/image-20220917145614166.png)
+
+### 导致创建新进程
+
+引起创建进程的事件：
+
+1、**用户登录**
+
+2、作业调度
+
+3、提供服务（用户程序提出请求）
+
+4、应用请求（基于应用进程的需求）
+
+![image-20220916215854033](javaNote.assets/image-20220916215854033.png)
+
+### 内存管理-程序的链接和装入
+
+一个进程在**被换出**之前所在的内存位置与后来被从外存重新调入内存时所在的内存位置不同
+
+在这种情况下，**地址映射必须延迟到进程执行时再进行**，把这种装入方式称为**动态运行时装入（动态重定位)**。
+
+动态重定位是在程序执行时对其发出的地址逐条进行翻译。因此，不论程序是否改变存放位置，只需要对翻译机制进行更新即可正确执行。
+
+要保证一个程序在主存中被改变了存放位置后仍能正确执行，则对主存空间应采用（）
+
+![image-20220916215042819](javaNote.assets/image-20220916215042819.png)
+
+### 最大回文字串
+
+![image-20220912153426646](javaNote.assets/image-20220912153426646.png)
+
+### 线性函数
+
+![img](javaNote.assets/d89a3c99a900823bc436ae4749ad2d1f.jpeg)
+
+![image-20220912152831245](javaNote.assets/image-20220912152831245.png)
+
+### 二维数组
+
+![image-20220912114617971](javaNote.assets/image-20220912114617971.png)
+
+### 操作系统-内存管理
+
+[操作系统题库解析](https://www.doc88.com/p-1416198931851.html)
+
+#### 改进CPU的利用率
+
+![image-20220918105019220](javaNote.assets/image-20220918105019220.png)
+
+![image-20220918105059604](javaNote.assets/image-20220918105059604.png)
+
+#### 需要增加并发进程数的是
+
+CPU利用率为13%，磁盘利用率为97%。时间都花在页面交换了，CPU使用率低，应增大内存或减少多道程序的度数（个数），度数少了每个分到的内存自然就多了。
+
+CPU利用率为87%，磁盘利用率为3%。CPU一直在运行，很少的进程进行换入换出。系统正常。
+
+CPU利用率3%，磁盘利用率3%。CPU利用率较低，且缺页现象不明显，可增加并发进程数，提高CPU利用率
+
+![image-20220918104932591](javaNote.assets/image-20220918104932591.png)
+
+![image-20220911221749497](javaNote.assets/image-20220911221749497.png)
+
+### 定时器
+
+![image-20220911202916304](javaNote.assets/image-20220911202916304.png)
+
+### 优化道具购买
+
+![image-20220911202846536](javaNote.assets/image-20220911202846536.png)
+
+### 求阵型半径
+
+![image-20220911202713431](javaNote.assets/image-20220911202713431.png)
+
+### 唯一id生成
+
+![image-20220911202637466](javaNote.assets/image-20220911202637466.png)
+
+### 获取99%响应时间
+
+![image-20220911202804632](javaNote.assets/image-20220911202804632.png)
+
+### 概率
+
+#### 小组赛
+
+单循环赛：
+单循环赛，是所有参加比赛的队均能相遇一次，最后按各队在全部比赛中的积分、得失分率排列名次。如果参赛队不多，而且时间和场地都有保证，通常都采用这种竞赛方法。
+分析：
+假设得分1分，那么你只能平一场和你打平得那一队也是平其他都输了，你们两队就都出局，
+假设得分2的话那么其他和你打得两只队伍也是平那么它们都是1，然后和其他打输了，那两只队伍就只有1就被淘汰了。自己就出了
+
+所以选择2分
+
+![image-20220911110521043](javaNote.assets/image-20220911110521043.png)
+
+### C&C++
+
+#### char a[10],*p;p=a="china"错在哪了？
+
+*符号，在定义的语句中，表示**声明了一个指针的类型**；
+*符号，在赋值语句中，表示一个运算，**取这个变量的指向内容**
+
+&就是取地址符
+
+**p=a是对的**！也可以写成**p=&a[0]**
+p是指针，指向一个地址，**数组名就是它的第一个元素的地址**。
+
+a="china"把字符串赋值给一个地址，显然是**不对**的！
+可以这样char
+**a[10]="china",或是*p="china"**
+
+#### 题目2
+
+![image-20220911103212305](javaNote.assets/image-20220911103212305.png)
+
+char a[]="abcdefg" ; 定义字符数组a，并将字符串abcdefg存储到该数组中，数组没有给定宽度，其宽度为abcdefg的长度+\0，即7+1=8.
+可通过printf("%d", sizeof(a) ) ; 来输出其宽度。
+
+A中a[10]已经声明了长度位10，后面a[]长度不能再变化了
+
+#### 内存分几个区
+
+![image-20220911103708900](javaNote.assets/image-20220911103708900.png)
+
+内存到底分几个区？
+
+1、栈区（stack）— 由编译器自动分配释放 ，存放函数的参数值，局部变量的值等。
+
+2、堆区（heap） — 一般由程序员分配释放， 若程序员不释放，程序结束时可能由os回收 。注意它与数据结构中的堆是两回事，分配方式倒是类似于链表。
+
+3、全局区（静态区）（static）—**全局变量和静态变量**的存储是放在一块的，初始化的全局变量和静态变量在一块区域， 未初始化的全局变量和未初始化的静态变量在相邻的另一块区域。程序结束后有系统释放。
+
+4、文字常量区 — 常量字符串就是放在这里的。 程序结束后由系统释放。
+
+5、程序代码区 — 存放函数体的二进制代码。
+
+#### sizeof
+
+[字符串](https://so.csdn.net/so/search?q=字符串&spm=1001.2101.3001.7020)是连续的字符序列，最后以空字符'\0'作为终止符。一个字符串的长度指所有字符的数量，但**不包括终止符**。
+
+char str1[30] = "Let's go"; // 字符串长度：8；数组长度：30
+
+**在32位系统上，对任意指针求sizeof，得到的结果都是4**
+
+**在64位系统上，对任意指针求sizeof，得到的结果都是8**
+
+![image-20220911110335295](javaNote.assets/image-20220911110335295.png)
+
+### 数据结构时间复杂度
+
+![image-20220910170124402](javaNote.assets/image-20220910170124402.png)
+
+### 进程内存空间
+
+函数参数，局部变量自动分配在栈上。
+
+栈上的内存随着方法出栈内存就释放了，不会造成泄露
+
+![image-20220908220759844](javaNote.assets/image-20220908220759844.png)
+
+### unicode
+
+![image-20220907230513829](javaNote.assets/image-20220907230513829.png)
+
+### 改善磁盘设备的IO性能
+
+```
+重排IO请求次序
+预读和滞后写
+优化文件物理块的分布
+```
+
+![image-20220907225901136](javaNote.assets/image-20220907225901136.png)
+
+### linux文件权限
+
+![image-20220905215738429](javaNote.assets/image-20220905215738429.png)
+
+### extend&super
+
+```
+/**
+ * List<? super A>： A和A的父类
+ * List<? extends A>： A和A的子类对象
+ */
+```
+
+![image-20220905212531645](javaNote.assets/image-20220905212531645.png)
+
+### 常用函数式接口
+
+- Supplier
+- Comsumer
+- Predicate
+- Function
+
+### 基本数据类型
+
+![image-20220904222218770](javaNote.assets/image-20220904222218770.png)
+
+### JUC工具类
+
+![image-20220903173208382](javaNote.assets/image-20220903173208382.png)
+
+### 字符匹配复杂度
+
+![image-20220903172030469](javaNote.assets/image-20220903172030469.png)
+
+### 线性链表
+
+![image-20220903172007865](javaNote.assets/image-20220903172007865.png)
+
+### RestFul&RPC
+
+1、RESTful是一种软件**约束风格**，用于约束客户端和服务器交互，满足这些约束条件和原则的应用程序或设计就是 RESTful。比如HTTP协议使用同一个URL地址，通过GET，POST，PUT，DELETE等方式实现查询、提交、删除数据。
+
+2、RPC是远程过程**调用模型**，是用于解决分布式系统服务间调用的一种方式。RPC采用客户端与服务端模式，双方通过约定的接口（常见为通过IDL定义或者是代码定义）以类似本地方法调用的方式来进行交互，客户端根据约定传输调用函数+参数给服务端（一般是网络传输TCP/UDP），服务端处理完按照约定将返回值返回给客户端。
+
+可分为两大部分RPC +服务治理
+RPC部分 = IDL  +客户端/服务端实现层 +协议层 +数据传输层
+服务治理 =服务管理（注册中心） +服务监控 +服务容灾 +服务鉴权
+
+### Service Mesh
+
+Service Mesh为了**解决传统微服务框架"胖客户端"**方式，引入的如下问题：
+与业务无关的服务治理逻辑与业务代码强耦合，框架、SDK的升级与业务代码强绑定，多语言的胖客户端支持起来性价比极低。
+
+Service Mesh又译作“**服务网格**”，作为**服务间通信的基础设施层**， 作为下一代微服务技术。负责服务之间的网络调用、限流、熔断和监控，对于编写应用程序来说一般无须关心这一层。
+
+微服务 (Microservices) 是一种软件架构风格，它是以专注于单一责任与功能的小型功能区块 (Small Building Blocks) 为基础，利用模块化的方式组合出复杂的大型应用程序，各功能区块使用与***语言无关\*** (Language-Independent/Language agnostic) 的 API 集相互通信。
+
+![image-20220827132204615](javaNote.assets/image-20220827132204615.png)
+
+### spring
+
+![image-20220823172923728](javaNote.assets/image-20220823172923728.png)
+
+### 二叉树
+
+![image-20220823105842021](javaNote.assets/image-20220823105842021.png)
+
+解法一：
+
+（１）二叉树性质
+
+２、总结点数＝各结点度之和＋１（ｎ＝ｎ0＊0＋ｎ1＊1＋ｎ2＊2＋１）
+
+３、叶子节点数＝度为２的结点数＋１（ｎ0＝ｎ2＋1）
+
+已知该完全二叉树叶子节点数为124，即可得完全二叉树ｎ2＝ｎ0－１＝123
+
+（2）完全二叉树性质
+
+１、完全二叉树，度为１的结点数不是0就是1
+
+２、深度为ｈ的完全二叉树，１～h－１层必定是满的，且第ｈ层结点集中在左侧
+
+完全二叉树最多结点数ｎ＝ｎ0＋ｎ1＋ｎ2＝124＋１＋123＝248
+
+解法二：
+
+（１）完全二叉树叶子节点数为124个，即可推导出最底层深度为8，且第8层最多可有128个叶子节点（128－124＝4，即最右侧分布4个节点）
+
+（２）此时有两种情况，第一种。上一层最右侧的4个节点都是叶子节点，第二种，最右侧3个叶子节点＋其中一个靠左的叶子节点存在一个左节点
+
+（３）显然第二种情况节点数是最多的，１～７层共127个节点、第8层有121个叶子节点，共127＋121＝248
+
+### 双向链表
+
+![image-20220823102532982](javaNote.assets/image-20220823102532982.png)
+
+### 地址
+
+![image-20220823102309228](javaNote.assets/image-20220823102309228.png)
+
+### 编译
+
+java程序编译后结果不一定只有一个
+
+![image-20220820211633278](javaNote.assets/image-20220820211633278.png)
+
+```
+22.下列说法中，不正确的是_B。
+
+A．一个java源程序经过编译后，得到的文件的扩展名一定是.class
+B．一个java源程序编译通过后，得到的结果文件数也只有一个
+C．一个java源程序只能有一个public class类定义，且源文件的名字与public class的类名相同，扩展名必须是.java
+D．一个java源程序可以包含多个class类
+
+答案：B
+难度等级：简单
+解析：
+一般情况下一个Java文件代表一个类，在编译时会产生一个字节码.class文件。
+但是在Java中 一个源文件中可以包含多个类，但是只能有一个public类，其他的都成为内部类，这时编译时会生成多个字节码文件。一个是那个public类也是该源文件名对应的.class 另一个就是public类名$内部类名.class
+```
+
+![image-20220820211411949](javaNote.assets/image-20220820211411949.png)
+
+### 类成员
+
+静态的才属于类成员
+
+![image-20220820183143933](javaNote.assets/image-20220820183143933.png)
+
+### 概率题
+
+![image-20220818182336023](javaNote.assets/image-20220818182336023.png)
+
+![image-20220805160039622](javaNote.assets/image-20220805160039622.png)
+
+### 海量数据
+
+[海量数据](https://www.nowcoder.com/jump/super-jump/word?word=海量数据)中找出重复次数最多的一个/前N个数据，我们的解决方法是： **分而治之/Hash映射 + HashMap/前缀树统计频率 + 堆/快速/归并[排序](https://www.nowcoder.com/jump/super-jump/word?word=排序)**
+
+#### 一、海量日志数据，提取出某日访问[百度]()次数最多的IP。 
+
+1、通过hash算法%1000把每个ip分到小文件中（同个ip一定会分到同个文件）
+
+2、找出每个文件次数最多的ip（hash/堆）
+
+3、对这1000个再进行堆排序
+
+ 假设内存无穷大，我们可以用常规的HashMap(ip，value)来统计ip出现的频率，统计完后利用[排序]()[算法]()得到次数最多的IP，这里的[排序]()[算法]()一般是堆[排序]()或快速[排序]()。 
+
+ 但考虑实际情况，我们的内存是有限的，所以无法将海量日志数据一次性塞进内存里，那应该如何处理呢？很简单**，分而治之**！即将这些IP数据**通过Hash映射[算法]()划分为多个小文件**，比如模1000，把整个大文件映射为1000个小文件，再找**出每个小文件中出现频率最大的IP**，最后在这1000个最大的IP中，找出那个频率最大的IP，即为所求（是不是很像Map Reduce的思想？）。 
+
+ 这里鬼仔再多说一句：Hash取模是一种等价映射[算法]()，不会存在同一个元素分散到不同小文件中的情况，这保证了我们分别在小文件统计IP出现频率的正确性。我们对IP进行模1000的时候，**相同的IP在Hash取模后，只可能落在同一个小文件中，不可能被分散的**。因为如果两个IP相等，那么经过Hash(IP)之后的哈希值是相同的，将此哈希值取模（如模1000），必定仍然相等。 
+
+ 总结一下，该类题型的解决方法分三步走： 
+
+1.  分而治之、hash映射； 
+2.  HashMap（或前缀树）统计频率； 
+3.  应用[排序]()[算法]()（堆[排序]()或快速[排序]()）。 
+
+ 如果将题目改为：海量日志数据，提取出某日访问[百度]()次数最多的前N个IP。牛油们知道怎么处理吗？把答案写在评论区吧～ 
+
+####  二、搜索引擎会通过日志文件把用户每次检索使用的所有查询串都记录下来，每个查询长度不超过 255 字节。假设目前有一千万个记录（这些查询串的重复度比较高，虽然总数是1千万，但如果除去重复后，不超过3百万个。一个查询串的重复度越高，说明查询它的用户越多，也就是越热门），请你统计最热门的10个查询串，要求使用的内存不能超过1G。 
+
+ 我们首先分析题意：一千万个记录，除去重复后，实际上只有300万个不同的记录，每个记录假定为最大长度255Byte，则最多占用内存为：3M*1K/4=0.75G<1G，完全可以将所以查询记录存放在内存中进行处理。相较于第一道题目，这题还更简单了，直接HashMap（或前缀树）+堆[排序]()即可。 
+
+ 具体做法如下： 
+
+1.  遍历一遍左右的Query串，利用HashMap（或前缀树）统计频率，时间复杂度为O(N)，N=1000万； 
+2.  建立并维护一个大小为10的最小堆，然后遍历300万Query的频率，分别和根元素（最小值）进行对比，最后找到Top K，时间复杂度为N‘logK，N‘=300万，K=10。 
+
+####  三、有一个1G大小的一个文件，里面每一行是一个词，词的大小不超过16字节，内存限制大小是1M。返回频数最高的100个词。 
+
+ 经过前两道题的训练，第三道题相信大家已经游刃有余了，这类题型都有相同的特点：文件size很大，内存有限，解决方法还是经典三步走：分而治之 + hash统计 + 堆/快速[排序]()。 
+
+ 具体做法如下： 
+
+1.  分而治之、hash映射：遍历一遍文件，对于每个词x，取hash(x)并模5000，这样可以将文件里的所有词分别存到5000个小文件中，如果哈希函数设计得合理的话，每个文件大概是200k左右。就算其中有些文件超过了1M大小，还可以按照同样的方法继续往下分，直到分解得到的小文件的大小都不超过1M； 
+2.  HashMap（或前缀树）统计频率：对于每个小文件，利用HashMap（或前缀树）统计词频； 
+3.  堆[排序]()：构建最小堆，堆的大小为100，找到频率最高的100个词。 
+
+####  四、给定a、b两个文件，各存放50亿个url，每个url各占64字节，内存限制是4G，让你找出a、b文件共同的url？ 
+
+ 每个url是64字节，50亿*64=5G×64=320G，内存限制为4G，所以不能直接放入内存中。怎么办？分而治之！ 
+
+ 具体做法如下： 
+
+1.  遍历文件a中的url，对url进行hash(url)%1000，将50亿的url分到1000个文件中存储（a0，a1，a2.......），每个文件大约300多M，对文件b进行同样的操作，因为**hash函数相同，所以相同的url必然会落到对应的文件中**，比如文件a中的url1与文件b中的url2相同，那么它们经过hash(url)%1000也是相同的。即url1落入第n个文件中，url2也会落入到第n个文件中。 
+2.  遍历a0中的url，存入HashSet中，同时遍历b0中的url，查看是否在HashSet中存在，如果存在则保存到单独的文件中。然后以此遍历剩余的小文件即可。 
+
+ 小结 
+
+  讲完了这四道例题，我们再来总结一下，这几道题都有一个共性， **那就是要求在[海量数据]()中找出重复次数最多的一个/前N个数据**，我们的解决方法也很朴实： **分而治之/Hash映射 + HashMap/前缀树统计频率 + 堆/快速/归并[排序]()**，具体来说就是先做hash，然后求模映射为小文件，求出每个小文件中重复次数最多的一个，并记录重复次数，最后利用堆这个数据结构高效地取出前N个出现次数最多的数据。
+
+### 计算题
+
+![image-20220808211943578](javaNote.assets/image-20220808211943578.png)
+
+![image-20220808211800882](javaNote.assets/image-20220808211800882.png)
+
+![image-20220808211709231](javaNote.assets/image-20220808211709231.png)
+
+![image-20220808211636249](javaNote.assets/image-20220808211636249.png)
+
+![image-20220808211606654](javaNote.assets/image-20220808211606654.png)
+
+![image-20220808211522890](javaNote.assets/image-20220808211522890.png)
+
+![image-20220808211422514](javaNote.assets/image-20220808211422514.png)
+
+![image-20220808211349049](javaNote.assets/image-20220808211349049.png)
+
+![image-20220808211249411](javaNote.assets/image-20220808211249411.png)
+
+![image-20220808211026295](javaNote.assets/image-20220808211026295.png)
+
+![image-20220808210655898](javaNote.assets/image-20220808210655898.png)
+
+![image-20220805142806340](javaNote.assets/image-20220805142806340.png)
+
+![image-20220805142757661](javaNote.assets/image-20220805142757661.png)
+
+![image-20220805141313413](javaNote.assets/image-20220805141313413.png)
+
+### 分段机制
+
+![image-20220804221551892](javaNote.assets/image-20220804221551892.png)
+
+### 引起进程调度
+
+只要是就绪状态就可能发生进程调度
+
+
+
+**进程调度的定义**：进程调度的主要功能是按照一定的策略**选择—个处于就绪状态的进程，使其获得处理机执行**；
+
+然后找是不是就绪状态即可
+
+C不是就绪状态，所以C；
+
+
+
+就绪状态 >>> 运行状态 (这个过程会出现任务调度)
+
+A. 当任务完成之后，就会从从运行状态转换为就绪状态。
+
+B.当进程访问临界区时，其他进程加锁，那么他就处于就绪状态,当其他程序释放所之后，他就会进入运行状态
+
+C.当一个进程执行了一条转移指令后，这里我们举例：中断就是一个转移指令，当我们产生中断时程序会从运行状态变为阻塞状态，并不会引起任务调度
+
+D.当我们创建一个新的进程时，新的进程处于就绪状态
+
+![image-20220804220621840](javaNote.assets/image-20220804220621840.png)
+
+![image-20220804221105424](javaNote.assets/image-20220804221105424.png)
 
 ### 不可重复读和幻读
 
@@ -9257,7 +14492,7 @@ HTTP响应报文由三部分组成，
 
 用俩个栈模拟实现一个队列，如果栈的容量分别是O和P(O>P),那么模拟实现的队列最大容量是多少？
 
-2p+1，O中还可一个存一个，即可满足先进先出的特点
+**2p+1**，O中还可一个存一个，即可满足先进先出的特点
 
 选取较大O作为缓冲区，先入栈p个元素，再全部出栈到p中，再把O入栈p+1个元素。
 
@@ -9419,7 +14654,7 @@ pid        /var/run/nginx.pid;
 
 
 events {
-    worker_connections  1024;
+    worker_connections  1024; 
 }
 
 
@@ -9445,11 +14680,28 @@ http {
 
 ```
 
+#### 配置文件
+
+```
+events{
+	accept_mutex on; # 惊群
+	multi_accept on; 
+	worker_commections 1024; # 单个worker的最大连接数
+	use epoll;
+}
+```
+
+
+
 
 
 #### 浏览器的缓存
 
 ![image-20211211200057006](javaNote.assets/image-20211211200057006.png)
+
+### Kafka
+
+
 
 ## RabbitMQ
 
@@ -9580,7 +14832,7 @@ RabbitMQ支持消费者确认机制，即：消费者处理消息后可以向MQ�
 
 当消费者出现异常后，消息会不断requeue（重新入队）到队列，再重新发送给消费者，然后再次异常，再次requeue，无限循环，导致mq的消息处理飙升，带来不必要的压力
 
-MessageRecoverer，重试耗尽后，将失败消息投递到指定的交换机，由人工进行处理
+MessageRecoverer，重试耗尽后，将**失败消息投递到指定的交换机**，由人工进行处理
 
 ```
 @Bean
@@ -9696,6 +14948,12 @@ GM模块实现的一种**可靠的组播通讯协议**，该协议能够保证�
 它的实现大致如下：
 
 将所有的节点形成一个循环链表，每个节点都会监控位于自己左右两边的节点，当有节点新增时，相邻的节点保证当前广播的消息会复制到新的节点上；当有节点失效时，相邻的节点会接管保证本次广播的消息会复制到所有的节点。在master节点和slave节点上的这些gm形成一个group，group（gm_group）的信息会记录在mnesia中。不同的镜像队列形成不同的group。消息从master节点对于的gm发出后，顺着链表依次传送到所有的节点，由于所有节点组成一个循环链表，master节点对应的gm最终会收到自己发送的消息，这个时候master节点就知道消息已经复制到所有的slave节点了。
+
+### RabbitMQ 消息怎么传输？
+
+由于 TCP 链接的创建和销毁开销较大，且并发数受系统资源限制，会造成性能瓶颈，所以 RabbitMQ **使用信道**的方式来传输数据。
+
+信道（Channel）是生产者、消费者与 RabbitMQ 通信的渠道，信道是**建立在 TCP 链接上的虚拟链接**，且每条 TCP 链接上的信道数量没有限制。就是说 RabbitMQ 在一条 TCP 链接上建立成百上千个信道来达到多个线程处理，这个 **TCP 被多个线程共享**，每个**信道在 RabbitMQ 都有唯一的 ID，保证了信道私有性**，每个信道对应一个线程使用
 
 ### docker-compose.yml
 
@@ -10055,6 +15313,128 @@ import 'element-plus/dist/index.css'
 
 ## Docker
 
+### 原理
+
+![image-20220831221934086](javaNote.assets/image-20220831221934086.png)
+
+内核与硬件交互，提供操作硬件的指令
+
+系统应用封装内核指令为函数，便于程序员调用
+
+用户程序基于系统函数库实现功能
+
+Ubuntu和CentOS都是基于Linux内核，只是系统应用不同，提供的函数库有差异
+
+Docker将用户程序和系统应用（ubuntu或centos）一起打包，基于操作系统的内核就可以运行，屏蔽了系统应用函数库依赖等问题。
+
+### 架构
+
+![image-20220831222256618](javaNote.assets/image-20220831222256618.png)
+
+### 容器操作
+
+docker exec -it CONTAINER bash # 以终端交互的模式
+
+docker run -p 端口映射 -e 环境变量 -d 后台运行
+
+docker start&restart
+
+docker ps [-a] 查看容器（所有）
+
+docker logs -f 查看日志
+
+docker rm 删除容器
+
+docker inspect container_id | grep # 查看容器详细信息
+
+![image-20220114205238651](javaNote.assets/image-20220114205238651.png)
+
+### 数据卷操作
+
+```
+docker volumn create&inspect&ls&prune&rm
+```
+
+![image-20220831223718787](javaNote.assets/image-20220831223718787.png)
+
+### 镜像操作
+
+docker save保存镜像为压缩包
+
+docker load加载压缩包为镜像
+
+docker pull和docker push为镜像推送和镜像拉取
+
+docker images 查看镜像
+
+docker rmi删除镜像
+
+通过使用docker build和Dockerfile构建镜像
+
+![image-20220831222403609](javaNote.assets/image-20220831222403609.png)
+
+### 批量删除容器或镜像
+
+```
+sudo docker ps -a | grep Exited | awk '{print $1}' | xargs sudo docker rm 删除异常停止的docker容器
+
+sudo docker images | grep '<none>' | awk '{print $3}'| xargs sudo docker rmi -f 删除名称或标签为none的镜像
+```
+
+### docker-compose
+
+```
+docker-compose 
+
+-f：指定使用的compose模板文件，默认为当前目录下的docker-compose.yaml文件，可以多次指定。
+
+-p：指定项目的名称，默认将使用所在目录名称作为项目名。
+
+–verbose：输出更多调试信息。
+
+-v：打印版本信息并退出
+
+
+
+build 构建（重新构建）项目中的服务容器
+
+config 检测compose文件的错误
+
+up 启动服务
+
+down 停止容器
+
+images 列出项目中所包含的镜像
+
+logs 查看服务容器的日志
+
+kill 发送 SIGKILL 信号来强制停止服务容器
+
+port 查看某个容器端口所映射的公共端口
+
+ps 列出项目中目前的所有容器
+
+restart 重启项目中的服务
+
+rm 删除所有停止状态的服务容器
+
+run 在指定服务上运行一个命令
+
+scale 设置指定服务运行的容器个数
+
+stop 停止处于运行状态的容器
+
+start 启动被stop的服务容器
+
+top 查看各个服务容器内运行的进程
+
+pause 暂停一个服务容器
+
+unpause 恢复处于暂停状态中的服务
+```
+
+
+
 ### 蓝绿发布：蓝绿一个好一个坏，切换
 
 金丝雀发布：一个一个替换
@@ -10063,12 +15443,6 @@ import 'element-plus/dist/index.css'
 
 ```
 /opt/harbor
-```
-
-### 查看容器详细信息
-
-```
-docker inspect asdadadad
 ```
 
 ### 启动命令
@@ -10112,34 +15486,6 @@ docker update name --restart
 
 `sysctl net.ipv4.ip_forward`
 如果返回为“net.ipv4.ip_forward = 1”则表示成功了
-
-### 检查容器
-
-```
-docker inspect container_id | grep 
-```
-
-![image-20220114205238651](javaNote.assets/image-20220114205238651.png)
-
-### 进入容器命令
-
-```
-docker exec [OPTIONS] CONTAINER COMMAND [ARG...]
-```
-
-### 移除数据卷
-
-```
-docker volume rm <volume name>
-```
-
-### 批量删除容器或镜像
-
-```
-sudo docker ps -a | grep Exited | awk '{print $1}' | xargs sudo docker rm 删除异常停止的docker容器
-
-sudo docker images | grep '<none>' | awk '{print $3}'| xargs sudo docker rmi -f 删除名称或标签为none的镜像
-```
 
 ## k8s
 
@@ -10200,6 +15546,32 @@ sed -i 's#http:\/\/updates.jekins-ci.org\/download#https:\/\/mirrors.tuna.tsingh
 ```
 
 ## es
+
+### 知识点
+
+在在es6中**_all**被禁止了，使用copy_to代替
+
+PUT my_index
+{
+  "mappings": {
+    "properties": {
+      "first_name": {
+        "type": "text",
+        "copy_to": "full_name" 
+      },
+      "last_name": {
+        "type": "text",
+        "copy_to": "full_name" 
+      },
+      "full_name": {
+        "type": "text",
+        "store": true
+      }
+    }
+  }
+}
+
+store:true 那么就可以把full_name也查出来
 
 ### 单节点es备份
 
@@ -10486,6 +15858,8 @@ PUT /question
 
 ### HU帖子Mapping
 
+hot
+
 ```
 PUT /hot
 {
@@ -10497,7 +15871,11 @@ PUT /hot
     }
   }
 }
+```
 
+question
+
+```
 PUT /question
 {
   "settings": {
@@ -10595,6 +15973,8 @@ PUT /question
   }
 }
 ```
+
+
 
 ### 常见DSL语句
 
