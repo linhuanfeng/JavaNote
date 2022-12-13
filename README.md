@@ -1,5 +1,13 @@
 # javaNote
+
+## 前言
+
+个人学习笔记（Java选手），包括计算机网络，操作系统，JVM，Java基础，设计模式，MySQL，Redis，RabbitMq，Java笔试题等
+
 ## 目录
 
-java知识点，包括Linux常见命令，各种错题集
-![image](https://user-images.githubusercontent.com/85426969/180150046-72846f27-7c27-4c34-b96d-5058e9fedb98.png)
+![image-20221213165904595](README.assets/image-20221213165904595.png)
+
+## 后记
+
+开源不易，感谢star留念
