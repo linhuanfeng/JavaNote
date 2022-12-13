@@ -1,4 +1,33 @@
-## 其它
+# 其它
+
+### 谷歌插件无法拖拽
+
+![image-20221203170703788](javaNote.assets/image-20221203170703788.png)
+
+### 第三方jar包无法识别
+
+```
+mvn install:install-file -Dfile=D:\app\apache-maven-3.8.6\repository\com\ruixiude\dwd_sync_sdk\dwd_sync_sdk-1.0.3.20221115.jar -DgroupId=com.ruixiude -DartifactId=dwd_sync_sdk  -Dversion=1.0.3.20221115 -Dpackaging=jar
+```
+
+如果将项目打成jar包时， aspose-words并不会打进包，即这个项目还是有问题的。
+手动导入jar包maven是无法识别到，因为maven在自动下载jar包时还会生成几个其他文件，因为手动导jar包没有这几个文件，导致识别失败。
+
+二、解决办法
+使用mvn的命令行生成所需文件使maven识别
+mvn命令格式：
+
+```
+mvn install:install-file -Dfile=jar包地址（最好不要出现中文路径） -DgroupId=<groupId>标签内的内容 -DartifactId=<artifactId>标签内的内容  -Dversion=<version>标签内的内容 -Dpackaging=jar
+```
+
+
+格式填写注释：
+
+Dfile：填写手动下载的jar包放置的位置，位置任意，只要能正确指向jar包即可（运行完命令后该jar包可以删除）
+DgroupId：对应待生效坐标< groupId > 的值
+DartifactId：< artifactId > 的值
+Dversion： < version > 的值
 
 ### IDEA JVM调优
 
@@ -94,7 +123,7 @@ title
 ![image-20221023141132150](javaNote.assets/image-20221023141132150.png)
 
 Windows注册表的基本知识及应用
- 
+
 一、注册表的重要性
 
 　　在ＤＯS年代，对计算机的内存管理及系统配置主要通过ＡUTOEXEC．BAT和ＣONFIG．SYS来完成。从ＷINDOWS３．ｘ开 始，对系统的管理增加了大量的＊．ｉｎｉ文件来登录软件及硬件的各种初始化信息。这为系统管理带来了灵活性，也带来了不便之处。因为每个应用程序都有自己 的ｉｎｉ文件，并在Ｗｉｎ．ｉｎｉ中增加了自己的配置项，这使ｉｎｉ文件众多，且Wｉｎ．ｉｎｉ日益庞大。
@@ -256,7 +285,323 @@ cd devtools
 5. 添加扩展程序
    点击Chrome浏览器右上角的三个点>更多工具>扩展程序>加载已解压的扩展程序>选定chrome文件夹，得到如下结果：
 
-## Spring
+### npm
+
+解决 npm 执行 install 安装依赖时出现 ERESOLVE 错误
+错误如下：
+
+```
+npm ERR! code ERESOLVE
+npm ERR! ERESOLVE unable to resolve dependency tree
+npm ERR! 
+```
+
+解决方法：
+
+```
+npm i --legacy-peer-deps
+```
+
+解析：
+
+npm@7 的 ERESOLVE 问题很常见，因为 npm 7.x 对某些事情比 npm 6.x 更严格。
+通常，最简单的解决方案是将 --legacy-peer-deps 标志传递给 npm（例如，npm i --legacy-peer-deps），或者使用 npm@6。
+如果这不能立即起作用，也许先尝试删除 node_modules 和 package-lock.json 。 它们将被重新创建。
+
+https://blog.csdn.net/qq_29483485/article/details/126120804
+
+### 启动命令
+
+```
+1、npm install或npm i --legacy-peer-deps
+2、npm run dev:mp-weixin
+```
+
+### vw和vh
+
+vm、vh、vmin、vmax是一种视窗单位，也是相对单位。它相对的不是父节点或者页面的根节点。而是由视窗（Viewport）大小来决定的，单位 1，代表类似于 1%。 视窗(Viewport)是你的浏览器实际显示内容的区域—，换句话说是你的不包括工具栏和按钮的网页浏览器。
+
+### uni.navigateTo传递对象类型的参数
+
+一，传递一个参数
+传递页面代码：
+
+```
+visualPage(){
+           var that=this
+           var editItem=that.pageModel
+            uni.navigateTo({url:'/pages/visualPage/index?editItem='+encodeURIComponent(JSON.stringify(editItem))})
+        }
+```
+
+跳转页面代码：（这里的option会识别传入参数类型为数组）
+
+```
+ onLoad(option){
+    const editItem = JSON.parse(decodeURIComponent(option.editItem));
+  },
+```
+
+二，传递多个参数
+传递页面代码：
+
+```
+ var seal=this.pageModel.seal;
+           var cStorageModel=this.storageModel
+            uni.navigateTo({url:'/pages/setSeal/index?seal='+encodeURIComponent(JSON.stringify(seal))+"&cStorageModel"+encodeURIComponent(JSON.stringify(cStorageModel))})
+```
+
+跳转页面代码：
+
+```
+ onLoad(option){
+    this.pageModel.sealAuth = JSON.parse(decodeURIComponent(option.sealAuth));
+    this.pageModel.cStorageModel = JSON.parse(decodeURIComponent(option.cStorageModel));
+  },
+```
+
+  setup无法导入onLoad,采用vue2 vue3结合写法通过getCurrentInstance()获取组件实例获取
+
+<script>
+	export default {
+		data() {
+			return {
+				_id: ''
+			}
+		},
+		onLoad(e) {
+			this._id = e.id;
+		}
+	}
+</script>
+<script setup>
+    import {
+		ref,
+		getCurrentInstance,
+		onBeforeMount,
+ 	 } from 'vue'
+
+    const id=ref('');
+    onBeforeMount(()=>{
+    	id.value=getCurrentInstance().data._id;	
+    })
+</script>
+
+
+
+```
+//跳转至帖子详情页面
+const toCardDetail = () => {
+  uni.navigateTo({
+    url: 'TalkDetail?dynamicCardStr='+encodeURIComponent(JSON.stringify(props.dynamicCard)),
+  });
+};
+
+
+import { onLoad } from '@dcloudio/uni-app';
+
+onLoad((option)=>{
+    const dynamicCard = JSON.parse(decodeURIComponent(option.dynamicCardStr))
+    console.log(dynamicCard)
+    });
+```
+
+
+
+```
+// 跳转
+uni.navigateTo({url: "/pages/sendManagement/index?id=123",})<script>
+import { onMounted } from 'vue';let parmes = null;
+export default {
+onLoad(options){parmes = options;},
+setup() {onMounted(() => {console.log('接受上个页面传的值',parmes)})}}
+</script>
+
+
+<script setup>
+import { onMounted, getCurrentInstance } from 'vue';
+onMounted(()=>{
+let options = getCurrentInstance()
+console.log("options--->",options.attrs);
+})
+</script>
+```
+
+### 遮罩层
+
+```
+<view class="my" @touchend="end" @touchmove="move" :class="{popupShow:popupShow}">
+  <u-popup :show="popupShow" mode="right" @close="closeMenu" 
+	bgColor="#161823" 
+	safeAreaInsetTop
+  >
+  </u-popup>
+  <u-button type="primary" class="top-right-btn" @click="openMenu">开启遮罩层</u-button>
+</view>
+<script>
+export default {
+  data() {
+	return {
+      popupShow:false;
+    }
+  }
+  methods:{
+    openMenu() {
+	  this.popupShow = true;
+	}
+    closeMenu() {
+	  this.popupShow = false;
+	}
+  }
+</script>
+<style lang="scss" scoped>
+.popupShow {
+	overflow: hidden;
+	position: fixed;
+}
+</style>
+```
+
+
+
+### vue3类名的动态绑定
+
+```
+<template>
+  <!-- vue3的class类名可以叠加使用，如下所示写两个class，f12里面都会显示 -->
+  <h1 class="text" :class="{red: isred}">我是app</h1>   
+</template>
+
+<script>
+import { ref } from 'vue'
+export default {
+  name: 'App',
+  setup() {
+    // 数据
+    let isred = ref(true) 
+
+    // 如果不return, view视图层是读不出来的
+    return {
+      isred,
+    }
+  }
+}
+</script>
+
+<style>
+.red {
+  color: red;
+}
+</style>
+
+```
+
+
+
+# Spring
+
+### @Value
+
+https://blog.csdn.net/wangooo/article/details/114018690
+
+### Dao重载
+
+Dao接口里的方法，是**不能重载**的，因为是全限**名+方法名**的保存和寻找策略。
+
+Dao接口的工作原理是DK动态代理，Mybatis运行时会使用DK动态代理为Dao接口生成代理proxy对象，代理对象proxy会拦截接口方法，转而执行MappedStatement所代表的sql,然后将sql执行结果返回。
+
+### cron 表达式
+
+每隔1秒执行一次：*/1 * * * *?
+每隔1分执行一次：0 */1 * * * ?
+
+Cron 从左到右（用空格隔开）：`秒 分 小时 月份中的日期 月份 星期中的日期 年份`
+
+```
+通用符号：，- * /
+, :  表示枚举值。例如：在Minuttes域使用5,20，表示在时间的分钟数为5,20时触发事件
+- ： 表示范围。例如在Minutes域使用5-20，表示在时间的分钟数为5-20时每分钟都触发事件
+* ： 表示匹配该域的任意值，假如在Minutes域使用,表示时间分数不做限制。没分钟都触发
+/ :  表示其实开始时间触发，然后每隔固定时间触发一次，例如在Minutes域使用5/20，表示分钟数为5时触发一次，后隔20分钟即25,45再分别触发一次事件。
+
+eg:  0 0 2 1 * ?     //表示每个月的1号的2点执行
+eg: 0 10,44 14 ？3 WED  //在每年的3月份星期三的14点的10分和44分0秒执行一次
+
+专有符号：
+?: 只能使用在DayofMonth和DayofWeek两个域，由于DayofMonth和DayofWeek互斥，必须对其一设置
+L:  表示最后，只能出现在DayofWeek和DayofMonth域，如果DayofWeek域使用5L（从星期日计数），意味着在最后的一个星期四触发。
+w:   表示有效工作日（周一到周五），只能出现在DayofMonth域，系统将在指定日期的最近有效工作日触发事件。
+    
+eg:  5w //表示在每个月的5号的最近的一个工作日执行
+    
+LW:  这两个可以连用，表示在某个月最后一个工作日
+#；  用于确定每个月星期几，只能出现在DayofWeek域，例如4#2表示在每个月的第二个星期三执行
+
+```
+
+```
+   按顺序依次为
+  1  秒（0~59）
+  2  分钟（0~59）
+  3 小时（0~23）
+  4  天（0~31）
+  5 月（0~11）
+  6  星期（1~7 1=SUN 或 SUN，MON，TUE，WED，THU，FRI，SAT）
+  7.年份（1970－2099）
+  其中每个元素可以是一个值(如6),一个连续区间(9-12),一个间隔时间(8-18/4)(/表示每隔4小时),一个列表(1,3,5),通配符。由于"月份中的日期"和"星期中的日期"这两个元素互斥的,必须要对其中一个设置?.
+   0 0 10,14,16 * * ? 每天上午10点，下午2点，4点
+   0 0/30 9-17 * * ?   朝九晚五工作时间内每半小时
+   0 0 12 ? * WED 表示每个星期三中午12点
+   "0 0 12 * * ?" 每天中午12点触发 
+   "0 15 10 ? * *" 每天上午10:15触发 
+   "0 15 10 * * ?" 每天上午10:15触发 
+   "0 15 10 * * ? *" 每天上午10:15触发 
+   "0 15 10 * * ? 2005" 2005年的每天上午10:15触发 
+   "0 * 14 * * ?" 在每天下午2点到下午2:59期间的每1分钟触发 
+   "0 0/5 14 * * ?" 在每天下午2点到下午2:55期间的每5分钟触发 
+   "0 0/5 14,18 * * ?" 在每天下午2点到2:55期间和下午6点到6:55期间的每5分钟触发 
+   "0 0-5 14 * * ?" 在每天下午2点到下午2:05期间的每1分钟触发 
+   "0 10,44 14 ? 3 WED" 每年三月的星期三的下午2:10和2:44触发 
+   "0 15 10 ? * MON-FRI" 周一至周五的上午10:15触发 
+   "0 15 10 15 * ?" 每月15日上午10:15触发 
+   "0 15 10 L * ?" 每月最后一日的上午10:15触发 
+   "0 15 10 ? * 6L" 每月的最后一个星期五上午10:15触发 
+   "0 15 10 ? * 6L 2002-2005" 2002年至2005年的每月的最后一个星期五上午10:15触发 
+   "0 15 10 ? * 6#3" 每月的第三个星期五上午10:15触发 
+   有些子表达式能包含一些范围或列表
+   例如：子表达式（天（星期））可以为 “MON-FRI”，“MON，WED，FRI”，“MON-WED,SAT”
+   “*”字符代表所有可能的值
+   “/”字符用来指定数值的增量
+   例如：在子表达式（分钟）里的“0/15”表示从第0分钟开始，每15分钟
+            在子表达式（分钟）里的“3/20”表示从第3分钟开始，每20分钟（它和“3，23，43”）的含义一样
+   “？”字符仅被用于天（月）和天（星期）两个子表达式，表示不指定值
+   当2个子表达式其中之一被指定了值以后，为了避免冲突，需要将另一个子表达式的值设为“？”
+   “L” 字符仅被用于天（月）和天（星期）两个子表达式，它是单词“last”的缩写
+   如果在“L”前有具体的内容，它就具有其他的含义了。例如：“6L”表示这个月的倒数第６天
+   注意：在使用“L”参数时，不要指定列表或范围，因为这会导致问题
+   W 字符代表着平日(Mon-Fri)，并且仅能用于日域中。它用来指定离指定日的最近的一个平日。大部分的商业处理都是基于工作周的，所以 W 字符可能是非常重要的。
+   例如，日域中的 15W 意味着 "离该月15号的最近一个平日。" 假如15号是星期六，那么 trigger 会在14号(星期五)触发，因为星期四比星期一离15号更近。
+   C：代表“Calendar”的意思。它的意思是计划所关联的日期，如果日期没有被关联，则相当于日历中所有日期。例如5C在日期字段中就相当于日历5日以后的第一天。1C在星期字段中相当于星期日后的第一天。
+   字段   允许值   允许的特殊字符
+   秒           0-59           , - * /
+   分           0-59           , - * /
+   小时           0-23           , - * /
+   日期           1-31           , - * ? / L W C
+   月份           1-12 或者 JAN-DEC           , - * /
+   星期           1-7 或者 SUN-SAT           , - * ? / L C #
+   年（可选）           留空, 1970-2099           , - * /
+
+```
+
+
+
+https://blog.csdn.net/qq_52723553/article/details/126569441
+
+![在这里插入图片描述](javaNote.assets/bd31715fad584cbd972f5e71b9956d56.png)
+
+### x-www-form-urlencoded
+
+https://www.cnblogs.com/Marydon20170307/p/12621036.html
 
 ### 七大模块
 
@@ -1990,7 +2335,29 @@ https://blog.csdn.net/qq_41775769/article/details/120090159
 
 有效减少 Java 程序与数据库交互次数，从而提升整个系统的运行效率，延迟加载**适用于多表关联查询的业务场景**，而单表查询本身只涉及到一张数据表的查询，所以也没有优化的余地了
 
-## java基础
+# java基础
+
+### Jre&Jdk
+
+JRE： Java Runtime Environment 
+ JDK：Java Development Kit
+ JRE顾名思义是java运行时环境，包含了java虚拟机，java基础类库。是使用java语言编写的程序运行所需要的软件环境，是提供给想运行java程序的用户使用的。
+ JDK顾名思义是java开发工具包，是程序员使用java语言编写java程序所需的开发工具包，是提供给程序员使用的。JDK包含了JRE，同时还包含了编译java源码的编译器javac，还包含了很多java程序调试和分析的工具：jconsole，jvisualvm等工具软件，还包含了java程序编写所需的文档和demo例子程序。
+ 如果你需要运行java程序，只需安装JRE就可以了。如果你需要编写java程序，需要安装JDK。
+
+  JRE根据不同操作系统（如：windows，linux等）和不同JRE提供商（IBM,ORACLE等）有很多版本 
+  再说说java的跨平台吧:
+  java源程序先经过javac编译器编译成二进制的.class字节码文件（java的跨平台指的就是.class字节码文件的跨平台，.class字节码文件是与平台无关的），.class文件再运行在jvm上，java解释器（jvm的一部分）会将其解释成对应平台的机器码执行，所以java所谓的跨平台就是在不同平台上安装了不同的jvm，而在不同平台上生成的.class文件都是一样的，而.class文件再由对应平台的jvm解释成对应平台的机器码执行
+
+
+
+  最后解释下机器码和字节码的区别: 
+  一，机器码，完全依附硬件而存在～并且不同硬件由于内嵌指令集不同，即使相同的0 1代码 
+
+ 意思也可能是不同的～换句话说，根本不存在跨平台性～比如～不同型号的CPU,你给他个指令10001101，他们可能会解析为不同的结果～
+ 二，我们知道JAVA是跨平台的，为什么呢？因为他有一个jvm,不论那种硬件，只要你装有jvm,那么他就认识这个JAVA字节码～～～～至于底层的机器码，咱不用管，有jvm搞定，他会把字节码再翻译成所在机器认识的机器码～～～
+
+![img](javaNote.assets/8609520_1515460528255_ACED241801E307EE7A39612F85A94EBF.png)
 
 ### 影响接口性能
 
@@ -2758,6 +3125,42 @@ sleep: sleep是Thread类中的静态方法。因此无论是在a线程中调用b
 wait、notify、notifyAll 就很惨了，只能在**同步控制方法**或**同步控制块**中使用。
 
 ![image-20220904222523241](javaNote.assets/image-20220904222523241.png)
+
+### sleep()&wait()
+
+一、sleep()和wait()的区别
+1、相同点
+
+#### sleep()和wait()都可以暂停线程的执行。
+
+2、不同点
+
+#### 所在类不同
+
+sleep()是Thread类的静态方法。
+wait()是Object类的方法。
+
+#### 锁释放不同
+
+sleep()是不释放锁的。
+wait()是释放锁的。
+
+#### 用途不同
+
+sleep()常用于一定时间内暂停线程执行。
+wait()常用于线程间交互和通信。
+
+#### 用法不同
+
+sleep()方法睡眠指定时间之后，线程会自动苏醒。
+wait()方法被调用后，可以通过notify()或notifyAll()来唤醒wait的线程。
+
+#### 二、使用wait()，notify()，notifyAll()的注意事项
+
+当一个线程需要**调用对象的wait0方法的时候，这个线程必须拥有该对象的锁**，接着它就会释放这个对象锁并进入等待状态直到其他线程调用这个对象上的notify()方法。
+同样的，当—个线程需要调用对象的 notity()方法之前，也要先获得对象锁，执行完毕后，释放这个对象的锁，以便其他在等待的线程就可以得到这个对象锁。由于所有的这些方法都需要线程持有对象的锁，这样就只能通过同步来实现，所以他们只能在同步方法或者同步块中被调用。
+三、wait()和notify()的工作原理
+如果线程A1，A2，A3，A4都调用了obj.wait()方法，那么它们就会进入obj对象的等待队列。当obj.notify()被调用的时候，会从等待队列中随机选择一个线程并将其唤醒。而如果调用obj.notifyAll()，则会唤醒等待队列中的所有等待线程。
 
 ### 线程
 
@@ -4027,33 +4430,51 @@ System.out.println("value1的值与value2的值相等");
 
 ### 接口和抽象类
 
-**抽象类好处**
-
-**自下而上**的思想
-
-负责方法约定和逻辑调用（**复用**共同的代码和逻辑），让实现**延迟到子类实现**，也让子类更加简洁
-
-注意只能定义变量和方法不能有其他语句。
+http://t.zoukankan.com/dw3306-p-9469875.html
 
 ![image-20220805155237034](javaNote.assets/image-20220805155237034.png)
 
-**接口**
+#### 一、接口
 
-**自上而下**的行为约束
+**自上而下**的思想，对行为进行约束
 
-#### 抽象类和接口的关系
+多实现
 
-看到这里，相信有很多小伙伴会有疑问，能否使用抽象类替换接口，毕竟两者概念上很容易模糊。在个人看来，JAVA中，除了类只能被单继承，但是接口可以多实现(接口之间可以多继承)这个限制外，最重要的是两者设计的一个目的。
+而接口则是为了规定某一种标准而设计出来，它强调的是**约定和规范**，用于系统之间的通信，在面向对象语言中**体现就是多态性**的使用。
 
-**抽象类设计出来的目的是为了抽取出某一个种类的一些共有特性或者默认行为，以达到代码复用的目的。而接口则是为了规定某一种标准而设计出来，它强调的是规范，在面向对象语言中体现就是多态性的使用。** 所以，如果出现该设计为抽象类还是接口纠结的场景，建议可以从设计的动机方面进行考虑，应该能得到一个比较好的结果。
+只能有抽象方法
 
-1.抽象类**允许包含某些方法的实现**，而接口是不允许的；从设计级别看，为了实现由抽象类定义的类型，一个类必须定义为一个抽象类的子类，这限制了它在类图中的层次，但是接口没有这个层次的限制。
+接口变量默认是静态常量(public static final修饰)，不能有静态代码快和静态方法，java8可以有静态方法但是强制编写实现。
 
-2.在抽象类中提供成员方法的实现细节，该方法只能在接口中为 public abstract修饰，也就是抽象方法。
 
-3.抽象类中的成员变量可以实现多个权限 public private protected final等，**接口中只能用 public static final修饰**。
 
-### 实例方法
+**接口为什么不能有静态方法**
+
+https://www.dovov.com/45168.html
+
+通过类目调用一个抽象方法是没有意义的
+
+在接口中不能有静态方法的原因在于Java parsing静态引用的方式。 在尝试执行静态方法时，Java不会为寻找类的实例而烦恼。 这是因为**静态方法不依赖于实例**，因此可以直接从类文件中执行。 鉴于接口中的所有方法都是抽象的，虚拟机将**不得不寻找特定的接口实现来查找静态方法后面的代码**，以便执行。 这与静态方法parsing的工作原理相矛盾，并且会在语言中引入不一致。
+
+#### 二、抽象类
+
+**自下而上**的思想：对一种事物进行抽象，即对类抽象
+
+负责方法约定和逻辑调用（**复用**共同的代码和逻辑），让实现**延迟到子类实现**，也让子类更加简洁
+
+抽象类设计出来的目的是为了抽取出某一个种类的一些**公共默认实现**，以达到**代码复用**的目的。
+
+可以有抽象方法和非抽象方法
+
+注意只能定义变量和方法不能有其他语句。
+
+不能进行实例化
+
+单继承
+
+抽象方法只能是public 或protect修饰（缺省默认public），这样子类才能进行实现，
+
+### 方法调用权限
 
 Java变量分为成员变量和局部变量
 
@@ -4809,6 +5230,7 @@ ArrayList会空间浪费，结尾需要预留一定的容量空间，不够还�
 
 ### 线程安全集合
 
+```
 // JUC
 new ConcurrentHashMap<String,String >();
 new CopyOnWriteArraySet<String>();
@@ -4824,6 +5246,7 @@ Collections.synchronizedMap(new HashMap<>());
 Collections.synchronizedSet(new HashSet<>());
 
 
+```
 
 
 
@@ -6119,7 +6542,7 @@ messageconverter
 
 可以使用@Ordered(int)来设置优先级
 
-## JVM
+# JVM
 
 ### JVM核心参数
 
@@ -6329,13 +6752,12 @@ JMM的设计需要考虑两个方面，分别是程序员角度和编译器、�
 
 下面通过一段代码来看JSR-133如何实现这两个目标：
 
+```
 double pi = 3.14;			//A
 double r  = 1.0;			//B
 double area = pi * r * r 	//C
-1
-2
-3
 上述代码存在如下happens-before关系：
+```
 
 A happens-before B
 B happens-before C
@@ -6725,7 +7147,7 @@ Class.forName则触发类加载和初始化
 
 ### 父子类加载顺序
 
-父类静态子类静态，父类非静态变量代码块构造，子类非静态变量代码块构造
+父类静态子类静态，父类非静态变量、代码块、构造，子类非静态变量代码块构造
 
 父类 > 子类
 
@@ -6808,8 +7230,6 @@ son 有参构造方法
     }
 ```
 
-
-
 #### 二、对应加载路径
 
 <JAVA_HOME>\lib  rt.jar、tools.jar
@@ -6828,17 +7248,17 @@ son 有参构造方法
 
 #### 四、破坏双亲委派机制
 
+代码热替换（动态性，会在平级类加载器中加载类）、JNDI(上层往下层找实现类，责任链解决)、tomcat自定义类加载器（不同jar包版本可能会不兼容，需要使用不同的类加载器）
+
 ServiceLoader，有基础类型又要调用回用户的代码，而引导类加载器又不认识和不会加载这些代码，ClassPath下的JNDI服务提供者接口（Service Provider Interface，SPI）的代码。JNDI服务使用这个**线程上下文类加载器**去加载所需的SPI服务代码，这是一种**父类加载器**去**请求子类加载器**完成类加载的行为，打破了双亲委派机制
 
-程序动态性：代码热替换（HotSwap）、模块热部署（Hot Deployment）
-
-
+程序动态性：代码**热替换**（HotSwap）、模块热部署（Hot Deployment）
 
 ##### 1 第一次破坏双亲委派机制
 
 双亲委派模型的第一次“被破坏”其实发生在双亲委派模型出现之前——即 JDK1.2 面世以前的“远古”时代。
 
-由于双亲委派模型在 JDK 1.2 之后才被引入，但是类加载器的概念和抽象类 java.lang.ClassLoader 则在 Java 的第一个版本中就已经存在，面对**已经存在的用户自定义类加载器的代码**，Java 设计者们引入双亲委派模型时不得不做出一些妥协，为了兼容这些已有代码，无法再以技术手段避免 loadClass() 被子类覆盖的可能性，只能在 JDK1.2 之后的 java.lang.ClassLoader 中添加一个新的 protected 方法 findClass()，并引导用户编写的类加载逻辑时尽可能去重写这个方法，而不是在 loadClass() 中编写代码。loadClass() 方法，双亲委派的具体逻辑就实现在这里面，**按照 loadClass() 方法的逻辑**，如果**父类加载失败**，会**自动调用自己的 findClass() 方法来完成加载**，这样既不影响用户按照自己的意愿去加载类，又可以保证新写出来的类加载器是符合双亲委派规则的。
+由于双亲委派模型在 JDK 1.2 之后才被引入，但是类加载器的概念和抽象类 java.lang.ClassLoader 则在 Java 的第一个版本中就已经存在，面对**已经存在的用户自定义类加载器的代码**，Java 设计者们引入双亲委派模型时不得不做出一些妥协，为了兼容这些已有代码，无法再以技术手段避免 loadClass() 被子类覆盖的可能性，只能在 JDK1.2 之后的 java.lang.ClassLoader 中添加一个新的 protected 方法 findClass()，并引导用户编写的类加载逻辑时尽可能去重写这个方法，而不是在 loadClass() 中编写代码。loadClass() 方法，双亲委派的具体逻辑就实现在这里面，**按照 loadClass() 方法的逻辑**，如果**父类加载失败**，会**自动调用自己的 findClass() 方法来完成加载**，这样既不影响用户按照自己的**意愿去加载类**，又可以**保证新写出来的类加载器是符合双亲委派规则的**。
 
 ##### 2 第二次破坏双亲委派机制：线程上下文类加载器
 
@@ -6852,7 +7272,7 @@ SPI：在 Java 平台中，通常把核心类 rt.jar 中提供外部服务、可
 
 为了解决这个困境，Java 的设计团队只好引入了一个不太优雅的设计：**线程上下文类加载器**。这个类加载器可以通过 java.lang.Thread 类的 **setContextClassLoader() 方法进行设置**，如果创建线程时还未设置，它将会从父线程中继承一个，如果在应用程序的全局范围内都没有设置过的话，那这个类加载器默认就是应用程序类加载器。
 
-有了线程上下文类加载器，程序就可以做一些“舞弊”的事情了。JNDI 服务**使用这个线程上下文类加载器去加载所需的 SPI 服务代码**。这是一种**父类加载器**去**请求子类加载器**完成**类加载**的行为，这种行为实际上是打通了双亲委派模型的层次结构来逆向使用类加载器，已经**违背了双亲委派模型的一般性原则**，但也是无可奈何的事情。 例如 JNDI、JDBC、JCE、JAXB 和 JBI 等。不过，当 SPI 的服务提供者多于一个的时候，代码就只能根据具体提供者的类型来硬编码判断，为了消除这种极不优雅的实现方式，在 JDK6 时，JDK 提供了 java.util.ServiceLoader 类，以 META-INF/services 中的配置信息，辅以责任链模式，这才算是给 SPI 的加载提供了一种相对合理的解决方案。
+有了线程上下文类加载器，程序就可以做一些“舞弊”的事情了。JNDI 服务**使用这个线程上下文类加载器去加载所需的 SPI 服务代码**。这是一种**父类加载器**去**请求子类加载器**完成**类加载**的行为，这种行为实际上是打通了双亲委派模型的层次结构来逆向使用类加载器，已经**违背了双亲委派模型的一般性原则**，但也是无可奈何的事情。 例如 JNDI、JDBC、JCE、JAXB 和 JBI 等。不过，当 SPI 的服务提供者多于一个的时候，代码就只能根据具体提供者的类型来硬编码判断，为了消除这种极不优雅的实现方式，在 JDK6 时，JDK 提供了 java.util.ServiceLoader 类，以 META-INF/services 中的配置信息，辅以**责任链模式**，这才算是给 SPI 的加载提供了一种相对合理的解决方案。
 
 ![img](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NoZW5ncWl1bWluZw==,size_16,color_FFFFFF,t_70-16655803897063.png)
 
@@ -6895,11 +7315,6 @@ IBM 公司主导的 JSR-291(即 OSGiR4.2 ) 实现**模块化热部署**的关键
 ###### 自定义类加载器
 
 除了以上三个类加载器，我们还可以自定义类加载器。只需要继承ClassLoader类即可。通过源码可以看到ClassLoader的主要调用loadClass方法与findClass()方法。因此我们自定义类加载器只需要重写这两个方法即可。而findClass我们跟踪代码发现是空实现，其底层是通过类加载器加载文件的字节码然后调用defineClass()方法。下面就来看看一个简单的自定义类加载器实现。
-
-
-​       
-
-
 
 ```java
 package com.zj.study.jvm;
@@ -7454,7 +7869,7 @@ JVM将字节码装在到其内部成字节码指令（仅被JVM识别），再�
 
 ![image-20210921130055864](javaNote.assets/image-20210921130055864.png)
 
-### **GC** **Roots**
+### GC Roots
 
 ![image-20211107162107077](javaNote.assets/image-20211107162107077.png)
 
@@ -7537,7 +7952,8 @@ MIX GC
 1、首先通过内存映像分析工具对Dump出来的堆转储快照进行分析，确认内存中导致OOM的对象是否是必要的，还需要分清楚是出现了内存泄露还是内存溢出。
 2、如果是内存泄露，可进一步通过工具查看泄露对象到GC roots的引用链，找到泄露对象是通过怎样的引用路径、与哪些GC roots相关联，才导致垃圾收集器无法回收他们，根据泄露对象的类型信息以及它到GC roots引用链的信息，一般可以比较准确的定位到这些对象创建的位置，进而找出产生泄露的代码的具体位置。
 3、如果不是内存泄露，则说明内存中的兑现是必须存活的，那就应该检查Java虚拟机的堆参数(-Xmx与-Xms)设置，与机器的内存对比，看看是否还有向上调整的空间，然后在从代码上检查是否存在某些对象生命周期过长、持有状态时间过长、存储结构设计不合理等情况，尽量尽量减少程序运行期的内存消耗。
-堆的常用参数：
+
+![image-20221213133115695](javaNote.assets/image-20221213133115695.png)堆的常用参数：
 
 -Xmx:堆的最大值参数
 
@@ -7554,9 +7970,229 @@ https://blog.csdn.net/weixin_41010294/article/details/104009722
 // 4，OOM的定位，还有别的很强大的工具，需要去多接触
 ```
 
+### 内存泄露
+
+```java
+package com.post.memory.leak;
+import java.util.Map;
+public class MemLeak {
+	public final String key;
+	public MemLeak(String key) {
+		this.key =key;
+	}
+	public static void main(String args[]) {
+		try {
+			Map map = System.getProperties();
+            for(;;) {
+                map.put(new MemLeak("key"), "value");
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }}
+}
+ 
+```
+
+一、前言
+
+        本文主要介绍如何从代码层面去定位内存泄漏的原因。无论是jdk还是open jdk，都使用到了虚拟机，前者使用JVM，后者使用GraalVM，并且它们都有相应的垃圾回收机制。其中，JVM是使用引用计数法和可达性分析算法，来判断对象是否是不再使用的对象，本质都是判断一个对象是否还会被引用。那么对于这种情况下，由于代码的实现不同就会出现很多种内存泄漏问题（让JVM误以为此对象还在引用中，无法回收，造成内存泄漏）。
+
+二、排查方法
+
+​      常见的排查或定位方法，主要有以下7种。
+
+#### 静态集合类
+
+​       如HashMap、LinkedList等等。如果这些变量被声明为静态的，那么它们生命周期与程序一致。
+
+各种连接，如数据库连接、网络连接和IO连接
+       在对数据库进行操作的过程中，首先需要建立与数据库的连接，当不再使用时，需要调用close等方法来释放与数据库的连接。只有连接被关闭后，GC才会回收对应的对象。否则，如果对Connection、Statement、ResultSet、HttpURLConnection、BufferedReader、InputStream等等实例或者通道，不显性地关闭，将会造成大量的对象无法被回收，从而引起内存泄漏。
+
+#### 变量不合理的作用域
+
+​       一般而言，一个变量的定义的作用范围大于其使用范围，很有可能会造成内存泄漏。另一方面，如果没有及时地把对象设置为null，很有可能导致内存泄漏的发生。
+
+```
+public class UsingRandom {		
+	private String msg;
+	public void receiveMsg(){
+		readFromNet();// 从网络中接受数据保存到msg中
+		saveDB();// 把msg保存到数据库中
+	}
+}
+```
+
+​      如上面这个伪代码，通过readFromNet方法把接受的消息保存在变量msg中，然后调用saveDB方法把msg的内容保存到数据库中，此时msg已经就没用了，由于msg的生命周期与对象的生命周期相同，此时msg还不能回收，因此造成了内存泄漏。
+​      实际上这个msg变量可以放在receiveMsg方法内部，当方法使用完，那么msg的生命周期也就结束，此时就可以回收了。还有一种方法，在使用完msg后，把msg设置为null，这样垃圾回收器也会回收msg的内存空间。
+
+#### 内部类持有外部类
+
+​       如果一个外部类的实例对象的方法返回了一个内部类的实例对象，这个内部类对象被长期引用了，即使那个外部类实例对象不再被使用，但由于**内部类持有外部类的实例对象**，这个外部类对象将不会被垃圾回收，这也会造成内存泄露。
+​      在Java中内部类的定义与使用，一般为成员内部类与匿名内部类。它们的对象都会隐式持有外部类对象的引用，影响外部类对象的回收。通过编译可以来验证这个理论。                    
+
+​	首先有如下代码：
+
+```
+public class OutClass {
+    int  out =2;
+    public class InnerClass{
+        int in=1;
+    }
+}
+      经过编译后：
+
+//内部类：InnerClass
+public class OutClass$InnerClass {
+    int in;
+	// 构造方法需要传入OutClass这个对象
+    public OutClass$InnerClass(OutClass var1) {
+        this.this$0 = var1;
+        this.in = 1;
+    }
+}
+//外部类：OutClass
+public class OutClass {
+    int out = 2;
+    public OutClass() {
+    }
+    public class InnerClass {
+        int in = 1;
+        public InnerClass() {
+        }
+    }
+}
+```
+
+   可以观察到，在内部类的构造方法中，会对外部类的成员变量进行初始化。即是内部类持有外部类的引用，导致外部类对象将不会被垃圾回收，造成内存泄露。
+
+#### 哈希值改变
+
+​      当一个对象被存储进HashSet集合中以后，就不能修改这个对象中的那些参与计算哈希值的字段了。
+​      因为，当修改后，所得的哈希值与最初存储进HashSet集合中时的哈希值就不同了。在这种情况下，即使用contains()方法，也将返回找不到对象的结果，但是HashSet却一直持有修改前的对象的实例，导致不能被GC，造成内存泄露。
+
+#### 缓存
+
+​       内存泄漏的另一个常见来源是缓存。举个例子，我们有时候为了减少与db的交互次数，会将查询出的对象实例放入缓存中，但是常常会忘记对这个缓存进行管理。比如忘记限制缓存大小。
+​      对于这个问题，可以使用WeakHashMap代表缓存，此种Map的特点是，当除了自身有对key的引用外，此key没有其他引用那么此map会自动丢弃此值。
+
+#### 事件处理
+
+​      如监听器和回调机制等等，这里我们举前端的一个例子，使用定时器时，我们销毁了这个DOM，但是在定时器中使用了这个DOM，定时器中就保留了对这个DOM的引用，导致内存泄漏。所以需要在清除DOM时也要手动清除定时器。
 
 
-## 操作系统
+
+
+
+
+
+#### 一、Dump的基本概念
+
+在[故障定位](https://www.zhihu.com/search?q=故障定位&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103})(尤其是out of memory)和性能分析的时候，经常会用到一些文件来帮助我们排除代码问题。这些文件记录了JVM运行期间的内存占用、线程执行等情况，这就是我们常说的[dump文件](https://www.zhihu.com/search?q=dump文件&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103})。
+
+常用的有heap dump和[thread dump](https://www.zhihu.com/search?q=thread dump&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103})（也叫javacore，或java dump）。我们可以这么理解：heap dump记录内存信息的，thread dump是记录CPU信息的；
+
+#### 二、压测过程中内存问题分析常用步骤
+
+1、使用 free -m 命令查看内存使用情况，判断内存使用占比是否过高
+
+2、使用jstat -gc pid 命令查看GC回收情况，判断是否存在full GC频繁
+
+3、使用 jmap -dump:live,format=b,file=xxxx.hprofile pid生成head dump文件
+
+4、使用VisualVM或MAT工具分析dump文件，找到具体泄露的对象
+
+#### 三、jmap命令实战演示
+
+##### 1、free -m 查看内存使用情况，top命令查看进程PID：
+
+
+
+![img](javaNote.assets/v2-35df4292407c7822712ca4dd7a182de9_720w.webp)
+
+
+
+##### 2、使用jmap命令导出head dump文件：
+
+jmap -dump:live,format=b,file=m.hprofile6534 6534
+其中：m.hprofile6534是dump信息导出的[文件名](https://www.zhihu.com/search?q=文件名&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103})称，6534是进程号
+
+
+
+![img](javaNote.assets/v2-ac1bd27f356e765aed7f606d2f26c721_720w.webp)
+
+
+
+##### 3、使用JDK自带的VisualVM工具分析：
+
+本地JDK安装目录》bin目录下找到[jvisualvm.exe](https://www.zhihu.com/search?q=jvisualvm.exe&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103}), 双加打开：
+
+
+
+![img](javaNote.assets/v2-4895f955e588c218f487d5be18719f4a_720w.webp)
+
+
+
+加载下载的head dump文件：
+
+
+
+![img](javaNote.assets/v2-5d517ea2de1c2de97fc5c56aaeb7cbab_720w.webp)
+
+
+
+如果是有OOM的现象，这里会多一段显示，点击可以查看具体异常信息，帮助定位OOM的原因：
+
+
+
+![img](javaNote.assets/v2-91ad09f47474ac23c67c377922d86672_720w.webp)
+
+
+
+点击“类”可以查看[对象类型](https://www.zhihu.com/search?q=对象类型&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103})，实例数占比，实例数个数、实例所占用内存大小从高到低排序，哪种类型的对象占用了内存最多一目了然：
+
+
+
+![img](javaNote.assets/v2-bd8a78cd5f1fbab69ab1a8d67d6e9ac0_720w.webp)
+
+
+
+如果某种类型的对象太多，那么有可能是引用它的那个类的对象太多，结合原代码，就可以初步定位[内存泄漏](https://www.zhihu.com/search?q=内存泄漏&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103})的地方。
+
+##### 4、也可以使用工具：MAT （ Eclipse Memory Analyzer）做更深入详细的分析
+
+下载MAT;
+使用MAT打开head dump文件；
+直接查看Report区域下Leak Suspects， MAT给出可能的[内存泄露](https://www.zhihu.com/search?q=内存泄露&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"answer"%2C"sourceId"%3A2534328103})原因：
+
+
+
+![img](javaNote.assets/v2-31b97097e7b4cff45f3bda0f7974bc47_720w.webp)
+
+
+
+Action区域下Histogram可以查看分析哪些类型的对象占用的内存比较多（没有得到及时GC）：
+
+
+
+![img](javaNote.assets/v2-5bb3ba1d62fd5d3fa62c98636c3dc8d2_720w.webp)
+
+
+
+在对象上右键，菜单中可以选择show objects by class查看更详细的信息用于分析：
+
+
+
+![img](javaNote.assets/v2-2347686b42df7ac3cdb607c52f7a8698_720w.webp)
+
+# 操作系统
+
+### 性能工具
+
+![微信图片_20221123175003](C:/Users/hefeng/Desktop/微信图片_20221123175003.jpg)
+
+![微信图片_20221123174941](javaNote.assets/微信图片_20221123174941.jpg)
+
+![微信图片_20221123174949](javaNote.assets/微信图片_20221123174949.jpg)
 
 ### C读取流
 
@@ -7814,7 +8450,7 @@ sleep()方法进入阻塞状态，当有两个线程（线程1和线程2），�
   存储单元一般具有储存数据和读写数据的动能，一般以8位二进制作为一个储存单元，也就是一个字节。每个单元有一个地址，是一个整数编码，可以表示为二进制数。
 
 什么是物理内存
-  我们都知道32位的操作系统可以寻找4G大小的内存空间。因此我们安装一个32位系统在配置4G的内存条，看起来是一个完美的方案。可是，当我们安装好系统配好内存，打开任务管理器后，发现我们的物理内存只有3G左右，这是怎么回事呢？
+  我们都知道**32位的操作系统可以寻找4G大小的内存空间**。因此我们安装一个32位系统在配置4G的内存条，看起来是一个完美的方案。可是，当我们安装好系统配好内存，打开任务管理器后，发现我们的物理内存只有3G左右，这是怎么回事呢？
 
   物理内存：在计算机体系中，物理内存不仅仅包括装在主板上的内存条（RAM），还包括**主板BIOS芯片的ROM**，**显卡上的显存（RAM）和BIOS(ROM)**,以及各种设备上的储存空间。所以说我们的实际的物理内存空间达不到4G，也就是我们那1G空间是给一些**输入输出缓存器等的不可访问的区域**。
 
@@ -7923,7 +8559,7 @@ Kakfa 服务端**向 Consumer 发送消息**的场景下使用 **sendfile** 机�
 
 ### CPU高速缓存cache
 
-一、CPU高速缓存（cache）
+#### 一、CPU高速缓存（cache）
 
 SRAM（静态RAM）
 
@@ -7935,7 +8571,7 @@ cache，中译名高速缓冲存储器，**位于内存和CPU之间**，其作�
 
 cache**对于程序员是不可见**的，它**完全是由硬件控制**的
 
-在以前，CPU的主频比较慢，CPU和内存DRAM之间速度差别不是很大，存储数据或者指令还OK。但是CPU的飞速发展，CPU大哥速度已经飞快，而内存速度却跟不上大哥的步伐，所以大哥每次要读取或者写入内存的时候都要等一等小弟，这个时候怎么办。cache就出来了，它类似与一个第三方。位于内存和CPU之间，速度非常快，所以CPU就把数据直接写入cache，然后CPU就可以干其他的了，剩下的事情就交给cache这个跑腿的，cache在合适的时机可以慢慢的把数据写入内存，也就是相当于解了CPU的燃眉之急。
+在以前，CPU的主频比较慢，CPU和内存DRAM之间速度差别不是很大，存储数据或者指令还OK。但是CPU的飞速发展，CPU大哥速度已经飞快，而**内存速度却跟不上大哥CPU的步伐**，所以大哥每次要读取或者写入内存的时候都要等一等小弟，这个时候怎么办。cache就出来了，它类似与一个第三方。位于内存和CPU之间，速度非常快，所以CPU就把数据直接写入cache，然后CPU就可以干其他的了，剩下的事情就交给cache这个跑腿的，cache在合适的时机可以慢慢的把数据写入内存，也就是相当于解了CPU的燃眉之急。
 
 说白了，CPU要读数据首先是在cache中读，如果cache命中，也叫cache hit，CPU就可以极快的得到该地址处的值。如果cache miss 也就是没有命中，它就会通过总线在内存中去读，并把连续的一块单元加载到cache中，下次好使用。
 
@@ -7943,17 +8579,18 @@ cache大多是SRAM（静态RAM），而内存大多是DRAM（动态随即存储�
 
 cache容量一般非常小，因为价格贵，所以cache小是有道理的。一级cache一般就几KB，cache 的单位又分成cache line ，它是从内存单元加载到cache中的最小单元，一般为几个字大小，32字节或者64字节偏多。（因为时间局部性和空间局部性所以加载一次是以一个cache单元为最小单位）
 
+#### cache有两种模式（写回模式） 和 （写通模式）
 
-cache有两种模式（写回模式） 和 （写通模式）
 写回？写通？ 回哪儿？通哪儿？
 当然是内存啊！！！
 
 简单介绍，写通也就是当CPU写入cache的时候，将数据再从cache 中写到内存中，这两个过程要都结束后，CPU的写入操作才算完成，也就是时刻保持内存和缓存的同步，这显然是很耗时的。
 
-什么是多级cache？
+#### 什么是多级cache？
+
 一级cache 有指令cache和数据cache之分，这使整个系统更加高效，因为1Lcache 容量小，所以有了多级cache ，比如二级cache ，他容量大，但是速度就要比1Lcache 慢些，但比内存快多了。三级cache就更一些了。
 
-写回也就是当CPU写入cache中的时候，数据不会马上从cache中写到内存里面，而是等待时机成熟后写入（比如 发生cache miss，其他内存要占用该cache line的时候将该单元写回到内存中，或者一定周期后写入到内存中 ，或者其它地核需要读取该内存的时候）。
+**写回也就是当CPU写入cache中的时候，数据不会马上从cache中写到内存里面**，而是**等待时机成熟后**写入（比如 发生**cache miss**，其他内存要占用该cache line的时候将该单元写回到内存中，或者一定周期后写入到内存中 ，或者其它地核需要读取该内存的时候）。
 
 内存写入cache的时候，如果cache 满了，则用一定的算法淘汰，比如随机淘汰还有或者LRU淘汰(用的少的被淘汰 常用)来替换掉原来的cache line 单元。
 
@@ -7975,11 +8612,11 @@ CPU进行存储器读操作时，根据主存地址可分成命中和未命中�
 
 
 
-采用**分立Cache技术**，也就是**将指令和数据分开**，分别存放在指令Cache 和数据Cache中。这种分立Cache技术有利于CPU采用流水线方式执行指令。在流水线中，往往会发生在同一个操作周期同时需要预取一条指令和执行另一条指令的取数据操作的情况。若采用指令和数据统一的Cache，则这种情况会造成取指令和取数据的访存冲突，冲突的结果就是使得流水线产生断流的情况发生，从而严重影响流水线的效率。采用分立Cache技术，因为取指令和取数据分别在不同的Cache中同时进行，因而不会产生冲突，有利于流水线的实现
+采用**分立Cache技术**，也就是**将指令和数据分开**，分别存放在指令Cache 和数据Cache中。这种分立Cache技术有利于CPU采用流水线方式执行指令。在流水线中，往往会发生在同一个操作周期同时需要预取一条指令和执行另一条指令的取数据操作的情况。若采用指令和数据统一的Cache，则这种情况会造成**取指令和取数据的访存冲突**，冲突的结果就是使得流水线产生断流的情况发生，从而严重影响流水线的效率。采用分立Cache技术，因为取指令和取数据分别在不同的Cache中同时进行，因而不会产生冲突，有利于流水线的实现
 
 
 
-二级缓存（L2 CACHE）出现是为了协调一级缓存与内存之间的速度。最初缓存只有一级，后来处理器速度又提升了，一级缓存不够用了，于是就添加了二级缓存。二级缓存是比一级缓存速度更慢，容量更大的内存，主要就是做一级缓存和内存之间数据临时交换的地方用。“L1级Cache-L2级Cache-主存”这种层次从工作原理上讲与前述的Cache工作原理是完全相同的，即CPU首先访L1级Cache，若不命中，再访问L2级Cache和主存。
+二级缓存（L2 CACHE）出现是为了协调一级缓存与内存之间的速度。最初缓存只有一级，后来**处理器速度又提升了**，**一级缓存不够用了，于是就添加了二级缓存**。二级缓存是比一级缓存速度更慢，容量更大的内存，主要就是做一级缓存和内存之间数据临时交换的地方用。“L1级Cache-L2级Cache-主存”这种层次从工作原理上讲与前述的Cache工作原理是完全相同的，即CPU首先访L1级Cache，若不命中，再访问L2级Cache和主存。
 
 
 
@@ -8050,47 +8687,6 @@ CPU进行存储器读操作时，根据主存地址可分成命中和未命中�
 但两者**不共享虚拟地址**空间，因为是两个独立的进程。
 
 ![image-20220727214451070](javaNote.assets/image-20220727214451070.png)
-
-### 上下文切换
-
-1. **内存管理**上下文。 包括加载页表、刷出地址转换后备缓冲器，向内存管理单元提供新的信息。
-2. **页表切换**，这就是重新装载全局页表，用于**给进程安装一个新的虚拟地址空间**。
-3. 由于进程的栈都在内核态，所以**切换内核态堆栈上下文数据**。
-4. 硬件上下文，主要部分就是**进程和CPU的任务状态寄存器**，就是TSS中的字段。在这里CPU为了减轻很多切换的工作，很多地方都是如果有必要，就切换，就是所谓的惰性原则。
-
-进程上下文切换：
-
-保存CPU寄存器和程序计数器
-
-进程状态到PCB中
-
-虚拟内存，内核堆栈
-
-
-
-引起上下文切换：
-
-时间片用完
-
-系统资源不足，进程挂起等待资源满足
-
-调用sleep主动挂起
-
-高优先级的进程抢占
-
-硬件中断，CPOU进程挂起，转而执行硬件中断服务程序
-
-
-
-进程调度信息，不属于上下文的内容，那是操作系统进程调度的范畴
-
-![image-20220727100545822](javaNote.assets/image-20220727100545822.png)
-
-```
-CPU调度的是线程，而不是作业
-```
-
-![image-20220724224432728](javaNote.assets/image-20220724224432728.png)
 
 ### 文件磁盘分配
 
@@ -8564,6 +9160,78 @@ D正确  一个进程中可以有多个线程，而线程独有的资源有栈�
 
 ![image-20220716134450840](javaNote.assets/image-20220716134450840.png)
 
+### 上下文切换
+
+1. **内存管理**上下文。 包括加载页表、刷出地址转换后备缓冲器，向内存管理单元提供新的信息。
+2. **页表切换**，这就是重新装载全局页表，用于**给进程安装一个新的虚拟地址空间**。
+3. 由于进程的栈都在内核态，所以**切换内核态堆栈上下文数据**。
+4. 硬件上下文，主要部分就是**进程和CPU的任务状态寄存器**，就是TSS中的字段。在这里CPU为了减轻很多切换的工作，很多地方都是如果有必要，就切换，就是所谓的惰性原则。
+
+#### 进程切换和线程切换的区别
+
+1、最主要的一个区别在于进程切换涉及**虚拟地址空间的切换**而线程不会。因为每个进程都有自己的虚拟地址空间，而线程是共享所在进程的虚拟地址空间的，因此同一个进程中的线程进行线程切换时不涉及虚拟地址空间的转换。
+
+2、进程切换是当今多任务多用户操作系统所应具有的基本功能。
+
+操作系统为了控制进程的执行，必须有能力挂起正在CPU上运行的进程，并恢复以前挂起的某个进程的执行，这种行为被称为进程切换，任务切换或上下文切换。
+
+或者说，进行进程切换就是从正在运行的进程中收回处理器，然后再使待运行进程来占用处理器。 这里所说的从某个进程收回处理器，实质上就是把进程存放在处理器的寄存器中的中间数据找个地方存起来，从而把处理器的寄存器腾出来让其他进程使用。那么被中止运行进程的中间数据存在何处好呢？当然这个地方应该是进程的私有堆栈。
+
+3、操作系统中为了将资源和指令执行序列区分开，引入了线程的概念，线程作为操作系统中的最小的调度单位。线程的模型是多个执行序列 + 一个地址空间。因此线程的切换不需要切换进程的内存映射表，这样保留了并发的特点，避免了进程切换的代价。
+
+**二线程只需少量寄存器，栈，程序计数器等保存即可，不用页表切换，因为是共享进程的地址空间**
+
+#### 为什么虚拟地址切换很慢
+
+cache失效，缺页中断，页表复制等
+
+现在我们已经知道了**进程都有自己的虚拟地址空间**，把不腻地址转化为物理地址需要查找页表，页表查找是一个很慢的过程，因此通常使用Cache来缓存常用
+的地址映射，这样可以加速页表查找，这个Cache就是TLB，Translation Lookaside Buffer，我们不需要关心这个名字，只需要知道TLB本质上就是一
+个cache，是用来加速页表查找的。由于每个进程都有自己的虚拟地址空间，那么显然每个进程都有自己的页表，那么当进程切换后页表也要进行切换，页表
+**切换后TLB就失效了，cache失效导致命中率降低**，那么虚拟地址转换为物理地址就会变慢，表现出来的就是程序运行会变慢，而线程切换不会导致TLB失效，
+因为线程无需切换地址空间，因此我们通常说线程切换比进程切换快，原因就在这里。
+
+#### 什么是虚拟内存
+
+虚拟内存是**操作系统为每个进程**提供的一种抽象，每个进程都有属于自己的，**私有的、地址连续的虚拟内存**，当然我们知道最终进程的数据
+及代码必然要放到物理内存上，那么必须有某种机制能记住虚拟地址空间中的某个数据 被放到了那个物理内存地址上，这就是所谓的地址空间映射
+，也就是虚拟内存地址与物理地址的映射关系，操作系统通过页表记住这种映射关系，页表中记录了虚拟内存地址到物理内存地址的映射关系。有了页表
+就可以将虚拟地址转换为物理内存地址了，这种机制就是虚拟内存。
+
+#### 进程上下文切换
+
+保存CPU寄存器和程序计数器
+
+进程状态到PCB中
+
+虚拟内存，内核堆栈
+
+
+
+#### 引起上下文切换
+
+**时间片**用完
+
+系统**资源不足，进程挂起等待资源满足**
+
+调用**sleep**主动挂起
+
+**高优先级的进程抢占**
+
+**硬件中断**，CPOU进程挂起，转而执行硬件中断服务程序
+
+
+
+进程调度信息，不属于上下文的内容，那是操作系统进程调度的范畴
+
+![image-20220727100545822](javaNote.assets/image-20220727100545822.png)
+
+```
+CPU调度的是线程，而不是作业
+```
+
+![image-20220724224432728](javaNote.assets/image-20220724224432728.png)
+
 ### 多线程多进程
 
 A.**不同进程有不同的页表**，对应着不同的物理地址空间，因此进程间通信需要使用IPC或者socket。而**线程可以共享了进程的地址空间**，所以A对。 
@@ -8938,6 +9606,8 @@ coend
 
 ### 中断
 
+异步事件处理
+
 1、利用中断功能，处理器**可以在I/O操作的执行过程中执行其它指令**
 2、中断处理中，**需要保护被中断进程的所有状态信息**
 3、处理多个中断有两种方法：一种方法是正在处理一个中断时，**禁止再发生中断**；另一种方法是**允许高优先级的中断打断低优先级**的中断处理程序的执行
@@ -8979,6 +9649,36 @@ DMA直接内存读取，发一个命令（包含IP设备地址、是否一次读
 高速缓存：根据局部性原理，把一小部分的指令集合加载到告诉缓存中，匹配CPU的处理速度
 
 ![image-20220904214541580](javaNote.assets/image-20220904214541580.png)
+
+#### 软硬中断
+
+前面我们也提到了，中断请求的处理程序应该要短且快，这样才能减少对正常进程运行调度地影响，而且中断处理程序可能会暂时关闭中断，这时如果中断处理程序执行时间过长，可能在还未执行完中断处理程序前，会丢失当前其他设备的中断请求。
+
+那 Linux 系统**为了解决中断处理程序执行过长和中断丢失的问题，将中断过程分成了两个阶段，分别是「上半部和下半部分」**。
+
+- **上半部用来快速处理中断**，一般会暂时关闭中断请求，主要负责处理跟硬件紧密相关或者时间敏感的事情。
+- **下半部用来延迟处理上半部未完成的工作**，一般以「内核线程」的方式运行。
+
+前面的外卖例子，由于第一个配送员长时间跟我通话，则导致第二位配送员无法拨通我的电话，其实当我接到第一位配送员的电话，可以告诉配送员说我现在下楼，剩下的事情，等我们见面再说（上半部），然后就可以挂断电话，到楼下后，在拿外卖，以及跟配送员说其他的事情（下半部）。
+
+这样，第一位配送员就不会占用我手机太多时间，当第二位配送员正好过来时，会有很大几率拨通我的电话。
+
+
+
+再举一个计算机中的例子，常见的网卡接收网络包的例子。
+
+网卡收到网络包后，通过 DMA 方式将接收到的数据写入内存，接着会通过**硬件中断**通知内核有新的数据到了，于是内核就会调用对应的中断处理程序来处理该事件，这个事件的处理也是会分成上半部和下半部。
+
+上部分要做的事情很少，会先禁止网卡中断，避免频繁硬中断，而降低内核的工作效率。接着，内核会触发一个**软中断**，把一些处理比较耗时且复杂的事情，交给「软中断处理程序」去做，也就是中断的下半部，其主要是需要从内存中找到网络数据，再按照网络协议栈，对网络数据进行逐层解析和处理，最后把数据送给应用程序。
+
+所以，中断处理程序的上部分和下半部可以理解为：
+
+- **上半部直接处理硬件请求，也就是硬中断**，主要是负责耗时短的工作，特点是快速执行；
+- **下半部是由内核触发，也就说软中断**，主要是负责上半部未完成的工作，通常都是耗时比较长的事情，特点是延迟执行；
+
+还有一个区别，硬中断（上半部）是会打断 CPU 正在执行的任务，然后立即执行中断处理程序，而软中断（下半部）是以内核线程的方式执行，并且每一个 CPU 都对应一个软中断内核线程，名字通常为「ksoftirqd/CPU 编号」，比如 0 号 CPU 对应的软中断内核线程的名字是 `ksoftirqd/0`
+
+不过，软中断不只是包括硬件设备中断处理程序的下半部，一些内核自定义事件也属于软中断，比如内核调度等、RCU 锁（内核里常用的一种锁）等。
 
 ### 页面置换算法
 
@@ -9920,7 +10620,7 @@ vm.swappiness=15 表示15的时候使用虚拟内存
 去掉上面的那行
 ```
 
-## Linux命令
+# Linux命令
 
 ### ssh-copy-id
 
@@ -10867,7 +11567,7 @@ ge	大于等于
 le	小于等于
 ```
 
-## MySQL
+# MySQL
 
 ### union&union all
 
@@ -11869,6 +12569,9 @@ lower_case_table_names=1
 ```
 docker run  -d --name mysql8 -p 3406:3306 -v /opt/module/mysql8/conf/my.cnf:/etc/mysql/my.cnf -v /opt/module/mysql8/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root mysql:8.0.26
 
+// 102
+docker run  -d --name mysql8 -p 3406:3306 -v /opt/module/mysql8/conf/my.cnf:/etc/mysql/my.cnf -v /opt/module/mysql8/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root mysql:8.0.26
+
 #--restart=unless-stopped
 ```
 
@@ -11883,8 +12586,8 @@ mysql -uroot -p
 
 ```
 use mysql
-ALTER USER 'root'@'localhost' IDENTIFIED BY '新密码' PASSWORD EXPIRE NEVER;
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '新密码';
+ALTER USER 'root'@'%' IDENTIFIED BY 'root' PASSWORD EXPIRE NEVER;
+ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'root';
 FLUSH PRIVILEGES;
 ```
 
@@ -11893,156 +12596,6 @@ FLUSH PRIVILEGES;
 ```
 ALTER USER 'root'@'%' IDENTIFIED BY '新密码' PASSWORD EXPIRE NEVER;
 ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '新密码';
-```
-
-### SQL执行顺序 
-
-![img](javaNote.assets/935501234925044480.pngExpires=4748320438&OSSAccessKeyId=LTAIh08vjrfC7HV0&Signature=LswsMOP8UQQPeuMBJObFEGNp45M%3D#1551517979315331.png)
-
-```sql
-from <left table>
-on <on_condition>
-<join_type> join <join_table>
-where <where_condition>
-group by <group_by_list>
-<sum()avg()等聚合函数>
-having <having_condition>
-select <select_list>
-distinct
-order by <order_by_condition>
-limit <limit_number>
-```
-
-
-
-第一步：加载from子句的前两个表计算笛卡尔积，生成虚拟表vt1；
-
-第二步：筛选关联表符合on表达式的数据，保留主表，生成虚拟表vt2；
-
-第三步：如果使用的是外连接，执行on的时候，会将主表中不符合on条件的数据也加载进来，做为外部行
-
-第四步：如果from子句中的表数量大于2，则重复第一步到第三步，直至所有的表都加载完毕，更新vt3；
-
-第五步：执行where表达式，筛选掉不符合条件的数据生成vt4；
-
-第六步：执行group by子句。group by 子句执行过后，会对子句组合成唯一值并且对每个唯一值只包含一行，生成vt5,。一旦执行group by，后面的所有步骤只能得到vt5中的列（group by的子句包含的列）和聚合函数。
-
-第七步：执行聚合函数，生成vt6；
-
-第八步：执行having表达式，筛选vt6中的数据。having是唯一一个在分组后的条件筛选，生成vt7;
-
-第九步：从vt7中筛选列，生成vt8；
-
-第十步：执行distinct，对vt8去重，生成vt9。其实执行过group by后就没必要再去执行distinct，因为分组后，每组只会有一条数据，并且每条数据都不相同。
-
-第十一步：对vt9进行排序，此处返回的不是一个虚拟表，而是一个游标，记录了数据的排序顺序，此处可以使用别名；
-
-第十二步：执行limit语句，将结果返回给客户端
-
- 
-
-```sql
-select <select_list>
-from <table_name>
-<join_type> join <join_table> on <join_condition>
-where <where_condition>
-group by <group_by_list>
-having <having_condition>
-order by <order_by_condition>
-limit <limt_number>
-```
-
-
-
-#### 1、on和where的区别
-
-简单地说，当有外关联表时，on主要是针对外关联表进行筛选，主表保留，当没有关联表时，二者作用相同。
-
-例如在左外连时，首先执行on，筛选掉外连表中不符合on表达式的数据，而where的筛选是对主表的筛选。
-
-### in&exist
-
-or可以使用union代替。
-
-in 一般可以用**exists**去优化或者使用**连接**去优化
-
-in子查询一般是使用memory引擎（hash索引）建立了一个临时表，但结果集不要太多，否则会变成基于磁盘的存储引擎（B+）。
-
-```
-in子查询里面一定得是小表，效率比exist高，因为使用in外表是大表可以用到索引，in()里面只执行一次，先执行子查询放到临时表中，再去查询外表和内表进行匹配。
-
-假设子查询B表是小表，效率高
-select * from A where cc in (select cc from B) 用到了A表上cc列的索引；
-
-select * from A where exists(select cc from B where cc=A.cc) 效率低，大表A是全表扫描，只用到了小表B表上cc列的索引。 
-
-not in和not exists比较，not exists效率一定比not in高，因为not in都是全表扫描，not exists可能用到索引
-```
-
-### 关联子查询
-
-```
-select prod_name,
-(select sum(quantity) from OrderItems a where a.prod_id=b.prod_id)quant_sold
-from Products b
-```
-
-关联子查询与下面的内连接效果一样，不用使用join和group
-
-```
-select prod_name, sum(quantity) from OrderItems,Products where OrderItems.prod_id = Products.prod_id group by prod_name
-```
-
-#### `关联子查询`和`普通子查询`的区别在于：
-
-1，`关联子查询`引用了外部查询的列。
-
-2，执行顺序不同。对于普通子查询，先执行普通子查询，再执行外层查询；而对于**关联子查询，先执行外层查询**（因为要用到外部的数据），然后对所有通过过滤条件的记录执行内层查询。
-
-语法：
-
-```sql
-SELECT column1, column2
-FROM table1 AS outer
-WHERE column1 operator
-      (SELECT column1, column2
-       FROM table2
-       WHERE expr1 = outer.expr2);
-123456
-```
-
-**在关联子查询中，对于外部查询返回的每一行数据，内部查询都要执行一次。另外，在关联子查询中是信息流是双向的，外部查询的每行数据传递一个值给子查询，然后子查询为每一行数据执行一次并返回它的记录。然后，外部查询根据返回的记录做出决策。**
-
-关联子查询的用途：
-
-#### 1，在细分的组内进行比较
-
-例子：查询各个商品种类中高于该商品种类平均销售价格的商品信息
-
-```sql
-SELECT * 
-FROM t_commodity AS t1
-WHERE sell_unit_price > (
-       SELECT AVG(sell_unit_price) 
-       FROM t_commodity
-       WHERE category = t1.category
-)
-1234567
-```
-
-#### 2，和`EXISTS`或`NOT EXISTS`配合使用，查询存在或不存在的记录
-
-例子：查询没有下过订单的所有顾客的信息
-
-```sql
-SELECT customer_id
-FROM customers AS c
-WHERE NOT EXISTS (
-      SELECT customer_id
-      FROM orders
-      WHERE customer_id = c.customer_id
-)
-1234567
 ```
 
 ### 数据类型
@@ -12077,7 +12630,7 @@ WHERE NOT EXISTS (
 
 取值范围如果加了unsigned，则最大值翻倍，如tinyint unsigned的取值范围为(0~256)。
 
-int(m)里的m是表示SELECT查询结果集中的显示宽度，并不影响实际的取值范围，没有影响到显示的宽度，不知道这个m有什么用。
+int(m)里的m是**表示SELECT查询结果集中的显示宽度**，并不影响实际的取值范围，没有影响到显示的宽度，不知道这个m有什么用。
 
 **2、浮点型(float和double)**
 
@@ -12342,77 +12895,6 @@ Compact会把变长字段如varchar类型会加入到**变长字段列表**，�
 
 Compact、Redundant、Dynamic和Compressed
 
-### 常见sql
-
-```
-# 表复制，MySQL仅支持:
-create table t3 select * from t2;
-
-不支持select * into new_table from old_table
-
-
-select id into @id from t2 where id=1;
-select @id;
-
-# 建表语句
-create table if not exists test.user
-(
-	id int auto_increment
-		primary key,
-	username varchar(56) not null,
-	password varchar(20) charset latin1 null,
-	birthday datetime null,
-	score decimal null,
-	index idx_name(username),
-	unique key uni_key(username),
-	foreign key(username) references sys_user(username)
-)engine InnoDb,auto_increment=1,charset=utf8;
-
-
-# 查询选修了所有课程的学生学号和所属部门
-# 等价于查询不存在一门课这个学生没选
-select s.stu_name,s.stu_department from tb_student s
-where not exists (
-    select 1 from tb_course c # true表示有一门课该学生没有选
-    where not exists(
-        select 1 from tb_score where course_id=c.course_id and stu_id=s.stu_id
-        )
-    )
-    
-    
-# 查询“001”课程比“002”课程成绩高的所有学生的学号;
-select * from tb_student s
-where exists(
-    select 1 from tb_score sc1 where s.stu_id=sc1.stu_id and sc1.course_id=1 and exists(
-        select 1 from tb_score sc2 where s.stu_id=sc2.stu_id and sc2.course_id=2 and sc1.score<sc2.score
-        )
-          );
-
-select a.stu_id from (select * from tb_score s1 where s1.course_id=1) a ,(select * from tb_score s2 where s2.course_id=2) b
-where a.stu_id=b.stu_id and a.score<b.score;
-
-# 查询没学过“叶平”老师课的同学的学号、姓名
-select * from tb_student s where exists(
-    select 1 from tb_course c where c.course_id=1 and not exists( # 选择课程2并且该学生没有选
-        select 1 from tb_score sc where sc.course_id=c.course_id and sc.stu_id=s.stu_id
-        )
-    );
-select * from tb_student s where s.stu_id not in (
-    select distinct sc.stu_id from tb_course c,tb_score sc where c.course_id=1 and c.course_id=sc.course_id
-    );
-    
-# 查询学过“叶平”老师所教的所有课的同学的学号、姓名;=》不存在一门叶老师的课该学生没有学过
-select * from tb_student s where not exists(
-    select 1 from tb_course c where c.tea_id=1 and not exists( # 找出叶老师的课并且不存在改选手没选过
-        select 1 from tb_score sc where c.course_id=sc.course_id and sc.stu_id=s.stu_id
-        ));
-
-select * from tb_student s where s.stu_id in (
-    select sc.stu_id from tb_score sc ,tb_course c where sc.course_id=c.course_id and c.tea_id=1 group by sc.stu_id
-    having count(*) =(select count(*) from tb_course where tea_id=1)
-    );
-```
-
 ### 复制原理
 
 ```
@@ -12531,6 +13013,156 @@ idx(name,age)
 不会用到age索引，开启索引下推后，在二级索引查询到满足tt%的时候，不会直接去聚簇索引查找，而是先判断age是否满足，满足了再回表。
 
 总结：不会减少二级索引扫描的行，但能减少回表的次数，提前过滤不满足另一个索引的记录
+```
+
+### SQL执行顺序 
+
+![img](javaNote.assets/935501234925044480.pngExpires=4748320438&OSSAccessKeyId=LTAIh08vjrfC7HV0&Signature=LswsMOP8UQQPeuMBJObFEGNp45M%3D#1551517979315331.png)
+
+```sql
+from <left table>
+on <on_condition>
+<join_type> join <join_table>
+where <where_condition>
+group by <group_by_list>
+<sum()avg()等聚合函数>
+having <having_condition>
+select <select_list>
+distinct
+order by <order_by_condition>
+limit <limit_number>
+```
+
+
+
+第一步：加载from子句的前两个表计算笛卡尔积，生成虚拟表vt1；
+
+第二步：筛选关联表符合on表达式的数据，保留主表，生成虚拟表vt2；
+
+第三步：如果使用的是外连接，执行on的时候，会将主表中不符合on条件的数据也加载进来，做为外部行
+
+第四步：如果from子句中的表数量大于2，则重复第一步到第三步，直至所有的表都加载完毕，更新vt3；
+
+第五步：执行where表达式，筛选掉不符合条件的数据生成vt4；
+
+第六步：执行group by子句。group by 子句执行过后，会对子句组合成唯一值并且对每个唯一值只包含一行，生成vt5,。一旦执行group by，后面的所有步骤只能得到vt5中的列（group by的子句包含的列）和聚合函数。
+
+第七步：执行聚合函数，生成vt6；
+
+第八步：执行having表达式，筛选vt6中的数据。having是唯一一个在分组后的条件筛选，生成vt7;
+
+第九步：从vt7中筛选列，生成vt8；
+
+第十步：执行distinct，对vt8去重，生成vt9。其实执行过group by后就没必要再去执行distinct，因为分组后，每组只会有一条数据，并且每条数据都不相同。
+
+第十一步：对vt9进行排序，此处返回的不是一个虚拟表，而是一个游标，记录了数据的排序顺序，此处可以使用别名；
+
+第十二步：执行limit语句，将结果返回给客户端
+
+ 
+
+```sql
+select <select_list>
+from <table_name>
+<join_type> join <join_table> on <join_condition>
+where <where_condition>
+group by <group_by_list>
+having <having_condition>
+order by <order_by_condition>
+limit <limt_number>
+```
+
+
+
+#### 1、on和where的区别
+
+简单地说，当有外关联表时，on主要是针对外关联表进行筛选，主表保留，当没有关联表时，二者作用相同。
+
+例如在左外连时，首先执行on，筛选掉外连表中不符合on表达式的数据，而where的筛选是对主表的筛选。
+
+### in&exist
+
+or可以使用union代替。
+
+in 一般可以用**exists**去优化或者使用**连接**去优化
+
+in子查询一般是使用memory引擎（hash索引）建立了一个临时表，但结果集不要太多，否则会变成基于磁盘的存储引擎（B+）。
+
+```
+in子查询里面一定得是小表，效率比exist高，因为使用in外表是大表可以用到索引，in()里面只执行一次，先执行子查询放到临时表中，再去查询外表和内表进行匹配。
+
+假设子查询B表是小表，效率高
+select * from A where cc in (select cc from B) 用到了A表上cc列的索引；
+
+select * from A where exists(select cc from B where cc=A.cc) 效率低，大表A是全表扫描，只用到了小表B表上cc列的索引。 
+
+not in和not exists比较，not exists效率一定比not in高，因为not in都是全表扫描，not exists可能用到索引
+```
+
+### 关联子查询
+
+```
+select prod_name,
+(select sum(quantity) from OrderItems a where a.prod_id=b.prod_id)quant_sold
+from Products b
+```
+
+关联子查询与下面的内连接效果一样，不用使用join和group
+
+```
+select prod_name, sum(quantity) from OrderItems,Products where OrderItems.prod_id = Products.prod_id group by prod_name
+```
+
+#### `关联子查询`和`普通子查询`的区别在于：
+
+1，`关联子查询`引用了外部查询的列。
+
+2，执行顺序不同。对于普通子查询，先执行普通子查询，再执行外层查询；而对于**关联子查询，先执行外层查询**（因为要用到外部的数据），然后对所有通过过滤条件的记录执行内层查询。
+
+语法：
+
+```sql
+SELECT column1, column2
+FROM table1 AS outer
+WHERE column1 operator
+      (SELECT column1, column2
+       FROM table2
+       WHERE expr1 = outer.expr2);
+123456
+```
+
+**在关联子查询中，对于外部查询返回的每一行数据，内部查询都要执行一次。另外，在关联子查询中是信息流是双向的，外部查询的每行数据传递一个值给子查询，然后子查询为每一行数据执行一次并返回它的记录。然后，外部查询根据返回的记录做出决策。**
+
+关联子查询的用途：
+
+#### 1，在细分的组内进行比较
+
+例子：查询各个商品种类中高于该商品种类平均销售价格的商品信息
+
+```sql
+SELECT * 
+FROM t_commodity AS t1
+WHERE sell_unit_price > (
+       SELECT AVG(sell_unit_price) 
+       FROM t_commodity
+       WHERE category = t1.category
+)
+1234567
+```
+
+#### 2，和`EXISTS`或`NOT EXISTS`配合使用，查询存在或不存在的记录
+
+例子：查询没有下过订单的所有顾客的信息
+
+```sql
+SELECT customer_id
+FROM customers AS c
+WHERE NOT EXISTS (
+      SELECT customer_id
+      FROM orders
+      WHERE customer_id = c.customer_id
+)
+1234567
 ```
 
 ### 适合建立索引？
@@ -13311,6 +13943,36 @@ Record lock, heap no 3 PHYSICAL RECORD: n_fields 18; compact format; info bits 0
 
 ```
 
+#### 死锁演示
+
+因为间隙锁不互斥，但是插入的时候互相等待对方的间隙锁导致死锁了。
+
+目的为了防止事务执行的过程中，有其他事务插入了记录，而出现幻读的问题。
+
+```
+begin ;
+select * from t_test where id=10 for update ;
+
+insert into t_test value (10,10,10);
+
+begin ;
+select * from t_test where id=11 for update ;
+
+insert into t_test value (11,11,11);
+```
+
+
+
+会自动检测到死锁
+
+![image-20221025213008652](javaNote.assets/image-20221025213008652.png)
+
+
+
+![img](javaNote.assets/1cf8614eba3b45b9874dc6204b4d0cd1.png)
+
+**间隙锁的意义只在于阻止区间被插入**，因此是可以共存的。**一个事务获取的间隙锁不会阻止另一个事务获取同一个间隙范围的间隙锁**，共享和排他的间隙锁是没有区别的，他们相互不冲突，且功能相同，即两个事务可以同时持有包含共同间隙的间隙锁。
+
 ### 怎样加锁
 
 ```
@@ -13367,7 +14029,25 @@ insert into t_test value (13,13,13);
 
 
 
-update没加索引锁全表
+update没加索引锁，对每条记录加next-key锁，相当于锁全表
+
+**在 update 语句的 where 条件没有使用索引，就会全表扫描，于是就会对所有记录加上 next-key 锁（记录锁 + 间隙锁），相当于把整个表锁住了**。
+
+我们可以将 MySQL 里的 `sql_safe_updates` 参数设置为 1，开启安全更新模式。
+
+大致的意思是，当 sql_safe_updates 设置为 1 时。
+
+update 语句必须满足如下条件之一才能执行成功：
+
+- 使用 where，并且 where 条件中必须有索引列；
+- 使用 limit；
+- 同时使用 where 和 limit，此时 where 条件中可以没有索引列；
+
+delete 语句必须满足以下条件能执行成功：
+
+- 同时使用 where 和 limit，此时 where 条件中可以没有索引列；
+
+如果 where 条件带上了索引列，但是优化器最终扫描选择的是全表，而不是索引的话，我们可以使用 `force index([index_name])` 可以告诉优化器使用哪个索引，以此避免有几率锁全表带来的隐患。
 
 ```
 begin ;
@@ -13584,7 +14264,7 @@ select * from user;
 
 update user set host = '%' where user = 'root' and host='localhost';
 
-GRANT ALL ON *.* TO 'root'@'%' 
+GRANT ALL ON *.* TO 'root'@'%';
 flush privileges;    
 ```
 
@@ -13818,15 +14498,169 @@ show variables like'%time_zone'; # 显示 SYSTEM 就是没有设置时区
 set global time_zone = '+8:00';
 ```
 
-### [mysql-建表、添加字段、修改字段、添加索引SQL语句写法](https://www.cnblogs.com/f-rt/p/11141421.html)
+### 常用Sql语句
 
-### 拷贝
+mysql不支持top
+
+#### [mysql-建表、添加字段、修改字段、添加索引SQL语句写法](https://www.cnblogs.com/f-rt/p/11141421.html)
+
+#### 表数据拷贝
 
 ```
 insert into t3(key1, key2) SELECT key1, key2 from t1;
 ```
 
+#### 查询每科成绩最高的同学及分数
 
+![image-20221026163138746](javaNote.assets/image-20221026163138746.png)
+
+聚合+连接
+
+```sql
+# 连接查询：查询各科成绩最高的学生
+select a.course_id,stu_id,sc
+from t_score a,
+(select max(score) sc,course_id
+from t_score
+group by course_id) b
+where a.score=b.sc and a.course_id=b.course_id;
+```
+
+![image-20221026180850639](javaNote.assets/image-20221026180850639.png)
+
+
+
+使用嵌套子查询
+
+```sql
+# 嵌套查询：查询各科成绩最高的学生
+select a.* from t_score a
+    where (
+    select count(distinct score) from t_score b
+    where b.course_id=a.course_id
+      and b.score>a.score)<1
+order by course_id,a.score desc ;
+```
+
+![image-20221026180907511](javaNote.assets/image-20221026180907511.png)
+
+
+
+嵌套子查询采用聚合运算
+
+```sql
+# 嵌套查询：查询各科成绩最高的学生
+select a.* from t_score a
+    where (
+    select count(distinct score) from t_score b
+    where b.course_id=a.course_id
+      and b.score>a.score)<1
+order by course_id,a.score desc ;
+```
+
+![image-20221026180946487](javaNote.assets/image-20221026180946487.png)
+
+#### 选课
+
+```
+# 表复制，MySQL仅支持:
+create table t3 select * from t2;
+
+不支持select * into new_table from old_table
+
+
+select id into @id from t2 where id=1;
+select @id;
+
+# 建表语句
+create table if not exists test.user
+(
+	id int auto_increment
+		primary key,
+	username varchar(56) not null,
+	password varchar(20) charset latin1 null,
+	birthday datetime null,
+	score decimal null,
+	index idx_name(username),
+	unique key uni_key(username),
+	foreign key(username) references sys_user(username)
+)engine InnoDb,auto_increment=1,charset=utf8;
+
+
+# 查询选修了所有课程的学生学号和所属部门
+# 等价于查询不存在一门课这个学生没选
+select s.stu_name,s.stu_department from tb_student s
+where not exists (
+    select 1 from tb_course c # true表示有一门课该学生没有选
+    where not exists(
+        select 1 from tb_score where course_id=c.course_id and stu_id=s.stu_id
+        )
+    )
+    
+    
+# 查询“001”课程比“002”课程成绩高的所有学生的学号;
+select * from tb_student s
+where exists(
+    select 1 from tb_score sc1 where s.stu_id=sc1.stu_id and sc1.course_id=1 and exists(
+        select 1 from tb_score sc2 where s.stu_id=sc2.stu_id and sc2.course_id=2 and sc1.score<sc2.score
+        )
+          );
+
+select a.stu_id from (select * from tb_score s1 where s1.course_id=1) a ,(select * from tb_score s2 where s2.course_id=2) b
+where a.stu_id=b.stu_id and a.score<b.score;
+
+# 查询没学过“叶平”老师课的同学的学号、姓名
+select * from tb_student s where exists(
+    select 1 from tb_course c where c.course_id=1 and not exists( # 选择课程2并且该学生没有选
+        select 1 from tb_score sc where sc.course_id=c.course_id and sc.stu_id=s.stu_id
+        )
+    );
+select * from tb_student s where s.stu_id not in (
+    select distinct sc.stu_id from tb_course c,tb_score sc where c.course_id=1 and c.course_id=sc.course_id
+    );
+    
+# 查询学过“叶平”老师所教的所有课的同学的学号、姓名;=》不存在一门叶老师的课该学生没有学过
+select * from tb_student s where not exists(
+    select 1 from tb_course c where c.tea_id=1 and not exists( # 找出叶老师的课并且不存在改选手没选过
+        select 1 from tb_score sc where c.course_id=sc.course_id and sc.stu_id=s.stu_id
+        ));
+
+select * from tb_student s where s.stu_id in (
+    select sc.stu_id from tb_score sc ,tb_course c where sc.course_id=c.course_id and c.tea_id=1 group by sc.stu_id
+    having count(*) =(select count(*) from tb_course where tea_id=1)
+    );
+```
+
+#### 查询各科前三名（考虑成绩并列情况）
+
+思路：不是前三名大于它的
+
+```sql
+# 采用连接查询：查询各科前三名
+select a.* from t_score a,t_score b
+where b.course_id=a.course_id and b.score>=a.score
+group by a.stu_id,a.course_id,a.score
+having count(distinct  b.score)<=3
+order by course_id,score desc ;
+```
+
+![image-20221026181016790](javaNote.assets/image-20221026181016790.png)
+
+
+
+方法二：where里面嵌套子查询小于3
+
+```sql
+# 嵌套子查询:查询各科前三名
+select a.* from t_score a
+    where (
+    select count(distinct score) from t_score b
+    where b.course_id=a.course_id
+      and b.score>a.score)<3
+order by course_id,a.score desc ;
+```
+
+![image-20221026181029717](javaNote.assets/image-20221026181029717.png)
 
 ### datetime与TIMESTAMP（时间戳）
 
@@ -13883,7 +14717,7 @@ innodb
 重启后找redo日志和当前表数值中的最小值
 ```
 
-## Redis
+# Redis
 
 ### 适合缓存场景
 
@@ -14509,7 +15343,7 @@ AOF 重写机制和 RDB 快照（bgsave 命令）的过程，都会分别通过 
 
 载你曾浏览过的页面。
 
-## 网络
+# 网络
 
 ### TCP Socket
 
@@ -14877,9 +15711,7 @@ vip的概念：也可以保护后端真正的服务器
 
 ![img](javaNote.assets/969156946_1581908541437_131FA92C75D60B62AFCDCCF2872A039F.jpeg)
 
-### 各层概述
-
-#### OSI七层模型
+### OSI七层模型
 
 链路层，网络层，传输层都提供流量控制
 
@@ -14891,13 +15723,21 @@ vip的概念：也可以保护后端真正的服务器
 
 ![img](javaNote.assets/webp.webp)
 
-#### 应用层
+#### 七、应用层
 
 为操作系统或网络应用程序提供访问网络服务的接口，数据传输基本单位报文。
 
 应用网关：应用层的协议转换。例如一个主机ISO电子邮件标准，另一个主机执行的是Internet电子邮件标准，如果这两个主机需要交换电子邮件，那么必须经过一个电子邮件网关进行协议转换。
 
-#### 传输层
+#### 六、表示层
+
+信息加解密，压缩解压缩
+
+#### 五、会话层
+
+不同机器用户会话管理
+
+#### 四、传输层
 
 将上层数据分段并提供端到端的、可靠或不可靠的传输及端到端的差错控制和流量控制，提供建立、维护和取消连接的功能
 
@@ -14905,7 +15745,7 @@ vip的概念：也可以保护后端真正的服务器
 
 传输网关：在**两个网络之间建立传输连接**，不同网络的主机之间可跨越多个网络的、级联的、**点对点**的传输连接
 
-#### 网络层
+#### 三、网络层
 
 IP寻址和路由选择、分组传输、控制子网运行。
 
@@ -14935,7 +15775,18 @@ BGP协议：边界网关协议，域间路由协议，互联网的规模很大�
 
 路由器：连接多个逻辑分开的网络，根据IP地址区分不同的网络，实现网路的互连和隔离，把IP报文传送到正确的网络。
 
-#### 链路层
+网络层向上提供**简单高效、无连接的、最大努力的交付的数据报服务**（IP数据报），为主机之间提供逻辑通信。
+
+- IP寻址
+- 路由选择
+- 分组传输
+- 控制子网运行。
+
+IP地址作用：IP地址通过ARP协议转为MAC地址，最终按照硬件地址找到主机的，那为什么不直接使用MAC地址，主要是屏蔽下层异构网络
+
+**路由器**：连接多个逻辑分开的网络，根据IP地址区分不同的网络，实现网路的互连和隔离，把IP报文传送到正确的网络。
+
+#### 二、链路层
 
 封装成帧、透明传输、差错控制（包含流量控制）
 
@@ -14943,7 +15794,7 @@ BGP协议：边界网关协议，域间路由协议，互联网的规模很大�
 
 交换机：更多端口的网桥，根据帧的目标MAC地址对照MAC地址表决定由哪个端口转发，不在表中则向所有端口转发，及洪泛
 
-#### 物理层
+#### 一、物理层
 
 接口标准、如何更快的传输数据
 
@@ -14987,10 +15838,233 @@ DNS 记录提供与域名相关的所有详细信息，这些 DNS 记录的详�
 - **NS（名称服务器）**： NS 记录直接发送到域或子域的权威名称服务器。
 - **CNAME**：规范名称（或别名）记录是将域名映射到其他域或子域的别名。
 
+### 网际协议IP
+
+网际协议IP是TCP/IP体系中两个最主要的协议之一，这里所说的是IPv4。
+与IP协议配套的三个协议：
+
+- **地址解析协议ARP**(Address Resolution Protocol）
+- **网际控制报文协议ICMP**(Internet Controller Message Protocol)
+- **网际组管理协议IGMP**(Internet Group Management Protocol)
+
+##### 3.1.1、虚拟互联网络
+
+互联网存在大量的异构物理网络，通过使用相同的IP协议，使这些网络**在网络层看起来好像是一个统一的网络**。
+
+举例：源主机H1要把一个IP数据报发给目的主机H2，通过存储转发，H1查看自己的路由表，看目的主机是否在本网络上。如是，**直接交付**；如不是，交给路由器R1。R1查找自己的路由表之后，知道应交给R2进行**间接交付**。
+
+##### 3.1.2、分类的IP地址：
+
+ A类网络的IP地址范围为1.0.0.1－126.255.255.254；  网络号为127为环回测试地址
+
+B类网络的IP地址范围为：128.1.0.1－191.255.255.254；
+
+C类网络的IP地址范围为：192.0.1.1－223.255.255.254。
+![在这里插入图片描述](javaNote.assets/6ce5ce48da1046d3b59b3405a220098e.png)
+
+#### ARP地址解析协议
+
+上层的TCP报文传到网络层会加上IP地址首部，IP地址是网络层及以上使用的**逻辑地址**，但真正要进行数据传输的还需要用到数据链路层和物理层使用的**物理地址**。
+
+**地址解析协议ARP**在主机**ARP高速缓存**中维护着IP地址到硬件地址的**映射表**，并且会动态更新（新增或超时删除），ARP高速缓存表初始化的时候采用广播的方式（我的IP地址，我的硬件地址）
+
+#### 网际控制报文协议ICMP
+
+ICMP允许主机或路由器报告差错情况和提供有关异常情况的报告，以更有效地转发IP数据报和提高交付成功的机会。
+ICMP报文装在IP数据包中，作为其中的数据部分。
+
+用于在 IP 主机、路由器之间传递控制消息，控制消息是指网络通不通、主机是否可达、路由是否可用等网络本身的消息。这些控制消息虽然并不传输用户数据，但是对于用户数据的传递起着重要的作用。
+
+**种类：**
+
+- ICMP差错报告报文：终点不可达、时间超时、参数问题（数据报字段数据不正确）、路由重定向
+- ICMP询问报文：回送请求和回答（测试是否可达）、时间戳请求和回答（可用于时间同步和测量）
+
+**应用举例：**
+
+- PING:分组网间探测ping，用来测试两台主机的连通性。使用到了ICMP回送请求和回答。注意：PING是应用层直接使用网络层的例子，所以并没有通过TCP或UDP.
+- traceroute：用来跟踪一个分组从源点到终点的路径，能得到到达路径中每个路由器的往返时间。原理：通过发送一个无法交付的UDP数据包，并不断重发，TTL从1递增，目的主机最终会发送一个**ICMP终点不可达**差错报告报文。
+
+#### 3.2、分层次的路由选择协议
+
+- 互联网的规模非常大。让路由器知道所有的网络如何到达所需的路由表太大，处理起来太花时间，交换路由时间的带宽也过大。
+- 许多单位不愿意向外界透露本部门的路由选择协议，同时又想连上互联网。
+
+于是互联网就划分了许多较小的**自治系统**（autonomous system）,称为AS，本质就是单一技术管理下的一组路由器。
+
+路由选择协议分为两大类：
+
+- **内部网关协议IGP**(Interior Gateway Protocol)，即一个自治系统内部使用的协议，与其它自治系统无关，常用协议有 RIP 和 OSPF 协议
+- **外部网关协议EGP**(External Gateway Protocol)，将路由选择信息在不同自治系统进行传递，常用的外部网关有BGP-4
+
+##### 3.2.1、内部网关RIP
+
+（适合小网络）
+RIP即路由信息协议，基于**距离向量**，最短跳数16视为不可达，比如（1，3，R）表示到达网络1的跳数为3，下一个路由是R.好消息传得快，坏消息传得慢。
+
+##### 3.2.2、内部网关协议OSPF
+
+（适合大网络）
+开放最短路径优先协议，基于**Dijkstra的最短路径**算法，坏消息能够快速收敛。划分为小的区域进行洪泛，直接使用IP数据包传送。
+
+##### 3.2.3、外部网关协议BGP
+
+边界网关协议，是一种**域间路由协议**，互联网的规模很大，自治系统之间的路由选择非常困难。另外一些数据报为了安全不能通过国外的网络。基于路径向量选择协议，每个自治系统之间保证要有一个**BGP代言人**。
+
+#### 3.3、IP协议详解
+
+[《Linux高性能服务器编程》阅读笔记 之（二）IP 协议详解](https://blog.csdn.net/weixin_44367006/article/details/102495693)
+
+##### 3.3.1、IPv4头部结构
+
+![在这里插入图片描述](javaNote.assets/bd79aead2fae488689a8df450ae6b424.png)
+
+##### 3.3.2、IP分片
+
+当IP数据报的长度超过帧的mtu时（可通过ifconfig查看），他将被**分片**，并只在目标主机内核中的IP模块重新**组装**。分片和重组可由头部字段信息来判断：数据包标识、标志和片偏移
+![在这里插入图片描述](javaNote.assets/6fb8212a2ec140cfb230cddb2057f27d.png)
+
+##### 3.3.3、IP模块工作流程
+
+![在这里插入图片描述](javaNote.assets/1002ee4ca8e44429bb54b5f032adf386.png)
+
+##### 3.3.4、IP路由机制
+
+可通过route命令来查看路由表。
+[理解IP路由器原理及工作机制](https://blog.csdn.net/fynjy/article/details/47184627)
+如何根据IP地址路由到目标网络，分为三个步骤
+
+- 1）查找路由表中和数据报中目标IP地址完全匹配的主机IP地址，如果找到就交给路由项，否则转 2）
+- 2）查找具有相同网络ID，找到就交给路由项，否则转 3）
+- 3）选择默认路由项，这通常意味着下一跳是网关（**默认路由项**）。所有访问internet的请求都将通过网关来转发
+
+##### 3.3.5、IP转发
+
+不是所有的机器都有路由转发功能，可通过命令`echo 1 > /proc/sys/net/ipv4/ip_forward`开启转发功能。
+数据报子模块转发数据报的流程：
+
+- 1）检查数据报头部的TTL值。如果TTL值已经是0，则丢弃。
+- 2）判断是否是本机的某个IP地址，如果不是，发送ICMP源站选路失败给发送端。
+- 3）如果有必要，给源站发送ICMP重定向报文，告诉它更合理的吓一跳路由器。
+- 4）将TTL值减一
+- 5）如果有必要，执行分片操作
+
+##### 3.3.6、IP重定向
+
+ICMP重定向报文包含一下信息：
+
+- 应该使用的路由器的IP地址
+- 引起重定向的IP数据报的源端IP地址，以此更新路由表缓冲
+  ![在这里插入图片描述](javaNote.assets/3f7799665f824192a311c19b848f4cbb.png)
+
+##### 3.3.7、IPv6
+
+解决IPv4地址不够用，增加多播和流的功能；自动配置，网路安全。
+![在这里插入图片描述](javaNote.assets/24231a2dd58542d09de60cdb23729a0e.png)
+
+#### 3.4、划分子网
+
+从两级IP到三级Ip地址，两级IP地址的缺陷：
+
+- IP地址空间浪费。比如ABC类的主机课链接很多，但实际用的不多，造成浪费。
+- 路由表变得太大。给每个物理网络分配网络号，导致路由表的项目数过多。
+- 两级IP地址不灵活。开通新的网络就得先申请新的Ip地址，这段期间无法连接到网络。
+
+于是增加了**子网号字段**，是两级Ip地址变成了三级IP地址，叫做**划分子网**，如{<网络号>，<子网号>，<主机号>}，对外仍表现为同一个网络。
+
+子网掩码
+
+![在这里插入图片描述](javaNote.assets/3799cb9ab6c94a6186c97e79bb8ec97c.png)
+
+#### 3.5、无分类编址CIDR（构造超网）
+
+由于路由表的项目数太多，并且B类地址即将耗尽，引进了**无分类域间路由选择CIDR**(Classless Inter-Domian Routing)，CIDR的两个主要特点：
+
+- 1）CIDR消除了传统的A类、B类和C类地址以及子网的概念
+- 2）CIDR把网络前缀都相同的连续的的IP地址组成一个”**CIDR地址块**“。我们只要知道地址块的任何一块地址，就可以地址快的起始地址和最大地址。
+
+#### 3.6、虚拟专用网VPN
+
+- 由于IP地址紧缺，并且互联网不安全，机构内的主机很多不需要接入互联网。
+- 假设机构内的计算机通信都是TCP/IP协议，那么有本机构**自行分配**IP地址，仅在机构内部有效，称为**本地地址**。
+- 为防止本地地址和互联网中的IP冲突，指明了一些**专用地址**（private address），只在本机构有效，**路由器对目的地址是专用地址的数据报一律不进行转发**。如10.0.0到10.255.255.255，172.16.0.0到172.31.255.255，192.168.0.0到192.168.255.255
+- 采用这样的专用地址的互联网叫做**专用互联网或本地互联网**，或者叫**专用网**。
+- 当机构的部门分布世界各地，就需要利用公网的互联网作为本机构专用网之间的通信载体，这样的专用网又称为**虚拟专用网VPN**（Virtual Private Network）
+- 如果两个专用网通信需要经过公用互联网的时候，**所有通过互联网传送的数据都必须加密**。使用**IP隧道技术**实现虚拟专用网，显然机构内至少有一个合法的全球IP地址即可。
+
+#### 3.7、网络地址转换NAT
+
+- 由于路由器不会转发专用地址，当专用地址想要**与互联网主机通信**的时候，需要通过NAT路由器**将其本地址转换成全球IP地址**才能联网（当然该路由器本身至少得有一个全球IP地址），这就是**网络地址转换NAT**(Network Address Translation)。通俗来说就是公用一个公网IP
+- 使用端口号的NAT也叫做**网络地址与端口号转换NAPT**(Network Address and port Translation)。由于端口号属于传输层，这违反了层次关系，导致NAPT曾遭受了一些诟病，但NAT(NAPT)依然成为互联网的一个重要组件。
+
+参考
+[分类的IP地址](https://blog.csdn.net/weixin_39307273/article/details/104525453)
+[理解IP路由器原理及工作机制](https://blog.csdn.net/fynjy/article/details/47184627)
+[《Linux高性能服务器编程》阅读笔记 之（二）IP 协议详解](https://blog.csdn.net/weixin_44367006/article/details/102495693)
+[划分子网的方法](https://blog.csdn.net/weixin_46155444/article/details/106263655)
+
 ### Ping命令
 
 应用可能用到**DNS**，域名解析服务
 网络层**ICMP**协议和**ARP**地址解析协议
+
+**ping报文的详细过程**
+
+   
+
+·ICMP是TCP/IP协议族的子协议，用于IP主机与路由器之间传递控制消息，控制消息指的是网络通不通，主机是否可达，路由是否可用等网络本身关系，ping命令就是ICMP协议的工作过程
+
+·ping.exe原理：向制定IP地址发送一定长度的数据包，如果IP地址存在，会返回相同大小的数据包，如果没有在特定时间内收到返回数据包，则判断“超时”，认定指定的IP地址不存在。但是有时防火墙会屏蔽ICMP协议，所以ping结果只能做参考。
+
+·ping的过程：
+
+  **·同一网段（****主机Aping主机B****）：**
+
+​     ·ping通知系统建立一个固定格式的ICMP请求数据包
+
+​     ·ICMP协议打包这个数据包和目的IP地址转交给IP协议层（一组后台运行的进程，和ICMP类似）
+
+​     ·IP协议层将主机B的IP地址设为目的IP地址，本机IP地址设为源地址，加上其他控制信息构成IP数据包
+
+​     ·获取主机B的MAC地址（在同一网段下，IP层协议通过主机B的IP子网掩码和自己的子网掩码会发现属于同一网络，于是直接在本网络查找B机器的MAC地址）
+
+​       ·若两台主机之前有过通信，那么在主机A的ARP缓存表应该有主机B的IP和其MAC的映射关系，如果没有，则发送ARP请求广播，首先交换机接收到报文之后，会检索自己是否有B机器的MAC地址，如果有则返回给主机A，如果没有则向所有端口发送ARP请求广播，其他主机收到之后，如果不是找的自己则丢弃报文，当主机B收到报文后就会立即响应，通过A主机的ARP请求报文得到A的MAC地址，并以同样的ARP报文格式返回给主机A。当主机A得到主机B的MAC地址后，交给链路层
+
+​          ·ARP报文如下（其中OP值   1：ARP请求  2：ARP应答  3.RARP请求  4.RARP应答）：
+
+​         ![img](javaNote.assets/2823b82b649058869933bfa6f32f14a6-62674)
+
+​         ![img](javaNote.assets/5d6a0f38d52c7f52abcf4f037300ac3e-45718)
+
+​         ![img](javaNote.assets/1de897ed2804a1d3ccd17aba42e4376e-62436)
+
+​         ![img](javaNote.assets/bd6ef8bc851b636d9ae5d9cf7671d3f2-53304)
+
+​       ·之后链路层构建一个数据帧，目的地址就是从IP层传过来的主机B的MAC地址，源地址是本机的MAC地址，然后再加一些控制信息，传输出去，当主机B接收到这个数据帧之后，先检查目的地址和本机地址，若符合则接收。然后从帧中提取出IP数据包交给本机IP层协议，IP层检查之后把有用信息交给ICMP协议，处理之后马上构建ICMP应答包，发送给主机A，由于目前主机AB都互相知道对方的MAC地址，所以就不用发送ARP请求了。
+
+  **·不同网段（主机Aping主机C）：**
+
+​     ·ping通知系统建立一个固定格式的ICMP请求数据包
+
+​     ·ICMP协议打包这个数据包和目的IP地址转交给IP协议层（一组后台运行的进程，和ICMP类似）
+
+​     ·IP协议层将主机C的IP地址设为目的IP地址，本机IP地址设为源地址，加上其他控制信息构成IP数据包     
+
+​     ·获取主机C的MAC地址（当IP协议发现主机C的IP地址和本机IP不属于同一网段，那么就直接交给路由器处理）
+
+​       ·首先要获取路由器MAC，还是先在ARP缓存表中寻找，若没有则发送ARP广播。获得路由器MAC之后，主机A链路层构建数据帧发送给路由器，路由器收到并解析到ICMP报文中发现目的地址，之后查询路由表找到对应的出口，之后去掉原来的MAC头部，加上自己的MAC地址之后向主机C转发，如果路由器也没有主机C的MAC缓存，也会和前面一样通过ARP获取。之后，主机C就学到了路由器的2端口MAC地址，并发送ICMP应答包，然后路由器修改MAC头部，通过1端口发送给主机A。
+
+​     ·ping的结果对应的一些问题：
+
+​       ·request timed out: 对方和自己不在同一网段内，且通过路由器不可达；对方已关机，或者网络中没有这个地址；对方存在，但是设置了ICMP数据包过滤；设置了错误的IP地址
+
+​       ·destination host unreachable: 自己未设定默认路由，对方跟自己不在同一网段
+
+​       ·bad ip address: 没有连接到DNS服务器；无法解析IP；IP不存在 
+
+​       ·source quench received: 对方或中途服务器繁忙而无法应答
+
+​       ·ping 127.0.0.1: 如果不通，则表明本地TCP/IP协议不能正常工作
 
 ### NAT协议
 
@@ -15986,7 +17060,7 @@ msl:（报文最大存活时间）
 
 #### 子网划分
 
-子网号**不能是另一个子网的前缀**，不然路由器转发的时候就不能区分去哪个子网了。
+m
 
 可以采用**哈夫曼编码**，划分5个子网号的哈夫曼树如下：
 
@@ -16128,7 +17202,12 @@ D:添加长度信息。
 - IPv6 包头包首部长度采用固定的值 `40` 字节，去掉了包头校验和，简化了首部结构，减轻了路由器负荷，大大**提高了传输的性能**。
 - IPv6 有应对伪造 IP 地址的网络安全功能以及防止线路窃听的功能，大大**提升了安全性**。
 
-## 算法和数据结构
+# 算法和数据结构
+
+### 科学计数法
+
+e+03是数字的科学计数法
+比如：1.0e+03=1000,1.0e-03=0.001 +表示小数位向右移动,-表示向左移动.
 
 ### 海量数据去重
 
@@ -16923,6 +18002,8 @@ eloge边先**排好序**，每次把边连起来，同时**保证不形成环**�
 
 ### 红黑树
 
+
+
 **B+树**插入操作的平均时间复杂度为O(logn)，最坏时间复杂度为**O(n)**
 **Hash表**插入操作的平均时间复杂度为O(1)，最坏时间复杂度为O(n)
 **排序链表**插入操作的平均和最坏时间复杂度为O(n)
@@ -16987,6 +18068,8 @@ B+树和B树都支持随机查找**，都可做文件的索引结构，平衡多
 ### 平衡二叉树(AVL)
 
 #### `每个结点的左右子树高度差至多等于一`
+
+https://blog.csdn.net/weixin_45902285/article/details/124517412
 
 ### 五大常用算法
 
@@ -17548,7 +18631,11 @@ public class HeapSort {
     
 ```
 
-## MongoDB
+# MongoDB
+
+```
+>db.col.find({key1:value1, key2:value2}).pretty()
+```
 
 支持副本集部署
 
@@ -17709,7 +18796,7 @@ db.driveevent.aggregate([
 
 
 
-## 分布式算法
+# 分布式算法
 
 ### paxos算法
 
@@ -17785,7 +18872,7 @@ https://blog.csdn.net/daaikuaichuan/article/details/98627822
 
   **参考网络分区的情况**。
 
-## SringCloud
+# SringCloud
 
 ### setinel
 
@@ -18059,7 +19146,174 @@ public void addPassRequest(int count) {
 
 AuthoritySlot
 
-## UML
+# UML
+
+### 时序图
+
+消息控制流
+
+![image-20221206140201195](javaNote.assets/image-20221206140201195.png)
+
+
+
+![img](javaNote.assets/682223-20220827185609160-933421564.png)
+
+### 流程图
+
+**常用的流程图符号都有其特定的含义**，彼此之间不可乱用，否则很容易闹出笑话。
+
+以下是流程图常用的7个符号，以及它们各自代表的含义：
+
+**1）开始与结束**
+
+一般是椭圆符号（分两种），用来表示一个过程的开始或结束。“开始”和“结束”写在符号内。
+
+![img](javaNote.assets/48540923dd54564e7ab824f823daaa8ad0584f1b.jpeg@f_auto)
+
+**2）活动/处理进程**
+
+用矩形符号。用来表示在过程的一个单独的步骤。活动的简要说明写在矩形内。
+
+![img](javaNote.assets/a08b87d6277f9e2f8caeed888e34df2cb999f3a0.jpeg@f_auto)
+
+**3）判断/判定**
+
+是菱形符号。用来表示过程中的一项判定或一个分叉点，判定或分岔的说明写在菱形内，常以问题的形式出现。对该问题的回答决定了判定符号之外引出的路线，每条路线标上相应的回答
+
+![img](javaNote.assets/d009b3de9c82d158c2e4b829100e2fd0bd3e42d4.jpeg@f_auto)
+
+**4）进程方向**
+
+一般是箭线符号。用来表示步骤在顺序中的进展。箭头表示一个过程的流程方向。
+
+![img](javaNote.assets/f2deb48f8c5494ee3ac1381ebff1d6f698257ee6.jpeg@f_auto)
+
+**5）文档/文件**
+
+符号如下图，用来表示属于该过程的书面信息。文件的题目或说明写在符号内。
+
+![img](javaNote.assets/faedab64034f78f0c3815360e9353c5db2191ca3.jpeg@f_auto)
+
+**6）输入/输出**
+
+一般用平行四边形符号，表示数据的输入或者输出。
+
+![img](javaNote.assets/359b033b5bb5c9eaf69a9b63443d80083bf3b3d6.jpeg@f_auto)
+
+**7）预设处理**
+
+双边矩形。可以理解为子流程，像一个黑盒。双边矩形中包着一个流程图，只是没有详细显示而已。
+
+![img](javaNote.assets/023b5bb5c9ea15ce9b6c31a427040cfb3b87b2ae.jpeg@f_auto)
+
+亿图图示内置了一个庞大的符号库，以上流程图符号都可以在符号库中找到：
+
+![img](javaNote.assets/c2cec3fdfc0392454e4dba47169092ca7c1e258e.jpeg@f_auto)
+
+最后，附上一份完整的流程图（**增值税申报流程图**）：
+
+![img](javaNote.assets/b219ebc4b74543a93fafb5128f13bc8ab8011440.jpeg@f_auto)
+
+图片模糊的话，可以复制下方链接获取查看源文件▼增值税申
+
+### 接口抽象类基类
+
+总览（必看）
+对接口、抽象类、基类我做了如下的图来说明：
+
+![在这里插入图片描述](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Luj56CB5LmL54uQ,size_20,color_FFFFFF,t_70,g_se,x_16.png)
+
+
+接口：与其说是不能被实例化的类，更像是一种约定子类可以同时遵守多个约定，实现多个接口
+
+抽象类：是对同类事物共有属性和行为的抽象模板，每个子类只能继承一个模板
+
+基类：是对接口/抽象类默认方法的一般实现，使得子类不需要对接口/抽象类的方法完全重写，更方便使用
+
+一、接口是“契约”
+在这里我强调接口是一种“契约”的概念，是从接口这个概念设计的目的出发，尽管从接口的定义方面：如下满足关键字iterface声明，字段内容默认为public static 方法默认public abstract 即可
+
+```
+public interface interfaceName{
+	int STATUS=1;
+	//...
+	void interfaceFunction();
+	//...
+}
+```
+
+尽管接口定义与一般的类定义差别不但，但是其中字段一般保存不变，方法共有但是不实现这些默认设置，恰巧说明了接口作为“契约”的功能。
+
+声明一个接口——我们使用其静态的字段作为状态标识，默认的方法作为使用该接口的客户和实现该方法的子类的纽带，属于使用者和实现者的约定——这是独属于程序员的浪漫（bushi）
+
+二、接口实例——Servlet接口
+Servlet是Java Web开发中较为基础的一个概念，是属于服务器容器和开发者实现后端功能类的一个关键接口
+关于Servlet的详细概念和Java Web基础可以参考这篇文章——Java Web 基础之Servlet概念详解
+
+![在这里插入图片描述](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Luj56CB5LmL54uQ,size_19,color_FFFFFF,t_70,g_se,x_16.png)
+
+通过上图，我们可以看到Servlet接口，已经默认实现接口功能的基类GenericServlet，然后是Web开发常用类HttpServlet作为子类扩展了Http相关功能。
+
+实现了Servlet接口的类才能被服务器容器识别和部署到服务器上，才能让服务器容器心甘情愿的为开发者设计的类提供服务，Servlet接口就是一种身份标识。
+
+三、抽象标识符abstract和抽象类
+有细心的小伙伴可能已经发现了，在接口中所有的方法都默认添加abstract标识，那么这个标识符到底有什么用嘞？
+
+在这里就不得不提到抽象和具体的概念——抽象是现实世界实体的提取概括，不能直接作用于现实世界，具体事物可以由抽象概念组合和创造，可以直接展现使用
+
+因此抽象标识符即表示该方法不能直接使用，需要被子类实现才能使用——同理，抽象类也是如此，抽象类的方法也默认为抽象的方法。具体一个例子如下：
+
+```
+public abstract class Animal{
+	String name;
+	Animal(String name){
+		this.name=name;
+	}
+	@Override
+	public void print(Object document){
+		System.out.println(name);
+	}
+	public abstract void describe();
+
+```
+
+首先，抽象类可以拥有可变字段和构造方法，而且抽象类还可以继承实现一些父类方法——抽象类可以实现接口方法，抽象类一般用于定义模板，模板方法…比如上面定义了一个动物模板，同样不能实例，但是可以供子类扩展。
+
+四、基类作为“辅助”
+在Servlet接口实例中，可以看到——在扩展Servlet接口直接使用时，中间还有一个GenericServlet作为辅助，帮助实现了默认的方法，具体GenericServlet做的工作见下：
+
+abstract class GenericServlet implements Servlet,ServletConfig{
+
+   //GenericServlet通过将ServletConfig赋给类级变量
+   private trServletConfig servletConfig;
+
+   public void init(ServletConfig servletConfig) throws ServletException {
+
+      this.servletConfig=servletConfig;
+    
+      /*自定义init()的原因是：如果子类要初始化必须覆盖父类的init() 而使它无效 这样
+       this.servletConfig=servletConfig不起作用 这样就会导致空指针异常 这样如果子类要初始化，
+       可以直接覆盖不带参数的init()方法 */
+      this.init();
+   }
+
+   //自定义的init()方法，可以由子类覆盖  
+   //init()不是生命周期方法
+   public void init(){
+
+   }
+
+   //实现service()空方法，并且声明为抽象方法，强制子类必须实现service()方法 
+   public abstract void service(ServletRequest request,ServletResponse response) 
+     throws ServletException,java.io.IOException{
+   }
+
+   //实现空的destroy方法
+   public void destroy(){ }
+}
+
+
+它实现了一大堆空的方法，它的子类就不必对那须不需要实现的方法再进行实现了，减轻了子类的工作。
 
 ### 软件生命周期三个阶段
 
@@ -18439,7 +19693,23 @@ public interface LoggerContextListener {
 }
 ```
 
+### 代理模式&装饰着模式
 
+让别人帮助你做你并不关心的事情，叫**代理模式**
+
+[果冻.Lee：透过Spring AOP来深入理解代理模式3 赞同 · 0 评论文章](https://zhuanlan.zhihu.com/p/80793420)
+
+为让自己的能力增强，使得增强后的自己能够使用更多的方法，拓展在自己基础之上的功能的，叫**装饰器模式**
+
+[果冻.Lee：装饰器模式（Java）1 赞同 · 2 评论文章](https://zhuanlan.zhihu.com/p/92516705)
+
+对装饰器模式来说，装饰者（decorator）和被装饰者（decoratee）都实现同一个 接口。对代理模式来说，代理类（proxy class）和真实处理的类（real class）都实现同一个接口。他们之间的边界确实比较模糊，两者都是对类的方法进行扩展，具体区别如下：
+
+1、装饰器模式强调的是增强自身，在被装饰之后你能够在被增强的类上使用增强后的功能。增强后你还是你，只不过能力更强了而已；代理模式强调要让别人帮你去做一些本身与你业务没有太多关系的职责（记录日志、设置缓存）。代理模式是为了实现对象的控制，因为被代理的对象往往难以直接获得或者是其内部不想暴露出来。
+
+2、装饰模式是以对客户端透明的方式扩展对象的功能，是继承方案的一个替代方案；代理模式则是给一个对象提供一个代理对象，并由代理对象来控制对原有对象的引用；
+
+3、装饰模式是为装饰的对象增强功能；而代理模式对代理的对象施加控制，但不对对象本身的功能进行增强；
 
 ### 设计模式三大类
 
@@ -20651,16 +21921,15 @@ public class MainTest {
 	}
  
 }
-1234567891011121314151617181920
 ```
 
 ### 17 命令模式
 
-定义：将一个请求封装为一个对象，使发出请求的责任和执行请求的责任分割开。这样两者之间通过命令对象进行沟通，这样方便将命令对象进行储存、传递、调用、增加与管理。
+定义：将一个请求封装为一个对象，使**发出请求的责任和执行请求的责任分割开**。这样两者之间通过命令对象进行沟通，这样方便将命令对象进行储存、传递、调用、增加与管理。
 
-意图：将一个请求封装成一个对象，从而使您可以用不同的请求对客户进行参数化。
+意图：**将一个请求封装成一个对象**，从而使您可以用不同的请求对客户进行参数化。
 
-主要解决：在软件系统中，行为请求者与行为实现者通常是一种紧耦合的关系，但某些场合，比如需要对行为进行记录、撤销或重做、事务等处理时，这种无法抵御变化的紧耦合的设计就不太合适。
+主要解决：在软件系统中，行为**请求者**与行为**实现者**通常是一种紧耦合的关系，但某些场合，比如需要对行为进行记录、撤销或重做、事务等处理时，这种无法抵御变化的紧耦合的设计就不太合适。
 
 何时使用：在某些场合，比如要对行为进行"记录、撤销/重做、事务"等处理，这种无法抵御变化的紧耦合是不合适的。在这种情况下，如何将"行为请求者"与"行为实现者"解耦？将一组行为抽象为对象，可以实现二者之间的松耦合。
 
@@ -20683,7 +21952,6 @@ public interface Command {
 	public void undo();
  
 }
-123456
 ```
 
 2 具体命令对象
@@ -20710,7 +21978,6 @@ public class TurnOffLight implements Command {
 	}
  
 }
-123456789101112131415161718192021
 ```
 
 3 实现者
@@ -20733,9 +22000,7 @@ public class Light {
  
 		System.out.println(loc + " Off");
 	}
- 
 }
-12345678910111213141516171819
 ```
 
 4 请求者
@@ -20754,7 +22019,6 @@ public class Contral{
 	}
  
 }
-12345678910111213
 ```
 
 ### 18 状态模式
@@ -20801,7 +22065,6 @@ public interface State {
 	public void move();
  
 }
-12345
 ```
 
 2 状态实例
@@ -20832,7 +22095,6 @@ public class PlaceA implements State {
 	}
  
 }
-12345678910111213141516171819202122232425
 ```
 
 3 context(player)拥有状态的对象
@@ -20881,16 +22143,15 @@ public class Player {
 	}
  
 }
-12345678910111213141516171819202122232425262728293031323334353637383940414243
 ```
 
 ### 19 备忘录模式
 
-定义： 在不破坏封装性的前提下，捕获一个对象的内部状态，并在该对象之外保存这个状态，以便以后当需要时能将该对象恢复到原先保存的状态。该模式又叫快照模式。
+定义： 在不破坏封装性的前提下，捕获一个对象的内部状态，并在该对象之外保存这个状态，以便以后当需要时能将该对象恢复到原先保存的状态。该模式又叫**快照模式**。
 
-备忘录模式是一种对象行为型模式，其主要优点如下。
+备忘录模式是一种**对象行为型模式**，其主要优点如下。
 
-提供了一种可以恢复状态的机制。当用户需要时能够比较方便地将数据恢复到某个历史的状态。
+提供了一种可以**恢复状态的机制**。当用户需要时能够比较方便地将数据恢复到某个历史的状态。
 
 实现了内部状态的封装。除了创建它的发起人之外，其他对象都不能够访问这些状态信息。
 
@@ -20913,7 +22174,6 @@ public class Player {
 public interface MementoIF {
  
 }
-123
 ```
 
 2 备忘录
@@ -20930,10 +22190,7 @@ public class Memento implements MementoIF{
 	public String getState(){
 		return state;
 	}
-	
- 
 }
-1234567891011121314
 ```
 
 3 发起者
@@ -20960,7 +22217,6 @@ public class Originator {
 	}
  
 }
-123456789101112131415161718192021
 ```
 
 4 管理者
@@ -20979,14 +22235,13 @@ public class CareTaker {
 	}
  
 }
-12345678910111213
 ```
 
 ### 20 访问者模式
 
-定义：将作用于某种数据结构中的各元素的操作分离出来封装成独立的类，使其在不改变数据结构的前提下可以添加作用于这些元素的新的操作，为数据结构中的每个元素提供多种访问方式。它将对数据的操作与数据结构进行分离。
+定义：将作用于某种**数据结构**中的各元素的**操作**分离出来**封装成独立的类**，使其在**不改变数据结构的前提下可以添加作用于这些元素的新的操作**，为数据结构中的每个元素提供多种访问方式。它将对数据的操作与数据结构进行分离。
 
-访问者（Visitor）模式是一种对象行为型模式，其主要优点如下。
+访问者（Visitor）模式是一种**对象行为型模式**，其主要优点如下。
 
 扩展性好。能够在不修改对象结构中的元素的情况下，为对象结构中的元素添加新的功能。
 
@@ -21043,7 +22298,6 @@ public class CompensationVisitor implements Visitor {
 	}
  
 }
-123456789101112
 ```
 
 3 抽象元素
@@ -21071,7 +22325,6 @@ public class CompensationVisitor implements Visitor {
 	}
  
 }
-123456789101112
 ```
 
 5 对象结构
@@ -21140,7 +22393,6 @@ public interface Mediator {
 	void relay(String from, String to,String ad); // 转发
  
 }
-1234567
 ```
 
 2 具体中介者
@@ -21174,7 +22426,6 @@ public class ConcreteMediator implements Mediator {
 	}
  
 }
-12345678910111213141516171819202122232425262728
 ```
 
 3 抽象同事类
@@ -21204,7 +22455,6 @@ public abstract class Colleague {
 	public abstract void receive(String from, String ad);
  
 }
-123456789101112131415161718192021222324
 ```
 
 4 具体同事类
@@ -21233,7 +22483,217 @@ public class Buyer extends Colleague {
 }
 ```
 
+从基础的角度看，设计模式是研究类本身或者类与类之间的协作模式，是进行抽象归纳的一个很好的速成思路。后面阅读设计模式后，为了加深理解，对相关图片进行了描绘和微调。
 
+从技术的角度已经有很多好的总结，本文会换一种角度思考，既然设计模式研究的是类与类的关系，我们作为工作的个体，一些工作中的策略是不是也可以进行类比，可以更好地去思考这些模式？答案是肯定的。
+
+
+
+### 创建型模式 5
+
+### 抽象工厂（Abstract Factory）：多套方案
+
+抽象工厂模式是对创建不同的产品类型的抽象。对应到工作中，我们的确应该具备提供多套方案的能力，这也是我们常说的，要提供选择题。当你有这样的前瞻意识，一般也会被打上思考较多的标签，但是内在来说，的确想问题更加全面了。
+
+
+
+![img](javaNote.assets/v2-7d4caf055a8789755957e69e016f45a8_720w.webp)
+
+
+
+### 生成器（Builder）：善于分解
+
+生成器模式是对一个个体的创建过程进行细分，拆解为不同的创建部分。这个对应到工作中，作为一些项目管理人员或者团队管理者，需要将一个大泥球一样的事务，合理分解，让大家各司其职，充分发挥才能。同样，我们对日常的工作内容，也可以按照结构去进行划分，从而更有条理。
+
+
+
+![img](javaNote.assets/v2-2730d56fa548e2e44ffbd0adf5e8109e_720w.webp)
+
+
+
+#### 工厂方法（Factory Method）：抽象思考
+
+工厂方法模式是说将提供某一产品的过程进行抽象，通过接口的模式去规范出来。类似的，我们很多做事的过程，都是面向过程，没有抽象提炼一下。如果经过进一步思考，那么可以往上再提炼一个层次，发现事物的本质：到底在做什么，我们的职责是什么，提供什么样的价值。想的更清楚，做的也会更加准确。
+
+![img](javaNote.assets/v2-b367158c65a49bf80ef31397faf20e79_720w.webp)
+
+
+
+### 原型（Prototype）：传承知识
+
+原型模式是说，利用拷贝对象的方法，减少一些复杂的创建过程。这里我们能够学到的是，需要做好日常的积累，很多方案不是每次来都重写，是可以在原来的方案上进行拷贝复用的。这个clone的过程，往往也是知识传承的过程。如果有比较好的传承机制，那么会大大提升服务效率。
+
+![img](javaNote.assets/v2-c0ac663b8bc6c5dc65b2fa07e87217b4_720w.webp)
+
+
+
+### 单件（Singleton）：专注
+
+单件模式是说在多线程的情况下，要保证对象只创建一遍，作为独一无二的资源。这个我觉得，应该去review一下我们的工作模式，虽然我们常常要并发很多事情，但是如果处处被打断，每件事都想干好，那么可能每件事都干不好。我们要确保在某个时间段竭力地做好一件事。事件是一件件有效解决的，不是一起慢慢解决的。
+
+![img](javaNote.assets/v2-37ad18f681ef1169ee50c7b445510307_720w.webp)
+
+
+
+### 结构型模式 7
+
+### 适配器（Adapter）：适应能力
+
+适配器是为了结合原来的能力，适配新的接口服务，比如适配不同的协议入口。工作的时候，其实需要适应不同的人和事，有不同的工作方法方式，但是我们的核心能力是一样的，都是解决对应的问题域。
+
+
+
+![img](javaNote.assets/v2-d379bd3eba427529e130b461f372ec22_720w.webp)
+
+
+
+### 桥接（Bridge）：合理关系
+
+桥接模式是将原来相互依赖的部分，通过上层接口再往抽象层提一下，减少类之间的直接合作，形成间接关系。这个到对应到工作中来说，有一种场景是，常常开发对开发去case by case解决问题。 如果往产品逻辑层走一下，开发对产品，产品层面可能有更好的抽象。当然为了更好的服务体验，这样的解耦是不多见的，但是这样的思考我们可能要get一下。
+
+![img](javaNote.assets/v2-b116889f91b02fff8f61f5b98d55c1f5_720w.webp)
+
+
+
+### 组合（Composite）：递归思考
+
+组合模式通过继承和孩子节点，可以递归地去描述一个对象层次。这个对我们工作来说，要加深思考的层次，可以某个点拆开去再去思考，同时如果能够在递归分解过程中抽象一些共性的点，就能找到一些规律。比如我们的需求分解，每个需求可以分解为子需求，子需求再往下看又可以递归分解。分解完之后，每个部分有这部分的owner去驱动他的下游，形成一个层次结构。
+
+![img](javaNote.assets/v2-cddbad99109ef86a483aa2bc7ddfb198_720w.webp)
+
+
+
+### 装饰（Decorator）：增量价值
+
+装饰模式是将原来的能力进行包装，并提供新的行为。其实每次功能迭代，我们大多是在原来的基础上添加新的功能。我们要定义好新的能力，首要前提是继承、理解好原来的逻辑。这里还想提的是，很多时候，我们只看到了我们复用了庞大的基础能力，但是也要看到我们在项目中增量的贡献，这是我们的闪光点。不要把“拧螺丝”真的看成了拧螺丝。
+
+![img](javaNote.assets/v2-84e29cfa0ff780da380650af7a6a0178_720w.webp)
+
+
+
+### 外观（Facade）：深入浅出
+
+外观模式是说我们不需要理解复杂的系统，而是通过一个外观去操作。这里我们的工作思路是，我们不用展示复杂的细节，我们要提供一些高层的理解，汇报如此，系统的包装也是如此。就比如，服务功能孤立来看，可能很多、很杂，但如果有一个统一的站点去引导包装，那么感觉会好很多，也会看上去有点收口和聚焦的感觉。
+
+![img](javaNote.assets/v2-fd437211c67f9d8cf8a1ec17d25d41ff_720w.webp)
+
+
+
+### 享元（Flyweight）：善于链接
+
+享元模式是说，当我们已经存在一些内容的时候，可以通过缓存复用，而不是重新创建，减少开销。我们在工作中也要做好积累，但是更要做好缓存的key，通过怎么样的手段去链接到我们的工作中，是需要我们做好类目管理和持续积累的。
+
+![img](javaNote.assets/v2-b69c3abd63ae29c9ba91ca1d98901912_720w.webp)
+
+
+
+### 代理（Proxy）：理解保护
+
+代理是为了包装一个类，对相关操作进行二次转发或者进行一些管控。工作中来说，有些工作模式下，有时候我们可能会抱怨管理者代理了我们的决策等操作，但是换个角度想，他们保护了你不用直接被暴露在业务方侧，能够按照预期内的节奏提供服务，不会被主动设置一些预期外操作或私活。
+
+
+
+![img](javaNote.assets/v2-c622d3f854e9b4537ab5582cfc1c8b84_720w.webp)
+
+
+
+### 行为型模式 11
+
+### 责任链（Chain of Responsibility）：能力与责任
+
+责任链是说将请求让队列内的处理器一个个执行，直到找到可以执行的。这里对我们工作的启示是，我们常常抱怨我们得到的机会少，不能成为队列内优先可以处理的处理器，总是处理人家不想做的。但是换个角度看，首先责任链里面的处理器应该是正交的，大家应该各司其职。退一步来说，如果真的有重叠，那么你应该努力提升自己，成为能力强的，从而提高队列内的优先级。
+
+![img](javaNote.assets/v2-8eecab15cdbefe8367c21080a1d2656c_720w.webp)
+
+
+
+### 命令（Command）：加强合作
+
+命令模型是说将请求包装为命令，这样在执行的时候可以与具体的执行逻辑解耦。工作中来说，我们有时候不应该太关心一个事情是怎么完成的，当交给别人完成时，信任他们即可，就是从解决问题的角度来看，不用事事亲为，事事较真。但是这并不妨碍我们主动养成全局视角，了解每个细节。合作才能影响更多的事情。
+
+![img](javaNote.assets/v2-c3f90f06897b6d9991f8e715fca71a3b_720w.webp)
+
+
+
+### 解释器（Interpreter）：加强理解
+
+解释器模式是说针对一套上下文，形成一套语言，可以通过解释表达式含义的方式完成对应的任务。这里来说，我们可以形成某个团体的领域语言，内部交流通过相关领域语言交流，可以增加交流效率。此外，其实不同层次都有不同层次的专业术语，有时候一个术语的解释是一个方面的顿悟，还是要多了解工作内容本身。
+
+![img](javaNote.assets/v2-9fd262280db25d7e620c0b7a75e6ecdd_720w.webp)
+
+
+
+### 迭代器（Iterator）：横向职责
+
+迭代器模式是将集合的访问功能独立出来，通过迭代的模式去访问。这种独立职责的操作，工作中我们常常会看到，我们会将需求管理，缺陷管理，资金安全的一些事情独立出来看。一个方面是这些功能块从主体来说是比较内聚的，另一个来方面说，对工作职责的细分，可以让大家把自己的事情干好，发挥团队作战的效能：开发把开发干好，测试把测试干好，资损防护同学把资损防护干好，整体也就做好了。
+
+![img](javaNote.assets/v2-64972279b2dbbb55be6a8c486ebf4b24_720w.webp)
+
+
+
+### 中介者（Mediator）：协调能力
+
+中介模式是说：当多个类之间要协调的时候，往往引入中介者进行协调，减少大家的知识成本。这个我们常常需要一些PM、PMO这样的角色去管理项目，系统中也需要一些协调层去协调各个域。因此我们也注重培养协调事务、具备全局观的能力。
+
+![img](javaNote.assets/v2-f47a545d4d5144567e7f91b447d0f57c_720w.webp)
+
+
+
+### 备忘录（Memento）：小步快跑
+
+备忘录模式是对操作的一些记录，已被可以恢复到之前的版本。在日常工作中，我们常常需要及时备份、及时保存、及时提交等操作，这样在程序崩溃的时候可以快速恢复到之前版本。但从抽象来说，一些比较长时费力的事情，我们应该分解来做，及时锁住部分收益。
+
+![img](javaNote.assets/v2-98a6085ca6b0c6c94574225ae8067d31_720w.webp)
+
+
+
+### 观察者（Observer）：主观能动性
+
+观察者模式是说我们通过注册、回掉这样的协作设计，完成变化通知的协作机制。这个工作中来说，换个角度思考，我们可以将一些被动的工作，变成主动的思考。比如：我需要干某部分工作，从工作的角度来说，不得不做，从主动的角度来说，就是需要培养某块的能力。如果对工作内容不太满意，也可以沟通协调，而不是事后爆发，凡是都是可以主观驱动的。
+
+![img](javaNote.assets/v2-3388f1c1ab78cb7cd6df1bb5d4fd31db_720w.webp)
+
+
+
+### 状态（State）：管理自己
+
+状态模式是说在不同的状态下，有不同的处理行为。对工作中来说，我们可能有状态好的时候，有状态不好的时候，主观的处理的手段是调整状态。但是如果调整不过来，我们应该进行不同的操作。比如，脑子好的时候，想一些复杂问题；脑子嗡嗡的时候，做一些简单整理。
+
+![img](javaNote.assets/v2-1385dbd6ec1df9ef714480ff6b29fe7a_720w.webp)
+
+
+
+### 策略（Strategy）：理解决策
+
+策略模式是说完成一个事情有不同的算法，可以进行相关切换。我们在工作中，常常会提供不同的方案，不同的方案有不同的成本和收益，但是这些方案的选择时候，往往不是我们能决定的，而是客户client主动判断的。
+
+![img](javaNote.assets/v2-30dcbceea77c7beea05d6d683c6060a5_720w.webp)
+
+
+
+### 模板（Template）：标准化能力
+
+模版模式是说对一个执行过程进行抽象分解，通过骨架和扩展方法完成一个标准的主体逻辑和扩展。我们很多时候，做xxx平台也都是这样的：对过程进行标准化，对变化进行定义，形成一个平台逻辑和业务扩展，完成一个产品模版。只是说这个模版是站点，还是扩展点，还是其他的展示形式。这样标准化的能力也是需要长期训练的。
+
+![img](javaNote.assets/v2-d6d55112c53a28db807127b00181c3e1_720w.webp)
+
+
+
+### 访问者（Visitor）：学会放手
+
+访问者模式是说把对元素的访问操作交给访问者来操作，因为对访问者来说常常有不同的访问行为。在工作中，往往我们只能陈述事实，这个内容消化后，每个人都有自己的理解。代码协作也是一样，比如：页面到底长什么样，其实还是要交还给业务本身，我们应该专注于提供基础的能力。
+
+![img](javaNote.assets/v2-e880973f47bf9f0ad4e0d388472f9695_720w.webp)
+
+
+
+### 总结
+
+作为开发者，我们对于如何写出优雅的代码，表示疑惑。因为常常背后是复杂的问题域，优雅的设计往往产生于局部，很难整体都很优雅。
+
+作为工作者，我们对于如何做出好的表现，表示疑惑。因为背后常常是综合素质与机遇的结合，好的结果往往产生于一个阶段，长期需要较快且持续的成长。
+
+但是，如果我们有一些指导性的原则，往往我们能够明白事务的折中点，做出更加合理的设计，以及更加关键的贡献。
 
 ### 依赖关系
 
@@ -21350,7 +22810,42 @@ composite    组合（ a : A =new A ()          ）
 
 ![image-20211127223027855](javaNote.assets/image-20211127223027855.png)
 
-## git
+#### 类与类六种关系
+
+类和类之间存在着六种关系 由弱到强分别是 依赖<关联<聚合<组合<实现=继承
+相对应的 每一种类的关系在类图里面都有一种画法来表示
+
+首先是依赖 这是一种什么关系呢 就好像人使用用计算机一样 在人这个类里面用到了计算机 那么 我们就可以说二者是依赖关系。
+
+![在这里插入图片描述](javaNote.assets/d37225c647094607a6cb6ff5fecee4d0.png)
+
+我们使用虚线+箭头 箭头指向的是被使用的类
+
+其次是关联什么意思呢 就好像对象间的引用 一个类和另外一个类的联系 比如妻子和丈夫 老师和学生 学生和课程 但是关联也是有单向和双向的 比如 学生是和课程关联 但是 课程不和学生关联 学生需要用到课程 但是课程不需要学生 注意 上面的关联和依赖 引用和使用的区别 大概的意思就是 一个是作为方法的变量进来 一个是作为类的属性进来指向大（地位）的（谁被依赖谁地位比较大嘛）
+
+![img](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5rmW5Y2X5pyA5ZCO55qE5rip5p-U,size_20,color_FFFFFF,t_70,g_se,x_16.png)这里老师有很多学生 同时学生也有很多老师 所以是双向依赖 但是课程不和学生关联 因为学生不是课程的属性
+
+然后就是聚合 什么是聚合呢？就好像大雁和雁群一样 一只只大雁组成了雁群 但是大雁又能脱离大雁存在 这里就提到大雁和大雁本身了 大雁的翅膀组成了大雁这个个体 他的翅膀不能再分（不要杠大雁的翅膀能被拆了之类的 不是重点）所以 这两个又算一组 这里还是使用学校主题的图片吧
+
+![在这里插入图片描述](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5rmW5Y2X5pyA5ZCO55qE5rip5p-U,size_20,color_FFFFFF,t_70,g_se,x_16-166926960912737.png)
+
+这里老师组成了学校 很明显是一种聚合的关系 并不是说老师走了学校就干不下去了。我们使用的是空心菱形 指向总体(大的)
+
+![在这里插入图片描述](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5rmW5Y2X5pyA5ZCO55qE5rip5p-U,size_20,color_FFFFFF,t_70,g_se,x_16-166926961709239.png)
+
+这里是人体由头组成 明显是一种强的聚合关系 两个不能脱离开来 因此我们使用实心菱形表示组成
+
+最后两种就是实现和泛化 这两个和我们平常的使用java的类之间的实现和继承没什么区别 两个的强弱也基本相同
+
+![在这里插入图片描述](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5rmW5Y2X5pyA5ZCO55qE5rip5p-U,size_16,color_FFFFFF,t_70,g_se,x_16.png)
+
+多提一嘴 的就是实现接口需要使用虚线
+而继承类就是用实线 指向实现或者是继承的类（指向大（辈分）的）
+
+总而言之 两个一组 关系从松到紧 指向大的
+然后类由三层构成 第一层是类名 第二层是属性 第三层是方法 如果是接口的话就只有两层 而且 要在第一层标注是接口 左边写名字 右边写返回值的类别 或者是属性的类别。 到这里为止 基本上类图能看明白了 还有类基本上画一画是没什么问题了。
+
+# git
 
 ### reset&revert
 
@@ -21367,9 +22862,6 @@ reset:**反做**取消commit2的提交，保留commit3，并生成commit4
 原理： git revert是用于“反做”某一个版本，以达到撤销该版本的修改的目的。比如，我们commit了三个版本（版本一、版本二、 版本三），突然发现版本二不行（如：有bug），想要撤销版本二，但又不想影响撤销版本三的提交，就可以用 git revert 命令来反做版本二，生成新的版本四，这个版本四里会保留版本三的东西，但撤销了版本二的东西。如下图所示：
 
 适用场景： 如果我们想撤销之前的某一版本，但是又想保留该目标版本后面的版本，记录下这整个版本变动流程，就可以用这种方法。
-————————————————
-版权声明：本文为CSDN博主「李俊的博客」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
-原文链接：https://blog.csdn.net/qq_36441027/article/details/124032290
 
 ### rebase和merge区别
 
@@ -21466,6 +22958,25 @@ $ git push origin :refs/tags/v1.0
 
 ```
 
+### idea分支合并
+
+idea将其他分支代码合并到当前分支中
+如：将1.0.0.1版本更改代码合并到1.0.0.2版本中
+
+1.先切换到需要合并代码的分支(切换到1.0.0.1版本)
+
+2.将1.0.0.1版本的代码更新到最新
+
+3.切换回1.0.0.2版本
+
+4.在Local Branches中选择1.0.0.1版本分支点击merge into curren(合并到当前分支：将所选分支合并到当前分支)
+
+![在这里插入图片描述](javaNote.assets/a680daac98144fe0961b889d77495a84.png)
+
+![在这里插入图片描述](javaNote.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5YG257O75rij5rij54Gw,size_12,color_FFFFFF,t_70,g_se,x_16.png)
+
+5.然后再选择git push ，将1.0.0.2版本分支(合并了1.0.0.1版本分支之后)提交到服务器
+
 ### 常用代码
 
 ```bash
@@ -21527,9 +23038,179 @@ alias git-log='git log --pretty=oneline --all --graph --abbrev-commit'
 
 ![image-20210910225843865](javaNote.assets/image-20210910225843865.png)
 
-## HU
+# HU医芽
 
-### 项目深挖
+## 项目难点
+
+数据一致性问题 业务比较复杂
+
+需要不断mq通知和缓存删除
+
+
+
+部署方面，docker jenkins比较麻烦
+
+es kibana 中间件的部署
+
+linux服务器挂了：挂载失败
+
+
+
+除了使用seata实现分布式事务，还有没有其它方案
+
+AT XA TCC Saga
+
+异步通知
+
+try catch手动回滚
+
+定时任务扫描校验
+
+
+
+seata分布式分支事务不回滚问题排查？
+
+https://vblogs.cn/steakliu/article?id=6040757908659864
+
+## mysql的应用
+
+各个微服务进行分库
+
+减少远程调用或连接查询
+
+于是冗余存储
+
+commnet creator_id createor_name
+
+## 接口幂等性
+
+1、点赞人和点赞实体是**联合唯一索引**，保证只能点赞一次
+
+2、同时，redis中set保存点赞人id，保证短时间只能点赞一次
+
+## 部署启动
+
+#### 1.mysql
+
+```
+# 地址
+192.168.42.100:3306
+
+#容器
+d894648a492d   mysql:5.7    0.0.0.0:3306->3306/tcp  mysql
+
+#挂在地址
+/mydata/mysql
+```
+
+新版：
+
+```
+# 地址
+192.168.42.102:3406
+
+#容器
+b39bd8275557 mysql:8.0.26 0.0.0.0:3406->3306/tcp   mysql8
+
+# 卷挂载
+/opt/module/mysql8
+```
+
+#### 2.redis
+
+```
+6379
+```
+
+#### 3.nacos
+
+```
+startup.cmd -m standalone
+```
+
+![image-20221202171306373](javaNote.assets/image-20221202171306373.png)
+
+#### 4.rabbitmq
+
+```
+管理页面：
+http://192.168.42.102:15672/
+
+username: itcast
+password: 123
+```
+
+#### 5.es
+
+1.1.创建网络
+
+因为我们还需要部署kibana容器，因此需要让es和kibana容器互联。这里先创建一个网络：
+
+```sh
+docker network create es-net
+```
+
+1.2新建容器
+
+```
+docker run -d \
+	--name es \
+    -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+    -e "discovery.type=single-node" \
+    -v /opt/module/es/es-data:/usr/share/elasticsearch/data \
+    -v /opt/module/es/es-plugins:/usr/share/elasticsearch/plugins \
+    --privileged \
+    --network es-net \
+    -p 9200:9200 \
+    -p 9300:9300 \
+	elasticsearch:7.12.1
+	
+docker run -d --name es -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -e "discovery.type=single-node" -v /opt/module/es/es-data:/usr/share/elasticsearch/data -v /opt/module/es/es-plugins:/usr/share/elasticsearch/plugins --privileged --network es-net -p 9200:9200 -p 9300:9300 elasticsearch:7.12.1
+	
+	
+665456ff8131   elasticsearch:7.12.1 0.0.0.0:9200->9200/tcp, 0.0.0.0:9300->9300/tcp es
+```
+
+#### 6.kibana
+
+```
+b80304c4d31d   kibana:7.12.1 0.0.0.0:5601->5601/tcp kibana
+```
+
+
+
+Kibana启动后外网访问不了
+
+修改 **config/kibaba.yml** 下的 server.host 为 0.0.0.0， 默认是注释掉的或者是localhost
+
+```
+#
+# ** THIS IS AN AUTO-GENERATED FILE **
+#
+
+# Default Kibana configuration for docker target
+server.name: kibana
+server.host: "0.0.0.0"
+elasticsearch.hosts: [ "http://192.168.42.102:9200" ]
+monitoring.ui.container.elasticsearch.enabled: true
+
+```
+
+
+
+#### 7.canal
+
+
+
+#### 8.Seata
+
+![image-20221211155223443](javaNote.assets/image-20221211155223443.png)
+
+#### node版本
+
+![image-20220624195541901](javaNote.assets/image-20220624195541901.png)
+
+## 项目深挖
 
 ![image-20220414224059381](javaNote.assets/image-20220414224059381.png)
 
@@ -21646,37 +23327,13 @@ set保存点赞的人，防止重复点赞；帖子的点赞评论计数采用ha
 2、继承AbstractRoutingDataSource，重写determineCurrentLookupKey动态切换数据源，通过threadLoacl获取需要的数据源
 ```
 
-### es和mysql数据一致性
-
-上面两种方案中都存在硬编码问题，也就是有任何对mysq进行增删改查的地方要么植入ES代码，要么替换为MQ代码，代码的侵入性太强。
-
-如果对实时性要求不高的情况下，可以考虑用定时器来处理，具体步骤如下：
-
-数据库的相关表中增加一个字段为timestamp的字段，任何crud操作都会导致该字段的时间发生变化；原来程序中的CURD操作不做任何变化；增加一个**定时器程序**（京东内部叫Worker），让该程序按**一定的时间周期扫描指定的表**，把该时间段内**发生变化的数据提取出来；逐条写入到ES中**。入下图所示
-
-优点：
-
-不改变原来代码，没有侵入性、没有硬编码；
-
-没有业务强耦合；不改变原来程序的性能；
-
-Worker代码编写简单不需要考虑增删改查。
-
-缺点：
-
-时效性较差，由于定时器工作周期不可能设在秒级，所以实时性没有上面2中好；
-
-对数据库有一定的轮询压力，一种改进方法是将轮询放到压力不大的从库上。
-
 ### elk
 
 日志整合es
 
 https://www.cnblogs.com/kebibuluan/p/15933706.html
 
-
-
-#### 启动命令
+#### logstash启动命令
 
 ```
 D:/my-log/logstash-7.3.0/bin/logstash.bat -f ./config/my-log.conf
@@ -21684,7 +23341,7 @@ D:/my-log/logstash-7.3.0/bin/logstash.bat -f ./config/my-log.conf
 D:/app/logstash-7.3.0/bin/logstash.bat -f D:\app\logstash-7.3.0\config\kafka.conf
 ```
 
-#### 收集kafka中的日志
+#### logstash收集kafka中的日志
 
 ```
 # Sample Logstash configuration for creating a simple
@@ -21720,7 +23377,7 @@ output {
 
 ```
 
-#### 收集文件my-log日志
+#### logstash收集文件my-log日志
 
 ```
 # Sample Logstash configuration for creating a simple
@@ -21760,11 +23417,326 @@ output {
 
 ```
 
-### es
+## Redis的应用
+
+### 点赞评论模块
+
+#### 点赞序列图
+
+![点赞时序图](javaNote.assets/点赞时序图-16707365180301.png)
+
+#### 基于Set实现点赞功能
+
+##### 点赞
+
+key：prefix+entityId+type
+
+value: memberId 
+
+```
+int type = entity.getType(); // 0表示帖子，1表示评论
+// 给帖子点赞，key(set:thumb:entityId:type)  value(memberId)
+String key = "set:thumb:" + entityId + ":" + type;
+String value=String.valueOf(entity.getMemberId());
+redisTemplate.boundSetOps(key).setOps.add(value);
+```
+
+由定时任务同步到mysql，同时通知es进行数据更新
+
+```
+/**
+     * 点赞数据（帖子和评论）同步到mysql
+     */
+    @Scheduled(cron = "0/20 * * * * ?") // 每隔5秒触发
+    public void thumbToMysql(){
+        // 获取所有set,前缀为 set:thumb:*
+        Set<String> set = redisTemplate.keys("set:thumb:*");
+        for (String s : set) {
+            // 给帖子点赞，key  set:thumb:entityId:type  value  memberId
+            String[] split = s.split(":");
+            // 目标实体id
+            long entityId = Long.valueOf(split[2]);
+            // 类型 0表示帖子，1表示评论
+            Integer type = Integer.valueOf(split[3]);
+
+            BoundSetOperations<String, String> setOps1 = redisTemplate.boundSetOps(s);
+            // 获取点赞数
+            long size = setOps1.size();
+            // 获取所赞的所有用户
+            Set<String> ids = setOps1.members();
+            // 保存后删除
+            redisTemplate.delete(s);
+
+            for (String id : ids) {
+                // 增加点赞记录
+                ThumbsEntity thumbsEntity = new ThumbsEntity();
+                thumbsEntity.setMemberId(Long.parseLong(id));
+                thumbsEntity.setType(type);
+                thumbsEntity.setEntityId(entityId);
+                thumbsService.save(thumbsEntity);
+            }
+
+            // 文章或评论的点赞数增加
+            if(type==0){
+                questionService.thumb(entityId, (int) size);
+                // 更新es帖子信息
+                rabbitTemplate.convertAndSend(MqConstants.QUESTION_EXCHANGE,MqConstants.QUESTION_UPDATE_ROUTINGKEY,entityId);
+            }
+        }
+    }
+```
+
+##### 取消点赞
+
+**操作顺序问题**：点赞数据由定期任务更新到mysql中，如果还未更新到mysql就取消点赞，由于点赞记录为空导致取消点赞失败
+
+解决方案：为了保证点赞还没更新到mysql，等待30s后（大于上面定期时间）再执行取消点赞逻辑
+
+#### 基于List实现评论分页查询
+
+缓存一级评论列表，当评论被点赞或被评论的时候，由于评论的点赞数和评论数，因此缓存失效要清除评论缓存
+
+```
+    public PageUtils queryPageRedisList(Map<String, Object> params, Long questionId, Long parent_id) {
+        // 分页参数校验
+        Object page = params.get("page");
+        Object limit = params.get("limit");
+        int p = page == null ? 1 : Integer.valueOf((String) page);
+        int l = limit == null ? 10 : Integer.valueOf((String) limit);
+
+        // redis list中找出最新的数据
+        String key = "list:comment:" + questionId;
+        BoundListOperations<String, String> listOps = redisTemplate.boundListOps(key);
+        List<String> redisList = listOps.range((p - 1) * l, (p - 1) * l + l);
+
+        // 判断redis数据量是否满足limit大小
+        int redisListSize = redisList.size();
+        if (redisListSize < l) {
+            // 从mysql中获取真正的长度
+            IPage<CommentEntity> entityIPage = getBaseMapper().listByQidPid(
+                    new Query<CommentEntity>().getPage(params), questionId, parent_id);
+            List<CommentEntity> records = entityIPage.getRecords();
+            int recordSize = records.size();
+
+            // 比较redis和mysql的数据大小，相等则不需要更新redis(分布式锁+过期续命)
+            if (recordSize == redisListSize) {
+                log.info("redis和mysql数据一致，不需要更新");
+            } else {
+                log.info("redis({})和mysql({})数据不一致，开始更新", redisListSize, recordSize);
+                // 更新redis，删除帖子对应的所有一级评论缓存（分布式锁）
+                deleteCommentList(questionId);
+                if(recordSize>0){
+                    // 有数量才缓存
+                    String[] entityIPageJson = new String[recordSize];
+                    for (int i = 0; i < recordSize; i++) {
+                        entityIPageJson[i] = JSON.toJSONString(records.get(i));
+                    }
+                    listOps.rightPushAll(entityIPageJson);
+                }
+            }
+            return new PageUtils(entityIPage);
+        } else {
+            // 缓存命中直接返回
+            return new PageUtils(redisList.stream().map(e -> JSON.parseObject(e, CommentEntity.class)).collect(Collectors.toList()), 0, p, l);
+        }
+    }
+```
+
+缓存失效，删除评论
+
+```
+    /**
+     * 删除帖子的一级评论缓存（redis list）
+     */
+    public void deleteCommentList(Long questionId){
+        String key = "list:comment:" + questionId;
+//        BoundListOperations<String, String> listOps = redisTemplate.boundListOps(key);
+        redisTemplate.delete(key);
+        log.info("删除key:{}",key);
+    }
+```
+
+分布式锁：解决缓存击穿问题
+
+存储：hash  health:sport:type  id   typeEntity
+
+```java
+public static final String SPORT_TYPE="health:sport:type";
+
+    public static  final String TYPE_LOCK="lock:health:sport:type";
+
+    /**
+     * 获取运动小贴士，数据读多写少
+     * 对象采用hash结构 health:sport:type  id   typeEntity
+     * @param params
+     * @return
+     */
+    @Override
+    public PageUtils queryPage(Map<String, Object> params) {
+        List<TypeEntity> entities= getRedis(params);
+        if(entities==null){
+            // 采用分布式锁，解决缓存击穿问题
+            RLock lock = redissonClient.getLock(TYPE_LOCK);
+            lock.lock(); // 休眠阻塞
+            entities=getRedis(params); // 双检，别的线程可能已经获取到数据了
+            if(entities==null){
+                IPage<TypeEntity> page = this.page(
+                        new Query<TypeEntity>().getPage(params),
+                        new QueryWrapper<TypeEntity>()
+                );
+                entities=page.getRecords();
+                saveToRedis(page); // 保存到缓存中
+            }
+            lock.unlock(); // 记得解锁
+        }
+        return new PageUtils(new Page<TypeEntity>(1,entities.size(),entities.size()).setRecords(entities));
+    }
+
+    private List<TypeEntity> getRedis(Map<String, Object> params) {
+        BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SPORT_TYPE);
+        List<String> values = hashOps.values();
+        List<TypeEntity> entities=null;
+        if(values!=null&&!values.isEmpty()){
+            entities=values.stream().map(v-> JSON.parseObject(v,TypeEntity.class)).collect(Collectors.toList());
+        }
+        return entities;
+    }
+
+
+    private void saveToRedis(IPage<TypeEntity> page) {
+        BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SPORT_TYPE);
+        List<TypeEntity> entities = page.getRecords();
+        for (TypeEntity entity : entities) {
+            hashOps.put(entity.getId().toString(), JSON.toJSONString(entity));
+        } // 这里不设置过期时间，因为每个人都要访问，且数据量不大
+    }
+```
+
+## Elasticsearch的应用
+
+### es和mysql数据一致性
+
+上面两种方案中都存在硬编码问题，也就是有任何对mysq进行增删改查的地方要么植入ES代码，要么替换为MQ代码，代码的侵入性太强。
+
+如果对实时性要求不高的情况下，可以考虑用定时器来处理，具体步骤如下：
+
+数据库的相关表中增加一个字段为timestamp的字段，任何crud操作都会导致该字段的时间发生变化；原来程序中的CURD操作不做任何变化；增加一个**定时器程序**（京东内部叫Worker），让该程序按**一定的时间周期扫描指定的表**，把该时间段内**发生变化的数据提取出来；逐条写入到ES中**。入下图所示
+
+优点：
+
+不改变原来代码，没有侵入性、没有硬编码；
+
+没有业务强耦合；不改变原来程序的性能；
+
+Worker代码编写简单不需要考虑增删改查。
+
+缺点：
+
+时效性较差，由于定时器工作周期不可能设在秒级，所以实时性没有上面2中好；
+
+对数据库有一定的轮询压力，一种改进方法是将轮询放到压力不大的从库上。
 
 function_score：主要用于让用户自定义查询相关性得分，实现精细化控制评分的目的
 
 https://blog.csdn.net/w1014074794/article/details/120523550
+
+#### 2. `function_score`简介
+
+在使用`ES`进行全文搜索时，搜索结果默认会以文档的相关度进行排序，而这个 “文档的相关度”，是可以透过 `function_score` 自己定义的，也就是说我们可以透过使用`function_score`，来控制 “怎麽样的文档相关度更高” 这件事。
+
+- `function_score`是专门用于处理文档`_score`的`DSL`，它允许爲每个主查询`query`匹配的文档应用加强函数， 以达到改变原始查询评分 `score`的目的。
+
+- `function_score`会在主查询`query`结束后对每一个匹配的文档进行一系列的重打分操作，能够对多个字段一起进行综合评估，且能够使用 `filter` 将结果划分爲多个子集 (每个特性一个`filter`)，并为每个子集使用不同的加强函数。
+
+  一个文档可以一次满足多条加强函数和多个`filter`，如果一次满足多个，那麽就会产生多个加强`score`，因此ES会使用`score_mode`定义的方式来合併这些加强score们，得到一个总加强score，得到总加强score之后，才会再使用`boost_mode`定义的方式去和`old_score`做合并。
+
+  
+
+**例如：** 下面的例子，`field_value_factor`和`gauss`这两个加强函数会应用到所有文档上，而`weight`只会应用到满足`filter`的文档上，假设有个文档满足了`filter`的条件，那他就会得到3个加强score，这3个加强score会使用sum的方式合併成一个总加强score，然后才和old_score使用multiply的方式合并。
+
+```
+GET 127.0.0.1/mytest/doc/_search
+{
+    "query": {
+        "function_score": {
+            "query": {.....},
+            "functions": [   //可以有多个加强函数(或是filter+加强函数)，每一个加强函数会产生一个加强score，因
+此functions会有多个加强score
+                { "field_value_factor": ... },
+                { "gauss": ... },
+                { "filter": {...}, "weight": ... }
+            ],
+            "score_mode": "sum", //决定加强score们怎麽合併,
+            "boost_mode": "multiply" //決定總加強score怎麼和old_score合併
+        }
+    }
+}
+```
+
+https://blog.csdn.net/lijingjingchn/article/details/106405577
+
+那就要使用`functions`来包含这些加强函数们，`functions`是一个数组，裡面放著的是将要被使用的加强函数列表。
+
+可以为`functions`裡的加强函数指定一个`filter`，这样做的话，只有在文档满足此`filter`的要求，此`filter`的加强函数才会应用到文挡上，也可以不指定`filter`，这样的话此加强函数就会应用到全部的文挡上。
+
+```
+GET 127.0.0.1/mytest/doc/_search
+{
+    "query": {
+        "function_score": {
+            "query": {.....},
+            "functions": [   //可以有多个加强函数(或是filter+加强函数)，每一个加强函数会产生一个加强score，因
+此functions会有多个加强score
+                { "field_value_factor": ... },
+                { "gauss": ... },
+                { "filter": {...}, "weight": ... }
+            ],
+            "score_mode": "sum", //决定加强score们怎麽合併,
+            "boost_mode": "multiply" //決定總加強score怎麼和old_score合併
+        }
+    }
+}
+
+```
+
+
+
+4、field_value_factor 字段值因子评分
+field_value_factor 函数允许您使用文档中的字段来影响分数。 它类似于使用 script_score 函数，但是，它避免了脚本的开销。 如果用于多值字段，则在计算中仅使用该字段的第一个值。
+
+举个例子，假设你有一个用数字 likes 字段索引的文档，并希望用这个字段影响文档的分数，一个这样做的例子看起来像：
+
+```
+GET /_search
+{
+    "query": {
+        "function_score": {
+            "field_value_factor": {
+                "field": "likes",
+                "factor": 1.2,
+                "modifier": "sqrt",
+                "missing": 1
+            }
+        }
+    }
+}
+```
+
+得分计算公式： sqrt(1.2 * doc['likes'].value)
+
+参数说明：
+
+field
+要从文档中提取的字段。
+
+factor
+与字段值相乘的可选因子，默认为 1。
+
+modifier
+应用于字段值的计算修饰符， none, log, log1p, log2p, ln, ln1p, ln2p, square, sqrt, or reciprocal，默认 none.
+
+missing
+如果文档没有该字段，则使用的值。 修饰符和因子仍然适用于它，就好像它是从文档中读取的一样。
 
 
 
@@ -22184,31 +24156,15 @@ canal采用tcp模式，同时配备两个instance实例（example,rabbitmq），
 
 另外只同步health_community的中的community_question到es中
 
-### 点赞评论模块
+## RabbitMq的应用
 
-1、用户点赞
+用于通知es帖子数据的更新，当帖子的点赞数、评论数等更新的时候，通知es进行数据更新。
 
-参数：用户id+帖子id
+文档id一致，则会更新（本质是先删除再覆盖）
 
-数据库实体：点赞记录表，帖子表点赞数增加
+## Canal的应用
 
-redis设计：hash存储questionLike，key(questionId::userId) value(1:tiemstamp)
-
-2、用户评论：
-
-参数：父评论id,帖子id,评论人id
-
-数据库实体：评论表，帖子表评论数增加
-
-redis设计：hash存储questionComment, key(questionId:userId:parentUserId:tiemStamp) value(comment)
-
-
-
-用户评论->异步通知文章评论数加一-》持久化到数据库中
-
-获取文章列表是用了缓存的，开启定时器，定期扫描去删除缓存
-
-### canal订阅过滤规则
+#### canal订阅过滤规则
 
 ```
 * a. 如果本次订阅中filter信息为空，则直接使用canal server服务端配置的filter信息
@@ -22239,11 +24195,11 @@ connector.subscribe("test.user")
 connector.subscribe("test\\..*,test2.user1,test3.user2")
 ```
 
-### cannal server instance client概念
+#### cannal server instance client概念
 
 server-server 对应JVM,instance就是真正的数据队列，instance承载着EventParser(解析binlog),EventSink(过滤路由加工),EventStore（时间存储）
 
-### canal高可用HA设计
+#### canal高可用HA设计
 
 通过多实例，创建成功就是对应的canal instance,失败就是standby备用状态。当实例消息，zookeeper会重新创建实例
 
@@ -22254,15 +24210,15 @@ server-server 对应JVM,instance就是真正的数据队列，instance承载着E
 
 Canal Client的方式和canal server方式类似，也是利用zookeeper的抢占EPHEMERAL节点的方式进行控制.
 
-### canal实例只能被消费一次
+#### canal实例只能被消费一次
 
 一个canal实例（比如example）只能被消费一次
 
-### canal执行流程
+#### canal执行流程
 
 ![在这里插入图片描述](javaNote.assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM2MDc5OTEy,size_16,color_FFFFFF,t_70.png)
 
-### 认证逻辑
+## JWT的应用
 
 使用JWT+HMAC签名（哈希消息验证码(对称)）
 
@@ -22295,73 +24251,9 @@ public class JwtRsaUtil {
 }
 ```
 
-### node版本
+## 设计模式的应用
 
-![image-20220624195541901](javaNote.assets/image-20220624195541901.png)
-
-### 使用到的设计模式
-
-### 哪里用到redis
-
-##### 运动模块：运动运动小贴士
-
-存储：hash  health:sport:type  id   typeEntity
-
-并使用到了分布式锁
-
-```java
-public static final String SPORT_TYPE="health:sport:type";
-
-    public static  final String TYPE_LOCK="lock:health:sport:type";
-
-    /**
-     * 获取运动小贴士，数据读多写少
-     * 对象采用hash结构 health:sport:type  id   typeEntity
-     * @param params
-     * @return
-     */
-    @Override
-    public PageUtils queryPage(Map<String, Object> params) {
-        List<TypeEntity> entities= getRedis(params);
-        if(entities==null){
-            // 采用分布式锁，解决缓存击穿问题
-            RLock lock = redissonClient.getLock(TYPE_LOCK);
-            lock.lock(); // 休眠阻塞
-            entities=getRedis(params); // 双检，别的线程可能已经获取到数据了
-            if(entities==null){
-                IPage<TypeEntity> page = this.page(
-                        new Query<TypeEntity>().getPage(params),
-                        new QueryWrapper<TypeEntity>()
-                );
-                entities=page.getRecords();
-                saveToRedis(page); // 保存到缓存中
-            }
-            lock.unlock(); // 记得解锁
-        }
-        return new PageUtils(new Page<TypeEntity>(1,entities.size(),entities.size()).setRecords(entities));
-    }
-
-    private List<TypeEntity> getRedis(Map<String, Object> params) {
-        BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SPORT_TYPE);
-        List<String> values = hashOps.values();
-        List<TypeEntity> entities=null;
-        if(values!=null&&!values.isEmpty()){
-            entities=values.stream().map(v-> JSON.parseObject(v,TypeEntity.class)).collect(Collectors.toList());
-        }
-        return entities;
-    }
-
-
-    private void saveToRedis(IPage<TypeEntity> page) {
-        BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SPORT_TYPE);
-        List<TypeEntity> entities = page.getRecords();
-        for (TypeEntity entity : entities) {
-            hashOps.put(entity.getId().toString(), JSON.toJSONString(entity));
-        } // 这里不设置过期时间，因为每个人都要访问，且数据量不大
-    }
-```
-
-## 大就业
+# 大就业
 
 ### swagger
 
@@ -23092,25 +24984,29 @@ str1.localeCompare(str2)
 }
 ```
 
-## RPC框架
+# RPC框架
 
-### 分层设计
-
-config---spring反射创建代理对象
-
-registry---zookeeper自动服务暴露服务注册服务发现
-
-remote ---netty远程通信
-
-protocol---心跳检测短线重连，数据的传输格式,负载均衡
-
-seriable---序列化反序列化
+### 为什么想着要写这个框架
 
 
 
-common
+### 分为四层
 
-test
+config---配置层，基于spring整合配置，创建代理对象
+
+registry---注册中心层，zookeeper服务注册服务发现
+
+remote ---原层通信层，netty远程通信
+
+protocol---协议层，心跳检测短线重连，数据的传输格式,负载均衡
+
+依赖关系：
+
+
+
+common 公共依赖
+
+test 测试模块
 
 ### netty为什么自己实现心跳检测，不是TCP的保活机制
 
@@ -23173,27 +25069,71 @@ Netty 中的心跳逻辑#
 
 下面演示一下在 Netty 中如果使用 IdleStateHandler
 
-## 面试笔试
+# 面试笔试
 
 ### 自我介绍
 
 面试官你好，我叫林涣锋，我来自东莞理工学院软件工程专业
 
-大学期间，我**参与开发了许多java相关的项目**，项目也用到了许多分布式微服务相关技术框架，比如消息队列kafka，rabbit，缓存redis，分布式zk,es，我对Mysql，Java相关原理，计网等有一定了解。
+大学期间，我**参与开发了许多java相关的项目**，主要负责系统架构设计和核心业务开发，对于项目中用到了许多技术框架，比如消息队列kafka，rabbit，缓存redis，分布式zk，es，Mysql，JVM，计网等有一定了解。
 
 目前的话，在广州瑞修得公司进行实习，岗位是java后端开发实习生，负责一些业务需求接口的开发。
 
-另外，我也多次参加计算机设计大赛，蓝桥杯算法竞赛等专业竞赛，积累了竞赛方面的相关经验。
+在课内方面，我也多次参加计算机大赛，蓝桥杯算法比赛，也有获得相关的奖项。
 
-在课内方面，我的计算机专业成绩优异，有获得奖学金
-
-大学实践方面，我担任了校审计处学生助理，社会实践分队负责人，班级团支书等。
+在课内方面，担任班级团支书，校审计处学生助理，社会实践分队负责人，成绩优异，有获得奖学金
 
 这就是我的自我介绍，感谢面试官。
 
 
 
-使用map代替原来的两边遍历，将时间统计接口时长从47s优化为7s
+实习收获或技术难点
+
+前期主要是培训，熟悉公司的整个需求开发测试上线流程，熟悉使用内部的weforward云原生框架，同时，约定一些编码规范，比如一些BO,接口注解，DI等的设计和命名。
+
+
+
+后期主要的难点是对业务进行熟悉
+
+
+
+接口优化一：
+
+从1分钟优化到7s
+
+根据a字段进行过滤，再统计b字段的数据个数
+
+1、对查询字段建立索引
+
+2、使用map代替原来的两边遍历，将时间统计接口时长从47s优化为7s
+
+优化使用聚合操作直接返回聚合结果
+
+
+
+
+
+接口优化二：
+
+对项目进行重构，直接进行对象嵌套，通过一个字段存储字段的内容
+
+抽象出可扩展的通用对象，解决业务对象暴增带来的存储和查询成本，
+
+通过类型标记不同的对象，插入或查询的时候再进行映射即可
+
+
+
+原来新加一个事件就得mongo就建一个collection,现在只需一个统一的BO对象
+
+
+
+
+
+使用云原生框架进行项目开发，参与业务需求的接口设计和编写
+
+对车服事件进行存储和分析，暴露相关的查询和统计接口，并按规则推送语音播报
+
+参与车服事件项目的重构，抽象出可扩展的通用对象，解决业务对象暴增带来的存储和查询成本
 
 
 
@@ -23319,7 +25259,7 @@ Time_wait：客户端等待，以确保服务器收到ACK真正关闭连接
 9.玩没玩过游戏
 10.业务介绍和反问
 
-## 错题集
+# 错题集
 
 ### 文法树
 
@@ -24176,7 +26116,7 @@ float y=2;
 System.out.println(x/y); // 0.5
 ```
 
-## Nginx
+# Nginx
 
 #### 简介
 
@@ -24337,11 +26277,7 @@ events{
 
 ![image-20211211200057006](javaNote.assets/image-20211211200057006.png)
 
-### Kafka
-
-
-
-## RabbitMQ
+# RabbitMQ
 
 ### 如何保证消息可靠性
 
@@ -24617,7 +26553,7 @@ RabbitListener和Rabbithandler的注意
 
 传对象的时候，注意全类名要一致，不然数据转换异常
 
-## Kafka
+# Kafka
 
 ### 消息有序
 
@@ -24643,7 +26579,102 @@ partiton 和 key 是可选的。如果你指定了 partition，那就是所有�
 
 所有消息，会发往同 1 个 partition。
 
-## Dubbo
+
+
+<1> 若指定Partition ID,则ProducerRecord被发送至指定Partition
+
+<2> 若未指定Partition ID,但指定了Key, ProducerRecord会按照hasy(key)发送至对应Partition
+
+<3> 若既未指定Partition ID也没指定Key，ProducerRecord会按照round-robin模式发送到每个Partition
+
+<4> 若同时指定了Partition ID和Key, ProducerRecord只会发送到指定的Partition (Key不起作用，代码逻辑决定)
+
+# 考公
+
+### 田赛和径赛
+
+田赛：力量，以**距离**为标准，跳远，跳高，投饼，标枪
+
+径赛：耐力，以**时间**为标准，谁快谁胜
+
+### 探测设备
+
+1. 热像仪可以在黑夜之中使用
+2. 声呐主要用于水下探测距离
+3. 雷达主要用于陆地探测距离
+4. 雷达测距利用了无线电波沿直线传播的原理
+5. 地下金属探测仪器利用了电磁感应原理
+
+### 牙膏成分
+
+1. 甘油在牙膏中起保湿作用
+2. 含氟牙膏有利于防龋齿
+3. 加入少量糖精改善牙膏口感
+4. 加入叶绿素防止牙龈出血和口臭
+
+### 毒品科普
+
+1. 从毒品的来源看：可分为天然毒品（鸦片）、半合成毒品（海洛因）和合成毒品（冰毒）。
+2. 从毒品对人中枢神经的作用看：可分为抑制剂（鸦片）、兴奋剂（苯丙胺类）和致幻剂（麦司卡林）。
+3. 金三角：泰国、缅甸、老挝
+4. 鸦片：又叫阿片，俗称大烟，是罂粟果实中流出的乳液经干燥凝结而成。
+5. 海洛因：化学名称“二乙酰吗啡”，俗称白粉，它是由吗啡和醋酸酐反应而制成的。
+6. 杜冷丁：即盐酸哌替啶，是一种临床应用的合成镇痛药，为白色结晶性粉末，味微苦，无臭。
+7. 可卡因：是从古柯叶中提取的一种白色晶状的生物碱，是强效的中枢神经兴奋剂和局部麻醉剂。
+8. 冰毒：即“甲基苯丙胺”，外观为纯白结晶体，故被称为“冰”（Ice）。对人体中枢神经系统具有极强的刺激作用，且毒性强烈。
+9. K粉：即“氯胺酮”，静脉全麻药，有时也可用作兽用麻醉药。白色结晶粉末，无臭，易溶于水，通常在娱乐场所滥用。
+
+### 人体器官
+
+1. 脾脏是人体最大的免疫器官
+2. 肝脏是人体的代谢器官
+3. 大肠属于消化系统
+4. 肾脏属于泌尿系统
+5. 毛发和指甲不是人体器官
+6. 心脏中的心室将离心血打入动脉
+
+### 化学元素
+
+1. 银质首饰在含硫的温泉中容易变色
+2. 常温条件下，汞是唯一保持液态的金属
+3. 通常情况下，火柴盒的侧面涂抹的是红磷、三硫化二锑、玻璃粉等
+4. 沿海地区人群碘的摄入量普遍高于其他地区
+
+### 芯片
+
+1. 芯片是内含众多电子元件及连线的半导体基片。
+2. 当今主流芯片的基层都是用单晶硅晶圆制造而成。
+3. 摩尔定律预测了芯片上集成的晶体管数量增长的速度。
+
+### 发热
+
+1. 一定程度的发热可使人体免疫功能增强
+2. 病人发热后没有食欲主要因为唾液淀粉酶活性降低。
+3. 手术发热可能是由于伤口感染或药物引起的。
+4. 体温在37.4℃—38℃为低热，38℃—39℃为中等发热，39℃—41℃为高热。
+
+### 生活常识
+
+1. 煤气中毒：打开门窗，通风换气，关闭煤气气阀，并及时将病人转移至空气新鲜处
+2. 消防安全标志分为三个颜色：红色，表示禁止；黄色，表示火灾爆炸危险；绿色，表示安全和疏散通道
+3. 暴雨预警信号分四级：蓝色、黄色、橙色、红色
+
+### 电磁波
+
+1. 电磁波是电场与磁场的相互激发并向远处传播形成的
+2. 地震波是地下岩石受强烈冲击产生振动而形成的弹性波，属于物理学中的机械波，不属于电磁波
+3. 电磁波可以在真空中传播
+4. 在导体中传播的电磁能量会衰减
+5. 电磁波在各种介质中的传播速度不一样
+
+### 维生素缺乏问题
+
+1. 夜盲症只在光线昏暗的环境下或夜晚事物不清，或完全看不清东西行动困难的症状。**缺乏维生素 A 可以引发夜盲症**，多吃动物肝脏、鱼肝油、胡萝ト等能补充维生素 A 。
+2. 败血症是指病原微生物侵人血液循环并生长繁殖，产生大量毒素和代谢产物引起严重毒血症症状的全身感染综合征。**缺乏维生素 C 可以引发败血症**。维生素 C 在新鲜的水果、蔬菜当中含量非常丰富，比如菠菜、韭菜、苹果、橘子、香蕉等，尤其在番茄和柑橘中含量特别丰富。
+3. 佝偻病即**维生素 D 缺乏性佝偻病**，是由于婴幼儿、儿童、青少年体内维生素 D 不足，引起钙、磷代谢紊乱，从而产生的一种以骨骼病变为特征的全身、慢性、营养性疾病。维生素 D 在植物性食物中含量极少，它主要存在于动物性食物中，如猪肝、鸡肝、羊肝、海鱼、虾、扇贝、蛋黄等。
+4. 脚气病又称**维生素 B 缺乏病**，是常见的营养素缺乏病之一。多吃糙米、瘦肉、麦麸等能补充维生素 B 。
+
+# Dubbo
 
 service
 
@@ -24973,7 +27004,7 @@ RegistryProtocol#export(Invoker)
 
 ![image-20220511112813231](javaNote.assets/image-20220511112813231.png)
 
-## VUE
+# VUE
 
 avaScript的基本数据类型有：（1）**Undefined**、（2）**Null**、（3）**Boolean**、（4）**String**、（5）**Number**、（6）**Symbol**、（7）**Object**。ES6 增加了Symbol类型
 
@@ -24991,7 +27022,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 ```
 
-## Docker
+# Docker
 
 ### 原理
 
@@ -25063,9 +27094,9 @@ docker**直接利用宿主机的系统内核，避免了虚拟机启动时所需
 
 docker exec -it CONTAINER bash # 以终端交互的模式
 
-docker run -p 端口映射 -e 环境变量 -d 后台运行
+docker run -p 端口映射 -e 环境变量 -d 后台运行 （创建一个新的容器并运行一个命令，是将镜像放入容器并启动容器。）
 
-docker start&restart
+docker start&restart （启动一个或多个已经被停止的容器	）
 
 docker ps [-a] 查看容器（所有）
 
@@ -25215,7 +27246,7 @@ docker update name --restart
 `sysctl net.ipv4.ip_forward`
 如果返回为“net.ipv4.ip_forward = 1”则表示成功了
 
-## k8s
+# k8s
 
 master默认有污点不能部署:强制措施：
 
@@ -25242,7 +27273,7 @@ yum clean all
 yum remove kube*
 ```
 
-## jenkins
+# jenkins
 
 war包启动命令（采用）
 
@@ -25273,11 +27304,15 @@ cd /var/lib/jenkins/updates/
 sed -i 's#http:\/\/updates.jekins-ci.org\/download#https:\/\/mirrors.tuna.tsinghua.edu.cn\/jenkins#g' default.json && sed -i '#/http:\/\/www.google.com#https:\/\/www.baidu.com#g' default.json
 ```
 
-## es
+# es
+
+### crud底层原理
+
+更新本质是，先标记为删除，再插入
+
+https://blog.csdn.net/Agly_Clarlie/article/details/116105998
 
 ### 自定义分词器
-
-
 
 将pinyin分词插件安装到elasticsearch的plugin目录
 
